@@ -1,0 +1,1611 @@
+$ bun scripts/check-adapter-integrations.ts
+codebase-tools / omp: COMPLETE
+  PROVIDED framework:extension-loading (required)
+    extension:codebase-tools → definition:state → semantic:extension-loading → framework:extension-loading
+    source extensions/codebase-tools/definition.ts:22:9
+    implementation adapters/omp/port.ts:92:23
+  PROVIDED framework:marker (required)
+    extension:codebase-tools → definition:marker → semantic:marker → framework:marker
+    source extensions/codebase-tools/definition.ts:36:10
+    implementation adapters/omp/native/extensibility/extensions/lifecycle.ts:115:11
+  PROVIDED framework:prompt-contribution (required)
+    extension:codebase-tools → definition:prompts → semantic:prompt-contribution → framework:prompt-contribution
+    source extensions/codebase-tools/definition.ts:32:11
+    implementation adapters/omp/port.ts:105:19
+  PROVIDED framework:session-facts (required)
+    extension:codebase-tools → definition:state → semantic:session-facts → framework:session-facts
+    source extensions/codebase-tools/definition.ts:22:9
+    implementation adapters/omp/port.ts:93:13
+  PROVIDED framework:state-follow (required)
+    extension:codebase-tools → definition:state → semantic:state-follow → framework:state-follow
+    source extensions/codebase-tools/definition.ts:22:9
+    implementation adapters/omp/native/extensibility/extensions/lifecycle.ts:115:11
+  PROVIDED framework:state-persistence (required)
+    extension:codebase-tools → definition:state → semantic:state-persistence → framework:state-persistence
+    source extensions/codebase-tools/definition.ts:22:9
+    implementation adapters/omp/native/extensibility/extensions/lifecycle.ts:115:11
+  PROVIDED port:onRunInitiation (required)
+    extension:codebase-tools → definition:marker → port:onRunInitiation
+    source extensions/codebase-tools/definition.ts:32:11
+    source extensions/codebase-tools/definition.ts:36:10
+    implementation adapters/omp/native/extensibility/extensions/prompts.ts:32:32
+  PROVIDED port:onSession (required)
+    extension:codebase-tools → binding:baseline → port:onSession
+    source extensions/codebase-tools/definition.ts:19:31
+    implementation adapters/omp/native/extensibility/extensions/lifecycle.ts:115:11
+  PROVIDED port:registerCommand (required)
+    extension:codebase-tools → definition:commands → port:registerCommand
+    source extensions/codebase-tools/definition.ts:24:3
+    implementation adapters/omp/native/extensibility/extensions/commands.ts:36:23
+  PROVIDED port:reportDiagnostic (required)
+    extension:codebase-tools → binding:baseline → port:reportDiagnostic
+    source extensions/codebase-tools/definition.ts:19:31
+    implementation adapters/omp/port.ts:86:20
+  UNAVAILABLE port:sessionObservationAccess (optional) — this entry observes each session in the process that runs it; no cross-process observation seat exists here
+    extension:codebase-tools → binding:baseline → port:sessionObservationAccess
+    source extensions/codebase-tools/definition.ts:19:31
+  PROVIDED port:setLabel (required)
+    extension:codebase-tools → binding:baseline → port:setLabel
+    source extensions/codebase-tools/definition.ts:19:31
+    implementation adapters/omp/port.ts:83:12
+  PROVIDED port:viewedSession (optional)
+    extension:codebase-tools → definition:marker → port:viewedSession
+    source extensions/codebase-tools/definition.ts:36:10
+    implementation adapters/omp/port.ts:89:17
+    session-facts mapping DECLARED adapters/omp/native/extensibility/extensions/session-facts.ts:138:42
+      MAPPED sessionId (adapters/omp/native/extensibility/extensions/session-facts.ts:139:13)
+      MAPPED kind (adapters/omp/native/extensibility/extensions/session-facts.ts:140:8)
+      MAPPED parentSessionId (adapters/omp/native/extensibility/extensions/session-facts.ts:141:19)
+      MAPPED name (adapters/omp/native/extensibility/extensions/session-facts.ts:148:8)
+      MAPPED taskName (adapters/omp/native/extensibility/extensions/session-facts.ts:156:12)
+      MAPPED agentName (adapters/omp/native/extensibility/extensions/session-facts.ts:161:13)
+      MAPPED agentId (adapters/omp/native/extensibility/extensions/session-facts.ts:167:11)
+      MAPPED startup (adapters/omp/native/extensibility/extensions/session-facts.ts:173:11)
+      MAPPED unavailable (adapters/omp/native/extensibility/extensions/session-facts.ts:179:15)
+codebase-tools / pi: COMPLETE
+  PROVIDED framework:extension-loading (required)
+    extension:codebase-tools → definition:state → semantic:extension-loading → framework:extension-loading
+    source extensions/codebase-tools/definition.ts:22:9
+    implementation extensions/codebase-tools/harnesses/pi-assembly.ts:32:28
+  PROVIDED framework:marker (required)
+    extension:codebase-tools → definition:marker → semantic:marker → framework:marker
+    source extensions/codebase-tools/definition.ts:36:10
+    implementation adapters/pi/native/core/extensions/session.ts:49:12
+  PROVIDED framework:prompt-contribution (required)
+    extension:codebase-tools → definition:prompts → semantic:prompt-contribution → framework:prompt-contribution
+    source extensions/codebase-tools/definition.ts:32:11
+    implementation adapters/pi/port.ts:148:19
+  PROVIDED framework:session-facts (required)
+    extension:codebase-tools → definition:state → semantic:session-facts → framework:session-facts
+    source extensions/codebase-tools/definition.ts:22:9
+    implementation adapters/pi/port.ts:133:13
+  PROVIDED framework:state-follow (required)
+    extension:codebase-tools → definition:state → semantic:state-follow → framework:state-follow
+    source extensions/codebase-tools/definition.ts:22:9
+    implementation adapters/pi/native/core/extensions/session.ts:49:12
+  PROVIDED framework:state-persistence (required)
+    extension:codebase-tools → definition:state → semantic:state-persistence → framework:state-persistence
+    source extensions/codebase-tools/definition.ts:22:9
+    implementation adapters/pi/native/core/extensions/session.ts:49:12
+  PROVIDED port:onRunInitiation (required)
+    extension:codebase-tools → definition:marker → port:onRunInitiation
+    source extensions/codebase-tools/definition.ts:32:11
+    source extensions/codebase-tools/definition.ts:36:10
+    implementation adapters/pi/native/core/extensions/prompt.ts:17:34
+  PROVIDED port:onSession (required)
+    extension:codebase-tools → binding:baseline → port:onSession
+    source extensions/codebase-tools/definition.ts:19:31
+    implementation adapters/pi/native/core/extensions/session.ts:49:12
+  PROVIDED port:registerCommand (required)
+    extension:codebase-tools → definition:commands → port:registerCommand
+    source extensions/codebase-tools/definition.ts:24:3
+    implementation adapters/pi/native/core/extensions/commands.ts:22:23
+  PROVIDED port:reportDiagnostic (required)
+    extension:codebase-tools → binding:baseline → port:reportDiagnostic
+    source extensions/codebase-tools/definition.ts:19:31
+    implementation adapters/pi/port.ts:122:20
+  UNAVAILABLE port:sessionObservationAccess (optional) — this adapter does not provide a cross-process session-observation outlet
+    extension:codebase-tools → binding:baseline → port:sessionObservationAccess
+    source extensions/codebase-tools/definition.ts:19:31
+  PROVIDED port:setLabel (required)
+    extension:codebase-tools → binding:baseline → port:setLabel
+    source extensions/codebase-tools/definition.ts:19:31
+    implementation adapters/pi/port.ts:121:12
+  UNAVAILABLE port:viewedSession (optional) — this adapter does not provide a displayed-session outlet; delivery-position projection remains in use
+    extension:codebase-tools → definition:marker → port:viewedSession
+    source extensions/codebase-tools/definition.ts:36:10
+    session-facts mapping DECLARED adapters/pi/mixture/session-facts.ts:35:41
+      MAPPED sessionId (adapters/pi/mixture/session-facts.ts:36:13)
+      MAPPED kind (adapters/pi/mixture/session-facts.ts:37:8)
+      MAPPED parentSessionId (adapters/pi/mixture/session-facts.ts:38:19)
+      MAPPED name (adapters/pi/mixture/session-facts.ts:39:8)
+      UNAVAILABLE taskName — task name (adapters/pi/mixture/session-facts.ts:45:12)
+      MAPPED agentName (adapters/pi/mixture/session-facts.ts:46:13)
+      UNAVAILABLE agentId — agent id (adapters/pi/mixture/session-facts.ts:51:11)
+      MAPPED startup (adapters/pi/mixture/session-facts.ts:52:11)
+      MAPPED unavailable (adapters/pi/mixture/session-facts.ts:54:15)
+connect-bot / omp: COMPLETE
+  PROVIDED delivery:command.canAcceptInput (required)
+    extension:connect-bot → deferred → function:run → delivery:command.canAcceptInput
+    source extensions/connect-bot/shared-logic/command/command.ts:135:68
+    source extensions/connect-bot/shared-logic/command/command.ts:135:92
+    source extensions/connect-bot/shared-logic/command/command.ts:162:6
+    source extensions/connect-bot/shared-logic/command/command.ts:162:22
+    source extensions/connect-bot/shared-logic/command/command.ts:162:31
+    source extensions/connect-bot/shared-logic/panel/registration.ts:127:4
+    source extensions/connect-bot/shared-logic/panel/registration.ts:127:29
+    implementation adapters/omp/native/extensibility/extensions/commands.ts:36:23
+  PROVIDED delivery:command.capability.feedback.notify (required)
+    extension:connect-bot → deferred → function:deactivate → call:<anonymous> → call:publishFeedback → delivery:command.capability.feedback.notify
+    source extensions/connect-bot/shared-logic/feedback.ts:145:30
+    implementation adapters/omp/native/extensibility/extensions/commands.ts:36:23
+  PROVIDED delivery:command.capability.state.read (required)
+    extension:connect-bot → deferred → function:deactivate → call:disarmLocally → delivery:command.capability.state.read
+    source extensions/connect-bot/shared-logic/panel/disarm.ts:34:6
+    implementation adapters/omp/native/extensibility/extensions/commands.ts:36:23
+  PROVIDED delivery:command.capability.state.write (required)
+    extension:connect-bot → deferred → function:deactivate → call:disarmLocally → delivery:command.capability.state.write
+    source extensions/connect-bot/shared-logic/panel/disarm.ts:34:20
+    source extensions/connect-bot/shared-logic/panel/registration.ts:284:3
+    implementation adapters/omp/native/extensibility/extensions/commands.ts:36:23
+  PROVIDED delivery:command.feedback.notify (required)
+    extension:connect-bot → deferred → function:deactivate → call:publishFeedback → delivery:command.feedback.notify
+    source extensions/connect-bot/shared-logic/feedback.ts:145:30
+    implementation adapters/omp/native/extensibility/extensions/commands.ts:36:23
+  PROVIDED delivery:command.state.read (required)
+    extension:connect-bot → deferred → function:deactivate → delivery:command.state.read
+    source extensions/connect-bot/shared-logic/panel/disarm.ts:34:6
+    source extensions/connect-bot/shared-logic/panel/registration.ts:148:25
+    implementation adapters/omp/native/extensibility/extensions/commands.ts:36:23
+  PROVIDED delivery:command.state.write (required)
+    extension:connect-bot → deferred → function:deactivate → call:disarmLocally → delivery:command.state.write
+    source extensions/connect-bot/shared-logic/panel/disarm.ts:34:20
+    implementation adapters/omp/native/extensibility/extensions/commands.ts:36:23
+  PROVIDED delivery:session.feedback.notify (required)
+    extension:connect-bot → deferred → function:ownerEnded → call:publishFeedback → delivery:session.feedback.notify
+    source extensions/connect-bot/shared-logic/feedback.ts:145:30
+    implementation adapters/omp/native/extensibility/extensions/lifecycle.ts:115:11
+  PROVIDED framework:marker (required)
+    extension:connect-bot → definition:marker → semantic:marker → framework:marker
+    source extensions/connect-bot/definition.ts:38:10
+    implementation adapters/omp/native/extensibility/extensions/lifecycle.ts:115:11
+  PROVIDED framework:round-lifecycle-events (required)
+    extension:connect-bot → subscription → semantic:round-lifecycle-events → framework:round-lifecycle-events
+    source extensions/connect-bot/harnesses/omp-assembly.ts:244:7
+    source extensions/connect-bot/harnesses/omp-assembly.ts:245:7
+    source extensions/connect-bot/harnesses/pi-assembly.ts:105:6
+    source extensions/connect-bot/harnesses/pi-assembly.ts:106:6
+    implementation adapters/omp/port.ts:94:11
+  PROVIDED framework:session-lifecycle (required)
+    extension:connect-bot → subscription → semantic:session-lifecycle → framework:session-lifecycle
+    source extensions/connect-bot/harnesses/omp-assembly.ts:243:7
+    source extensions/connect-bot/harnesses/omp-assembly.ts:244:7
+    source extensions/connect-bot/harnesses/omp-assembly.ts:245:7
+    source extensions/connect-bot/harnesses/pi-assembly.ts:104:6
+    source extensions/connect-bot/harnesses/pi-assembly.ts:105:6
+    source extensions/connect-bot/harnesses/pi-assembly.ts:106:6
+    implementation adapters/omp/port.ts:93:13
+  PROVIDED framework:session-lifecycle-events (required)
+    extension:connect-bot → subscription → semantic:session-lifecycle-events → framework:session-lifecycle-events
+    source extensions/connect-bot/harnesses/omp-assembly.ts:243:7
+    source extensions/connect-bot/harnesses/pi-assembly.ts:104:6
+    implementation adapters/omp/port.ts:93:13
+  PROVIDED port:nextTask (required)
+    extension:connect-bot → subscription → round-machinery → port:nextTask
+    source extensions/connect-bot/harnesses/omp-assembly.ts:244:7
+    source extensions/connect-bot/harnesses/omp-assembly.ts:245:7
+    source extensions/connect-bot/harnesses/pi-assembly.ts:105:6
+    source extensions/connect-bot/harnesses/pi-assembly.ts:106:6
+    implementation adapters/omp/port.ts:97:12
+  UNAVAILABLE port:onDisposal (optional) — this harness reports a disposal as its session-end event and offers no awaitable exit position to close a round from
+    extension:connect-bot → subscription → round-machinery → port:onDisposal
+    source extensions/connect-bot/harnesses/omp-assembly.ts:244:7
+    source extensions/connect-bot/harnesses/omp-assembly.ts:245:7
+    source extensions/connect-bot/harnesses/pi-assembly.ts:105:6
+    source extensions/connect-bot/harnesses/pi-assembly.ts:106:6
+  PROVIDED port:onRound (required)
+    extension:connect-bot → subscription:owner → event:round_end → port:onRound
+    source extensions/connect-bot/harnesses/omp-assembly.ts:244:7
+    source extensions/connect-bot/harnesses/omp-assembly.ts:245:7
+    source extensions/connect-bot/harnesses/pi-assembly.ts:105:6
+    source extensions/connect-bot/harnesses/pi-assembly.ts:106:6
+    implementation adapters/omp/native/extensibility/extensions/round.ts:79:12
+  PROVIDED port:onRunInitiation (required)
+    extension:connect-bot → definition:cleanup → port:onRunInitiation
+    source extensions/connect-bot/definition.ts:38:10
+    source extensions/connect-bot/harnesses/pi-assembly.ts:116:13
+    implementation adapters/omp/native/extensibility/extensions/prompts.ts:32:32
+  PROVIDED port:onSession (required)
+    extension:connect-bot → binding:baseline → port:onSession
+    source extensions/connect-bot/definition.ts:26:28
+    implementation adapters/omp/native/extensibility/extensions/lifecycle.ts:115:11
+  PROVIDED port:registerCommand (required)
+    extension:connect-bot → definition:commands → port:registerCommand
+    source extensions/connect-bot/definition.ts:31:3
+    implementation adapters/omp/native/extensibility/extensions/commands.ts:36:23
+  PROVIDED port:reportDiagnostic (required)
+    extension:connect-bot → binding:baseline → port:reportDiagnostic
+    source extensions/connect-bot/definition.ts:26:28
+    implementation adapters/omp/port.ts:86:20
+  UNAVAILABLE port:sessionObservationAccess (optional) — this entry observes each session in the process that runs it; no cross-process observation seat exists here
+    extension:connect-bot → binding:baseline → port:sessionObservationAccess
+    source extensions/connect-bot/definition.ts:26:28
+  PROVIDED port:setLabel (required)
+    extension:connect-bot → binding:baseline → port:setLabel
+    source extensions/connect-bot/definition.ts:26:28
+    implementation adapters/omp/port.ts:83:12
+  PROVIDED port:viewedSession (optional)
+    extension:connect-bot → definition:marker → port:viewedSession
+    source extensions/connect-bot/definition.ts:38:10
+    implementation adapters/omp/port.ts:89:17
+connect-bot / pi: COMPLETE
+  PROVIDED delivery:command.canAcceptInput (required)
+    extension:connect-bot → deferred → function:run → delivery:command.canAcceptInput
+    source extensions/connect-bot/shared-logic/command/command.ts:135:68
+    source extensions/connect-bot/shared-logic/command/command.ts:135:92
+    source extensions/connect-bot/shared-logic/command/command.ts:162:6
+    source extensions/connect-bot/shared-logic/command/command.ts:162:22
+    source extensions/connect-bot/shared-logic/command/command.ts:162:31
+    source extensions/connect-bot/shared-logic/panel/registration.ts:127:4
+    source extensions/connect-bot/shared-logic/panel/registration.ts:127:29
+    implementation adapters/pi/native/core/extensions/commands.ts:22:23
+  PROVIDED delivery:command.capability.feedback.notify (required)
+    extension:connect-bot → deferred → function:deactivate → call:<anonymous> → call:publishFeedback → delivery:command.capability.feedback.notify
+    source extensions/connect-bot/shared-logic/feedback.ts:145:30
+    implementation adapters/pi/native/core/extensions/commands.ts:22:23
+  PROVIDED delivery:command.capability.state.read (required)
+    extension:connect-bot → deferred → function:deactivate → call:disarmLocally → delivery:command.capability.state.read
+    source extensions/connect-bot/shared-logic/panel/disarm.ts:34:6
+    implementation adapters/pi/native/core/extensions/commands.ts:22:23
+  PROVIDED delivery:command.capability.state.write (required)
+    extension:connect-bot → deferred → function:deactivate → call:disarmLocally → delivery:command.capability.state.write
+    source extensions/connect-bot/shared-logic/panel/disarm.ts:34:20
+    source extensions/connect-bot/shared-logic/panel/registration.ts:284:3
+    implementation adapters/pi/native/core/extensions/commands.ts:22:23
+  PROVIDED delivery:command.feedback.notify (required)
+    extension:connect-bot → deferred → function:deactivate → call:publishFeedback → delivery:command.feedback.notify
+    source extensions/connect-bot/shared-logic/feedback.ts:145:30
+    implementation adapters/pi/native/core/extensions/commands.ts:22:23
+  PROVIDED delivery:command.state.read (required)
+    extension:connect-bot → deferred → function:deactivate → delivery:command.state.read
+    source extensions/connect-bot/shared-logic/panel/disarm.ts:34:6
+    source extensions/connect-bot/shared-logic/panel/registration.ts:148:25
+    implementation adapters/pi/native/core/extensions/commands.ts:22:23
+  PROVIDED delivery:command.state.write (required)
+    extension:connect-bot → deferred → function:deactivate → call:disarmLocally → delivery:command.state.write
+    source extensions/connect-bot/shared-logic/panel/disarm.ts:34:20
+    implementation adapters/pi/native/core/extensions/commands.ts:22:23
+  PROVIDED delivery:session.feedback.notify (required)
+    extension:connect-bot → deferred → function:ownerEnded → call:publishFeedback → delivery:session.feedback.notify
+    source extensions/connect-bot/shared-logic/feedback.ts:145:30
+    implementation adapters/pi/native/core/extensions/session.ts:49:12
+  PROVIDED framework:marker (required)
+    extension:connect-bot → definition:marker → semantic:marker → framework:marker
+    source extensions/connect-bot/definition.ts:38:10
+    implementation adapters/pi/native/core/extensions/session.ts:49:12
+  PROVIDED framework:round-lifecycle-events (required)
+    extension:connect-bot → subscription → semantic:round-lifecycle-events → framework:round-lifecycle-events
+    source extensions/connect-bot/harnesses/omp-assembly.ts:244:7
+    source extensions/connect-bot/harnesses/omp-assembly.ts:245:7
+    source extensions/connect-bot/harnesses/pi-assembly.ts:105:6
+    source extensions/connect-bot/harnesses/pi-assembly.ts:106:6
+    implementation adapters/pi/port.ts:140:11
+  PROVIDED framework:session-lifecycle (required)
+    extension:connect-bot → subscription → semantic:session-lifecycle → framework:session-lifecycle
+    source extensions/connect-bot/harnesses/omp-assembly.ts:243:7
+    source extensions/connect-bot/harnesses/omp-assembly.ts:244:7
+    source extensions/connect-bot/harnesses/omp-assembly.ts:245:7
+    source extensions/connect-bot/harnesses/pi-assembly.ts:104:6
+    source extensions/connect-bot/harnesses/pi-assembly.ts:105:6
+    source extensions/connect-bot/harnesses/pi-assembly.ts:106:6
+    implementation adapters/pi/port.ts:133:13
+  PROVIDED framework:session-lifecycle-events (required)
+    extension:connect-bot → subscription → semantic:session-lifecycle-events → framework:session-lifecycle-events
+    source extensions/connect-bot/harnesses/omp-assembly.ts:243:7
+    source extensions/connect-bot/harnesses/pi-assembly.ts:104:6
+    implementation adapters/pi/port.ts:133:13
+  PROVIDED port:nextTask (required)
+    extension:connect-bot → subscription → round-machinery → port:nextTask
+    source extensions/connect-bot/harnesses/omp-assembly.ts:244:7
+    source extensions/connect-bot/harnesses/omp-assembly.ts:245:7
+    source extensions/connect-bot/harnesses/pi-assembly.ts:105:6
+    source extensions/connect-bot/harnesses/pi-assembly.ts:106:6
+    implementation adapters/pi/port.ts:134:12
+  PROVIDED port:onDisposal (optional)
+    extension:connect-bot → subscription → round-machinery → port:onDisposal
+    source extensions/connect-bot/harnesses/omp-assembly.ts:244:7
+    source extensions/connect-bot/harnesses/omp-assembly.ts:245:7
+    source extensions/connect-bot/harnesses/pi-assembly.ts:105:6
+    source extensions/connect-bot/harnesses/pi-assembly.ts:106:6
+    implementation adapters/pi/port.ts:144:14
+  PROVIDED port:onRound (required)
+    extension:connect-bot → subscription:owner → event:round_end → port:onRound
+    source extensions/connect-bot/harnesses/omp-assembly.ts:244:7
+    source extensions/connect-bot/harnesses/omp-assembly.ts:245:7
+    source extensions/connect-bot/harnesses/pi-assembly.ts:105:6
+    source extensions/connect-bot/harnesses/pi-assembly.ts:106:6
+    implementation adapters/pi/native/core/extensions/round.ts:93:12
+  PROVIDED port:onRunInitiation (required)
+    extension:connect-bot → definition:cleanup → port:onRunInitiation
+    source extensions/connect-bot/definition.ts:38:10
+    source extensions/connect-bot/harnesses/pi-assembly.ts:116:13
+    implementation adapters/pi/native/core/extensions/prompt.ts:17:34
+  PROVIDED port:onSession (required)
+    extension:connect-bot → binding:baseline → port:onSession
+    source extensions/connect-bot/definition.ts:26:28
+    implementation adapters/pi/native/core/extensions/session.ts:49:12
+  PROVIDED port:registerCommand (required)
+    extension:connect-bot → definition:commands → port:registerCommand
+    source extensions/connect-bot/definition.ts:31:3
+    implementation adapters/pi/native/core/extensions/commands.ts:22:23
+  PROVIDED port:reportDiagnostic (required)
+    extension:connect-bot → binding:baseline → port:reportDiagnostic
+    source extensions/connect-bot/definition.ts:26:28
+    implementation adapters/pi/port.ts:122:20
+  UNAVAILABLE port:sessionObservationAccess (optional) — this adapter does not provide a cross-process session-observation outlet
+    extension:connect-bot → binding:baseline → port:sessionObservationAccess
+    source extensions/connect-bot/definition.ts:26:28
+  PROVIDED port:setLabel (required)
+    extension:connect-bot → binding:baseline → port:setLabel
+    source extensions/connect-bot/definition.ts:26:28
+    implementation adapters/pi/port.ts:121:12
+  UNAVAILABLE port:viewedSession (optional) — this adapter does not provide a displayed-session outlet; delivery-position projection remains in use
+    extension:connect-bot → definition:marker → port:viewedSession
+    source extensions/connect-bot/definition.ts:38:10
+model-cost / omp: COMPLETE
+  PROVIDED delivery:action.canAcceptInput (required)
+    extension:model-cost → deferred → function:<anonymous> → delivery:action.canAcceptInput
+    source extensions/model-cost/shared-logic/business/pricing/period-switch.ts:89:16
+    source extensions/model-cost/shared-logic/business/pricing/period-switch.ts:89:25
+    implementation adapters/omp/native/extensibility/extensions/commands.ts:36:23
+  PROVIDED delivery:action.feedback.notify (required)
+    extension:model-cost → deferred → function:<anonymous> → delivery:action.feedback.notify
+    source extensions/model-cost/shared-logic/business/pricing/period-switch.ts:80:4
+    source extensions/model-cost/shared-logic/business/pricing/period-switch.ts:91:4
+    source extensions/model-cost/shared-logic/business/pricing/period-switch.ts:98:4
+    source extensions/model-cost/shared-logic/business/pricing/period-switch.ts:105:4
+    source extensions/model-cost/shared-logic/business/pricing/period-switch.ts:123:4
+    source extensions/model-cost/shared-logic/business/pricing/period-switch.ts:141:5
+    source extensions/model-cost/shared-logic/runtime.ts:481:4
+    source extensions/model-cost/shared-logic/runtime.ts:490:4
+    source extensions/model-cost/shared-logic/runtime.ts:881:4
+    source extensions/model-cost/shared-logic/runtime.ts:885:3
+    implementation adapters/omp/native/extensibility/extensions/commands.ts:36:23
+  PROVIDED delivery:action.provider (required)
+    extension:model-cost → deferred → function:<anonymous> → delivery:action.provider
+    source extensions/model-cost/shared-logic/business/pricing/period-switch.ts:78:7
+    source extensions/model-cost/shared-logic/business/pricing/period-switch.ts:79:17
+    source extensions/model-cost/shared-logic/business/pricing/period-switch.ts:79:64
+    implementation adapters/omp/native/extensibility/extensions/commands.ts:36:23
+  PROVIDED delivery:activity.feedback.notify (required)
+    extension:model-cost → deferred → function:<anonymous> → call:<anonymous> → delivery:activity.feedback.notify
+    source extensions/model-cost/shared-logic/runtime.ts:481:4
+    source extensions/model-cost/shared-logic/runtime.ts:490:4
+    implementation adapters/omp/native/extensibility/extensions/lifecycle.ts:115:11
+  PROVIDED delivery:commit.feedback.notify (required)
+    extension:model-cost → deferred → function:<anonymous> → call:<anonymous> → delivery:commit.feedback.notify
+    source extensions/model-cost/shared-logic/runtime.ts:481:4
+    source extensions/model-cost/shared-logic/runtime.ts:490:4
+    source extensions/model-cost/shared-logic/runtime.ts:659:6
+    source extensions/model-cost/shared-logic/runtime.ts:667:6
+    implementation adapters/omp/native/extensibility/extensions/lifecycle.ts:115:11
+  PROVIDED delivery:initialization.feedback.notify (required)
+    extension:model-cost → deferred → function:<anonymous> → call:<anonymous> → delivery:initialization.feedback.notify
+    source extensions/model-cost/shared-logic/runtime.ts:481:4
+    source extensions/model-cost/shared-logic/runtime.ts:490:4
+    source extensions/model-cost/shared-logic/runtime.ts:507:4
+    source extensions/model-cost/shared-logic/runtime.ts:514:5
+    implementation adapters/omp/native/extensibility/extensions/lifecycle.ts:115:11
+  PROVIDED delivery:initialization.subagents (optional)
+    extension:model-cost → deferred → function:initialize → delivery:initialization.subagents
+    source extensions/model-cost/harnesses/pi.ts:167:42
+    source extensions/model-cost/harnesses/pi.ts:167:51
+    implementation adapters/omp/port.ts:92:23
+  PROVIDED delivery:input.feedback.notify (required)
+    extension:model-cost → deferred → function:<anonymous> → call:<anonymous> → delivery:input.feedback.notify
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:667:3
+    source extensions/model-cost/shared-logic/runtime.ts:481:4
+    source extensions/model-cost/shared-logic/runtime.ts:490:4
+    source extensions/model-cost/shared-logic/runtime.ts:507:4
+    source extensions/model-cost/shared-logic/runtime.ts:514:5
+    implementation adapters/omp/native/extensibility/extensions/lifecycle.ts:277:12
+  UNAVAILABLE delivery:round.closeOut.remaining (optional) — this harness reports a disposal as its session-end event and offers no awaitable exit position to close a round from
+    extension:model-cost → deferred → function:roundEnded → call:<anonymous> → delivery:round.closeOut.remaining
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1193:60
+  PROVIDED delivery:round.feedback.notify (required)
+    extension:model-cost → deferred → function:roundEnded → delivery:round.feedback.notify
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1215:4
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1233:4
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1414:6
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1422:7
+    source extensions/model-cost/shared-logic/runtime.ts:481:4
+    source extensions/model-cost/shared-logic/runtime.ts:490:4
+    source extensions/model-cost/shared-logic/runtime.ts:507:4
+    source extensions/model-cost/shared-logic/runtime.ts:514:5
+    implementation adapters/omp/native/extensibility/extensions/round.ts:79:12
+  PROVIDED delivery:session.feedback.notify (required)
+    extension:model-cost → deferred → function:<anonymous> → call:<anonymous> → delivery:session.feedback.notify
+    source extensions/model-cost/shared-logic/runtime.ts:481:4
+    source extensions/model-cost/shared-logic/runtime.ts:490:4
+    source extensions/model-cost/shared-logic/runtime.ts:507:4
+    source extensions/model-cost/shared-logic/runtime.ts:514:5
+    implementation adapters/omp/native/extensibility/extensions/lifecycle.ts:115:11
+  PROVIDED delivery:turn.feedback.notify (required)
+    extension:model-cost → deferred → function:turnSettled → delivery:turn.feedback.notify
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:667:3
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1341:6
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1350:5
+    source extensions/model-cost/shared-logic/runtime.ts:481:4
+    source extensions/model-cost/shared-logic/runtime.ts:490:4
+    source extensions/model-cost/shared-logic/runtime.ts:507:4
+    source extensions/model-cost/shared-logic/runtime.ts:514:5
+    implementation adapters/omp/native/extensibility/extensions/turn.ts:92:11
+  PROVIDED delivery:unobserved.feedback.notify (required)
+    extension:model-cost → deferred → function:<anonymous> → call:<anonymous> → delivery:unobserved.feedback.notify
+    source extensions/model-cost/shared-logic/runtime.ts:481:4
+    source extensions/model-cost/shared-logic/runtime.ts:490:4
+    implementation adapters/omp/native/extensibility/extensions/lifecycle.ts:115:11
+  PROVIDED framework:extension-loading (required)
+    extension:model-cost → subscription:session → semantic:extension-loading → framework:extension-loading
+    source extensions/model-cost/shared-logic/runtime.ts:995:4
+    implementation adapters/omp/port.ts:92:23
+  PROVIDED framework:model-prices (optional)
+    extension:model-cost → deferred → function:<anonymous> → context.modelPrices
+    source extensions/model-cost/harnesses/omp.ts:146:9
+    source extensions/model-cost/harnesses/omp.ts:146:17
+    source extensions/model-cost/harnesses/omp.ts:146:52
+    source extensions/model-cost/harnesses/omp.ts:146:65
+    source extensions/model-cost/harnesses/omp.ts:146:73
+    source extensions/model-cost/harnesses/pi.ts:152:10
+    source extensions/model-cost/harnesses/pi.ts:152:18
+    source extensions/model-cost/harnesses/pi.ts:152:53
+    source extensions/model-cost/harnesses/pi.ts:152:66
+    source extensions/model-cost/harnesses/pi.ts:152:74
+    source extensions/model-cost/shared-logic/runtime.ts:341:8
+    source extensions/model-cost/shared-logic/runtime.ts:341:47
+    source extensions/model-cost/shared-logic/runtime.ts:915:34
+    source extensions/model-cost/shared-logic/runtime.ts:933:3
+    source extensions/model-cost/shared-logic/runtime.ts:1064:8
+    source extensions/model-cost/shared-logic/runtime.ts:1065:6
+    source extensions/model-cost/shared-logic/runtime.ts:1065:36
+    source extensions/model-cost/shared-logic/runtime.ts:1067:33
+    source extensions/model-cost/shared-logic/runtime.ts:1067:72
+    implementation adapters/omp/port.ts:87:15
+  PROVIDED framework:provider-access (optional)
+    extension:model-cost → deferred → function:<anonymous> → context.providerAccess
+    source extensions/model-cost/harnesses/omp.ts:150:9
+    source extensions/model-cost/harnesses/omp.ts:150:17
+    source extensions/model-cost/harnesses/omp.ts:150:55
+    source extensions/model-cost/harnesses/omp.ts:150:71
+    source extensions/model-cost/harnesses/omp.ts:150:79
+    source extensions/model-cost/harnesses/pi.ts:156:10
+    source extensions/model-cost/harnesses/pi.ts:156:18
+    source extensions/model-cost/harnesses/pi.ts:156:56
+    source extensions/model-cost/harnesses/pi.ts:156:72
+    source extensions/model-cost/harnesses/pi.ts:156:80
+    source extensions/model-cost/shared-logic/business/allowance/codex-quota.ts:272:24
+    source extensions/model-cost/shared-logic/business/allowance/codex-quota.ts:272:31
+    source extensions/model-cost/shared-logic/business/pricing/provider-balance.ts:209:25
+    source extensions/model-cost/shared-logic/business/pricing/provider-balance.ts:209:32
+    source extensions/model-cost/shared-logic/runtime.ts:414:14
+    source extensions/model-cost/shared-logic/runtime.ts:414:52
+    source extensions/model-cost/shared-logic/runtime.ts:414:67
+    source extensions/model-cost/shared-logic/runtime.ts:432:14
+    source extensions/model-cost/shared-logic/runtime.ts:432:52
+    source extensions/model-cost/shared-logic/runtime.ts:432:67
+    implementation adapters/omp/port.ts:88:18
+  PROVIDED framework:round-lifecycle-events (required)
+    extension:model-cost → subscription → semantic:round-lifecycle-events → framework:round-lifecycle-events
+    source extensions/model-cost/shared-logic/runtime.ts:1000:6
+    source extensions/model-cost/shared-logic/runtime.ts:1001:6
+    implementation adapters/omp/port.ts:94:11
+  PROVIDED framework:session-facts (required)
+    extension:model-cost → deferred → function:<anonymous> → delivery.session
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:815:29
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:816:33
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:817:16
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:818:20
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:819:21
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:820:19
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:821:18
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:822:16
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:829:28
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1137:28
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1138:15
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1139:10
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1147:29
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1154:27
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1156:8
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1207:17
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1238:24
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1356:13
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1357:22
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1368:8
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1376:13
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1377:22
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1408:8
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1430:31
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1443:15
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1452:13
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1458:40
+    source extensions/model-cost/shared-logic/runtime.ts:804:31
+    source extensions/model-cost/shared-logic/runtime.ts:817:67
+    source extensions/model-cost/shared-logic/runtime.ts:858:26
+    source extensions/model-cost/shared-logic/runtime.ts:867:62
+    source extensions/model-cost/shared-logic/runtime.ts:995:4
+    implementation adapters/omp/port.ts:93:13
+  PROVIDED framework:session-lifecycle (required)
+    extension:model-cost → subscription → semantic:session-lifecycle → framework:session-lifecycle
+    source extensions/model-cost/shared-logic/runtime.ts:1000:6
+    source extensions/model-cost/shared-logic/runtime.ts:1001:6
+    source extensions/model-cost/shared-logic/runtime.ts:1004:6
+    source extensions/model-cost/shared-logic/runtime.ts:1008:6
+    implementation adapters/omp/port.ts:93:13
+  PROVIDED framework:session-lifecycle-events (required)
+    extension:model-cost → subscription → semantic:session-lifecycle-events → framework:session-lifecycle-events
+    source extensions/model-cost/shared-logic/runtime.ts:1004:6
+    source extensions/model-cost/shared-logic/runtime.ts:1008:6
+    implementation adapters/omp/port.ts:93:13
+  PROVIDED framework:session-observation-read (optional)
+    extension:model-cost → deferred → function:observePiSubagentResults → closure:<anonymous> → session.observations.read
+    source extensions/model-cost/harnesses/pi.ts:214:7
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:742:22
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:800:78
+    source extensions/model-cost/shared-logic/runtime.ts:390:22
+    implementation adapters/omp/port.ts:93:13
+  PROVIDED framework:session-observation-snapshot (optional)
+    extension:model-cost → implementation → create → call:createModelCostRuntime → call:createRequestAccounting → closure:<anonymous> → context.session.observations.snapshot
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:925:23
+    implementation adapters/omp/port.ts:93:13
+  PROVIDED framework:session-observations (required)
+    extension:model-cost → subscription → semantic:session-observations → framework:session-observations
+    source extensions/model-cost/harnesses/pi.ts:214:7
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:742:22
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:800:78
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:925:23
+    source extensions/model-cost/shared-logic/runtime.ts:390:22
+    source extensions/model-cost/shared-logic/runtime.ts:1002:6
+    source extensions/model-cost/shared-logic/runtime.ts:1005:6
+    implementation adapters/omp/port.ts:93:13
+  PROVIDED framework:session-record-commit (optional)
+    extension:model-cost → implementation → create → call:createModelCostRuntime → closure:recordCommit → context.session.recordCommit
+    source extensions/model-cost/shared-logic/runtime.ts:381:30
+    implementation adapters/omp/port.ts:93:13
+  PROVIDED framework:storage-commit (required)
+    extension:model-cost → subscription → semantic:storage-commit → framework:storage-commit
+    source extensions/model-cost/shared-logic/runtime.ts:381:30
+    source extensions/model-cost/shared-logic/runtime.ts:1006:6
+    implementation adapters/omp/port.ts:93:13
+  PROVIDED framework:turn-usage (required)
+    extension:model-cost → deferred → function:turnSettled → turn.usage
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1338:30
+    implementation adapters/omp/port.ts:104:10
+  PROVIDED port:modelPrices (optional)
+    extension:model-cost → deferred → function:<anonymous> → context.modelPrices
+    source extensions/model-cost/harnesses/omp.ts:146:9
+    source extensions/model-cost/harnesses/omp.ts:146:17
+    source extensions/model-cost/harnesses/omp.ts:146:52
+    source extensions/model-cost/harnesses/omp.ts:146:65
+    source extensions/model-cost/harnesses/omp.ts:146:73
+    source extensions/model-cost/harnesses/pi.ts:152:10
+    source extensions/model-cost/harnesses/pi.ts:152:18
+    source extensions/model-cost/harnesses/pi.ts:152:53
+    source extensions/model-cost/harnesses/pi.ts:152:66
+    source extensions/model-cost/harnesses/pi.ts:152:74
+    source extensions/model-cost/shared-logic/runtime.ts:341:8
+    source extensions/model-cost/shared-logic/runtime.ts:341:47
+    source extensions/model-cost/shared-logic/runtime.ts:915:34
+    source extensions/model-cost/shared-logic/runtime.ts:933:3
+    source extensions/model-cost/shared-logic/runtime.ts:1064:8
+    source extensions/model-cost/shared-logic/runtime.ts:1065:6
+    source extensions/model-cost/shared-logic/runtime.ts:1065:36
+    source extensions/model-cost/shared-logic/runtime.ts:1067:33
+    source extensions/model-cost/shared-logic/runtime.ts:1067:72
+    implementation adapters/omp/port.ts:87:15
+  PROVIDED port:nextTask (required)
+    extension:model-cost → subscription → round-machinery → port:nextTask
+    source extensions/model-cost/shared-logic/runtime.ts:998:6
+    source extensions/model-cost/shared-logic/runtime.ts:999:6
+    source extensions/model-cost/shared-logic/runtime.ts:1000:6
+    source extensions/model-cost/shared-logic/runtime.ts:1001:6
+    source extensions/model-cost/shared-logic/runtime.ts:1002:6
+    source extensions/model-cost/shared-logic/runtime.ts:1005:6
+    implementation adapters/omp/port.ts:97:12
+  UNAVAILABLE port:onDisposal (optional) — this harness reports a disposal as its session-end event and offers no awaitable exit position to close a round from
+    extension:model-cost → subscription → round-machinery → port:onDisposal
+    source extensions/model-cost/shared-logic/runtime.ts:998:6
+    source extensions/model-cost/shared-logic/runtime.ts:999:6
+    source extensions/model-cost/shared-logic/runtime.ts:1000:6
+    source extensions/model-cost/shared-logic/runtime.ts:1001:6
+    source extensions/model-cost/shared-logic/runtime.ts:1002:6
+    source extensions/model-cost/shared-logic/runtime.ts:1005:6
+  PROVIDED port:onRound (required)
+    extension:model-cost → subscription:session → event:round_end → port:onRound
+    source extensions/model-cost/shared-logic/runtime.ts:998:6
+    source extensions/model-cost/shared-logic/runtime.ts:999:6
+    source extensions/model-cost/shared-logic/runtime.ts:1000:6
+    source extensions/model-cost/shared-logic/runtime.ts:1001:6
+    source extensions/model-cost/shared-logic/runtime.ts:1002:6
+    source extensions/model-cost/shared-logic/runtime.ts:1005:6
+    implementation adapters/omp/native/extensibility/extensions/round.ts:79:12
+  PROVIDED port:onRunInitiation (required)
+    extension:model-cost → definition:cleanup → port:onRunInitiation
+    source extensions/model-cost/harnesses/omp.ts:159:13
+    source extensions/model-cost/harnesses/pi.ts:166:17
+    source extensions/model-cost/harnesses/pi.ts:173:14
+    source extensions/model-cost/shared-logic/runtime.ts:1021:38
+    implementation adapters/omp/native/extensibility/extensions/prompts.ts:32:32
+  PROVIDED port:onSession (required)
+    extension:model-cost → binding:baseline → port:onSession
+    source extensions/model-cost/definition.ts:25:27
+    implementation adapters/omp/native/extensibility/extensions/lifecycle.ts:115:11
+  PROVIDED port:onSessionContext (required)
+    extension:model-cost → subscription:session → event:session_context → port:onSessionContext
+    source extensions/model-cost/shared-logic/runtime.ts:1005:6
+    implementation adapters/omp/native/extensibility/extensions/context.ts:94:11
+  PROVIDED port:onTurn (required)
+    extension:model-cost → subscription:session → event:turn_end → port:onTurn
+    source extensions/model-cost/shared-logic/runtime.ts:998:6
+    source extensions/model-cost/shared-logic/runtime.ts:999:6
+    implementation adapters/omp/native/extensibility/extensions/turn.ts:92:11
+  PROVIDED port:onUserInput (required)
+    extension:model-cost → subscription:session → event:user_input → port:onUserInput
+    source extensions/model-cost/shared-logic/runtime.ts:1003:6
+    implementation adapters/omp/native/extensibility/extensions/lifecycle.ts:277:12
+  PROVIDED port:providerAccess (optional)
+    extension:model-cost → deferred → function:<anonymous> → context.providerAccess
+    source extensions/model-cost/harnesses/omp.ts:150:9
+    source extensions/model-cost/harnesses/omp.ts:150:17
+    source extensions/model-cost/harnesses/omp.ts:150:55
+    source extensions/model-cost/harnesses/omp.ts:150:71
+    source extensions/model-cost/harnesses/omp.ts:150:79
+    source extensions/model-cost/harnesses/pi.ts:156:10
+    source extensions/model-cost/harnesses/pi.ts:156:18
+    source extensions/model-cost/harnesses/pi.ts:156:56
+    source extensions/model-cost/harnesses/pi.ts:156:72
+    source extensions/model-cost/harnesses/pi.ts:156:80
+    source extensions/model-cost/shared-logic/business/allowance/codex-quota.ts:272:24
+    source extensions/model-cost/shared-logic/business/allowance/codex-quota.ts:272:31
+    source extensions/model-cost/shared-logic/business/pricing/provider-balance.ts:209:25
+    source extensions/model-cost/shared-logic/business/pricing/provider-balance.ts:209:32
+    source extensions/model-cost/shared-logic/runtime.ts:414:14
+    source extensions/model-cost/shared-logic/runtime.ts:414:52
+    source extensions/model-cost/shared-logic/runtime.ts:414:67
+    source extensions/model-cost/shared-logic/runtime.ts:432:14
+    source extensions/model-cost/shared-logic/runtime.ts:432:52
+    source extensions/model-cost/shared-logic/runtime.ts:432:67
+    implementation adapters/omp/port.ts:88:18
+  PROVIDED port:registerCommand (required)
+    extension:model-cost → definition:commands → port:registerCommand
+    source extensions/model-cost/definition.ts:30:3
+    implementation adapters/omp/native/extensibility/extensions/commands.ts:36:23
+  PROVIDED port:reportDiagnostic (required)
+    extension:model-cost → binding:baseline → port:reportDiagnostic
+    source extensions/model-cost/definition.ts:25:27
+    implementation adapters/omp/port.ts:86:20
+  UNAVAILABLE port:sessionObservationAccess (optional) — this entry observes each session in the process that runs it; no cross-process observation seat exists here
+    extension:model-cost → binding:baseline → port:sessionObservationAccess
+    source extensions/model-cost/definition.ts:25:27
+  PROVIDED port:setLabel (required)
+    extension:model-cost → binding:baseline → port:setLabel
+    source extensions/model-cost/definition.ts:25:27
+    implementation adapters/omp/port.ts:83:12
+  PROVIDED port:subagentIntegration (optional)
+    extension:model-cost → deferred → function:initialize → port:subagentIntegration
+    source extensions/model-cost/harnesses/pi.ts:167:42
+    source extensions/model-cost/harnesses/pi.ts:167:51
+    implementation adapters/omp/port.ts:92:23
+    session-facts mapping DECLARED adapters/omp/native/extensibility/extensions/session-facts.ts:138:42
+      MAPPED sessionId (adapters/omp/native/extensibility/extensions/session-facts.ts:139:13)
+      MAPPED kind (adapters/omp/native/extensibility/extensions/session-facts.ts:140:8)
+      MAPPED parentSessionId (adapters/omp/native/extensibility/extensions/session-facts.ts:141:19)
+      MAPPED name (adapters/omp/native/extensibility/extensions/session-facts.ts:148:8)
+      MAPPED taskName (adapters/omp/native/extensibility/extensions/session-facts.ts:156:12)
+      MAPPED agentName (adapters/omp/native/extensibility/extensions/session-facts.ts:161:13)
+      MAPPED agentId (adapters/omp/native/extensibility/extensions/session-facts.ts:167:11)
+      MAPPED startup (adapters/omp/native/extensibility/extensions/session-facts.ts:173:11)
+      MAPPED unavailable (adapters/omp/native/extensibility/extensions/session-facts.ts:179:15)
+model-cost / pi: COMPLETE
+  PROVIDED delivery:action.canAcceptInput (required)
+    extension:model-cost → deferred → function:<anonymous> → delivery:action.canAcceptInput
+    source extensions/model-cost/shared-logic/business/pricing/period-switch.ts:89:16
+    source extensions/model-cost/shared-logic/business/pricing/period-switch.ts:89:25
+    implementation adapters/pi/native/core/extensions/commands.ts:22:23
+  PROVIDED delivery:action.feedback.notify (required)
+    extension:model-cost → deferred → function:<anonymous> → delivery:action.feedback.notify
+    source extensions/model-cost/shared-logic/business/pricing/period-switch.ts:80:4
+    source extensions/model-cost/shared-logic/business/pricing/period-switch.ts:91:4
+    source extensions/model-cost/shared-logic/business/pricing/period-switch.ts:98:4
+    source extensions/model-cost/shared-logic/business/pricing/period-switch.ts:105:4
+    source extensions/model-cost/shared-logic/business/pricing/period-switch.ts:123:4
+    source extensions/model-cost/shared-logic/business/pricing/period-switch.ts:141:5
+    source extensions/model-cost/shared-logic/runtime.ts:481:4
+    source extensions/model-cost/shared-logic/runtime.ts:490:4
+    source extensions/model-cost/shared-logic/runtime.ts:881:4
+    source extensions/model-cost/shared-logic/runtime.ts:885:3
+    implementation adapters/pi/native/core/extensions/commands.ts:22:23
+  PROVIDED delivery:action.provider (required)
+    extension:model-cost → deferred → function:<anonymous> → delivery:action.provider
+    source extensions/model-cost/shared-logic/business/pricing/period-switch.ts:78:7
+    source extensions/model-cost/shared-logic/business/pricing/period-switch.ts:79:17
+    source extensions/model-cost/shared-logic/business/pricing/period-switch.ts:79:64
+    implementation adapters/pi/native/core/extensions/commands.ts:22:23
+  PROVIDED delivery:activity.feedback.notify (required)
+    extension:model-cost → deferred → function:<anonymous> → call:<anonymous> → delivery:activity.feedback.notify
+    source extensions/model-cost/shared-logic/runtime.ts:481:4
+    source extensions/model-cost/shared-logic/runtime.ts:490:4
+    implementation adapters/pi/native/core/extensions/session.ts:49:12
+  PROVIDED delivery:commit.feedback.notify (required)
+    extension:model-cost → deferred → function:<anonymous> → call:<anonymous> → delivery:commit.feedback.notify
+    source extensions/model-cost/shared-logic/runtime.ts:481:4
+    source extensions/model-cost/shared-logic/runtime.ts:490:4
+    source extensions/model-cost/shared-logic/runtime.ts:659:6
+    source extensions/model-cost/shared-logic/runtime.ts:667:6
+    implementation adapters/pi/native/core/extensions/session.ts:49:12
+  PROVIDED delivery:initialization.feedback.notify (required)
+    extension:model-cost → deferred → function:<anonymous> → call:<anonymous> → delivery:initialization.feedback.notify
+    source extensions/model-cost/shared-logic/runtime.ts:481:4
+    source extensions/model-cost/shared-logic/runtime.ts:490:4
+    source extensions/model-cost/shared-logic/runtime.ts:507:4
+    source extensions/model-cost/shared-logic/runtime.ts:514:5
+    implementation adapters/pi/native/core/extensions/session.ts:49:12
+  PROVIDED delivery:initialization.subagents (optional)
+    extension:model-cost → deferred → function:initialize → delivery:initialization.subagents
+    source extensions/model-cost/harnesses/pi.ts:167:42
+    source extensions/model-cost/harnesses/pi.ts:167:51
+    implementation extensions/model-cost/harnesses/pi.ts:121:24
+  PROVIDED delivery:input.feedback.notify (required)
+    extension:model-cost → deferred → function:<anonymous> → call:<anonymous> → delivery:input.feedback.notify
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:667:3
+    source extensions/model-cost/shared-logic/runtime.ts:481:4
+    source extensions/model-cost/shared-logic/runtime.ts:490:4
+    source extensions/model-cost/shared-logic/runtime.ts:507:4
+    source extensions/model-cost/shared-logic/runtime.ts:514:5
+    implementation adapters/pi/native/core/extensions/session.ts:144:21
+  CONDITIONAL delivery:round.closeOut.remaining (optional) — the close-out wait exists only on a disposal edge
+    extension:model-cost → deferred → function:roundEnded → call:<anonymous> → delivery:round.closeOut.remaining
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1193:60
+  PROVIDED delivery:round.feedback.notify (required)
+    extension:model-cost → deferred → function:roundEnded → delivery:round.feedback.notify
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1215:4
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1233:4
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1414:6
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1422:7
+    source extensions/model-cost/shared-logic/runtime.ts:481:4
+    source extensions/model-cost/shared-logic/runtime.ts:490:4
+    source extensions/model-cost/shared-logic/runtime.ts:507:4
+    source extensions/model-cost/shared-logic/runtime.ts:514:5
+    implementation adapters/pi/native/core/extensions/round.ts:93:12
+  PROVIDED delivery:session.feedback.notify (required)
+    extension:model-cost → deferred → function:<anonymous> → call:<anonymous> → delivery:session.feedback.notify
+    source extensions/model-cost/shared-logic/runtime.ts:481:4
+    source extensions/model-cost/shared-logic/runtime.ts:490:4
+    source extensions/model-cost/shared-logic/runtime.ts:507:4
+    source extensions/model-cost/shared-logic/runtime.ts:514:5
+    implementation adapters/pi/native/core/extensions/session.ts:49:12
+  PROVIDED delivery:turn.feedback.notify (required)
+    extension:model-cost → deferred → function:turnSettled → delivery:turn.feedback.notify
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:667:3
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1341:6
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1350:5
+    source extensions/model-cost/shared-logic/runtime.ts:481:4
+    source extensions/model-cost/shared-logic/runtime.ts:490:4
+    source extensions/model-cost/shared-logic/runtime.ts:507:4
+    source extensions/model-cost/shared-logic/runtime.ts:514:5
+    implementation adapters/pi/native/core/extensions/turn.ts:100:11
+  PROVIDED delivery:unobserved.feedback.notify (required)
+    extension:model-cost → deferred → function:<anonymous> → call:<anonymous> → delivery:unobserved.feedback.notify
+    source extensions/model-cost/shared-logic/runtime.ts:481:4
+    source extensions/model-cost/shared-logic/runtime.ts:490:4
+    implementation adapters/pi/native/core/extensions/session.ts:49:12
+  PROVIDED framework:extension-loading (required)
+    extension:model-cost → subscription:session → semantic:extension-loading → framework:extension-loading
+    source extensions/model-cost/shared-logic/runtime.ts:995:4
+    implementation extensions/model-cost/harnesses/pi.ts:121:24
+  PROVIDED framework:model-prices (optional)
+    extension:model-cost → deferred → function:<anonymous> → context.modelPrices
+    source extensions/model-cost/harnesses/omp.ts:146:9
+    source extensions/model-cost/harnesses/omp.ts:146:17
+    source extensions/model-cost/harnesses/omp.ts:146:52
+    source extensions/model-cost/harnesses/omp.ts:146:65
+    source extensions/model-cost/harnesses/omp.ts:146:73
+    source extensions/model-cost/harnesses/pi.ts:152:10
+    source extensions/model-cost/harnesses/pi.ts:152:18
+    source extensions/model-cost/harnesses/pi.ts:152:53
+    source extensions/model-cost/harnesses/pi.ts:152:66
+    source extensions/model-cost/harnesses/pi.ts:152:74
+    source extensions/model-cost/shared-logic/runtime.ts:341:8
+    source extensions/model-cost/shared-logic/runtime.ts:341:47
+    source extensions/model-cost/shared-logic/runtime.ts:915:34
+    source extensions/model-cost/shared-logic/runtime.ts:933:3
+    source extensions/model-cost/shared-logic/runtime.ts:1064:8
+    source extensions/model-cost/shared-logic/runtime.ts:1065:6
+    source extensions/model-cost/shared-logic/runtime.ts:1065:36
+    source extensions/model-cost/shared-logic/runtime.ts:1067:33
+    source extensions/model-cost/shared-logic/runtime.ts:1067:72
+    implementation adapters/pi/port.ts:123:15
+  PROVIDED framework:provider-access (optional)
+    extension:model-cost → deferred → function:<anonymous> → context.providerAccess
+    source extensions/model-cost/harnesses/omp.ts:150:9
+    source extensions/model-cost/harnesses/omp.ts:150:17
+    source extensions/model-cost/harnesses/omp.ts:150:55
+    source extensions/model-cost/harnesses/omp.ts:150:71
+    source extensions/model-cost/harnesses/omp.ts:150:79
+    source extensions/model-cost/harnesses/pi.ts:156:10
+    source extensions/model-cost/harnesses/pi.ts:156:18
+    source extensions/model-cost/harnesses/pi.ts:156:56
+    source extensions/model-cost/harnesses/pi.ts:156:72
+    source extensions/model-cost/harnesses/pi.ts:156:80
+    source extensions/model-cost/shared-logic/business/allowance/codex-quota.ts:272:24
+    source extensions/model-cost/shared-logic/business/allowance/codex-quota.ts:272:31
+    source extensions/model-cost/shared-logic/business/pricing/provider-balance.ts:209:25
+    source extensions/model-cost/shared-logic/business/pricing/provider-balance.ts:209:32
+    source extensions/model-cost/shared-logic/runtime.ts:414:14
+    source extensions/model-cost/shared-logic/runtime.ts:414:52
+    source extensions/model-cost/shared-logic/runtime.ts:414:67
+    source extensions/model-cost/shared-logic/runtime.ts:432:14
+    source extensions/model-cost/shared-logic/runtime.ts:432:52
+    source extensions/model-cost/shared-logic/runtime.ts:432:67
+    implementation adapters/pi/port.ts:124:18
+  PROVIDED framework:round-lifecycle-events (required)
+    extension:model-cost → subscription → semantic:round-lifecycle-events → framework:round-lifecycle-events
+    source extensions/model-cost/shared-logic/runtime.ts:1000:6
+    source extensions/model-cost/shared-logic/runtime.ts:1001:6
+    implementation adapters/pi/port.ts:140:11
+  PROVIDED framework:session-facts (required)
+    extension:model-cost → deferred → function:<anonymous> → delivery.session
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:815:29
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:816:33
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:817:16
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:818:20
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:819:21
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:820:19
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:821:18
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:822:16
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:829:28
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1137:28
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1138:15
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1139:10
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1147:29
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1154:27
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1156:8
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1207:17
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1238:24
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1356:13
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1357:22
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1368:8
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1376:13
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1377:22
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1408:8
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1430:31
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1443:15
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1452:13
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1458:40
+    source extensions/model-cost/shared-logic/runtime.ts:804:31
+    source extensions/model-cost/shared-logic/runtime.ts:817:67
+    source extensions/model-cost/shared-logic/runtime.ts:858:26
+    source extensions/model-cost/shared-logic/runtime.ts:867:62
+    source extensions/model-cost/shared-logic/runtime.ts:995:4
+    implementation adapters/pi/port.ts:133:13
+  PROVIDED framework:session-lifecycle (required)
+    extension:model-cost → subscription → semantic:session-lifecycle → framework:session-lifecycle
+    source extensions/model-cost/shared-logic/runtime.ts:1000:6
+    source extensions/model-cost/shared-logic/runtime.ts:1001:6
+    source extensions/model-cost/shared-logic/runtime.ts:1004:6
+    source extensions/model-cost/shared-logic/runtime.ts:1008:6
+    implementation adapters/pi/port.ts:133:13
+  PROVIDED framework:session-lifecycle-events (required)
+    extension:model-cost → subscription → semantic:session-lifecycle-events → framework:session-lifecycle-events
+    source extensions/model-cost/shared-logic/runtime.ts:1004:6
+    source extensions/model-cost/shared-logic/runtime.ts:1008:6
+    implementation adapters/pi/port.ts:133:13
+  PROVIDED framework:session-observation-read (optional)
+    extension:model-cost → deferred → function:observePiSubagentResults → closure:<anonymous> → session.observations.read
+    source extensions/model-cost/harnesses/pi.ts:214:7
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:742:22
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:800:78
+    source extensions/model-cost/shared-logic/runtime.ts:390:22
+    implementation adapters/pi/port.ts:133:13
+  PROVIDED framework:session-observation-snapshot (optional)
+    extension:model-cost → implementation → create → call:createModelCostRuntime → call:createRequestAccounting → closure:<anonymous> → context.session.observations.snapshot
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:925:23
+    implementation adapters/pi/port.ts:133:13
+  PROVIDED framework:session-observations (required)
+    extension:model-cost → subscription → semantic:session-observations → framework:session-observations
+    source extensions/model-cost/harnesses/pi.ts:214:7
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:742:22
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:800:78
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:925:23
+    source extensions/model-cost/shared-logic/runtime.ts:390:22
+    source extensions/model-cost/shared-logic/runtime.ts:1002:6
+    source extensions/model-cost/shared-logic/runtime.ts:1005:6
+    implementation adapters/pi/port.ts:133:13
+  PROVIDED framework:session-record-commit (optional)
+    extension:model-cost → implementation → create → call:createModelCostRuntime → closure:recordCommit → context.session.recordCommit
+    source extensions/model-cost/shared-logic/runtime.ts:381:30
+    implementation adapters/pi/port.ts:133:13
+  PROVIDED framework:storage-commit (required)
+    extension:model-cost → subscription → semantic:storage-commit → framework:storage-commit
+    source extensions/model-cost/shared-logic/runtime.ts:381:30
+    source extensions/model-cost/shared-logic/runtime.ts:1006:6
+    implementation adapters/pi/port.ts:133:13
+  PROVIDED framework:turn-usage (required)
+    extension:model-cost → deferred → function:turnSettled → turn.usage
+    source extensions/model-cost/shared-logic/foundation/session/request-accounting.ts:1338:30
+    implementation adapters/pi/port.ts:146:10
+  PROVIDED port:modelPrices (optional)
+    extension:model-cost → deferred → function:<anonymous> → context.modelPrices
+    source extensions/model-cost/harnesses/omp.ts:146:9
+    source extensions/model-cost/harnesses/omp.ts:146:17
+    source extensions/model-cost/harnesses/omp.ts:146:52
+    source extensions/model-cost/harnesses/omp.ts:146:65
+    source extensions/model-cost/harnesses/omp.ts:146:73
+    source extensions/model-cost/harnesses/pi.ts:152:10
+    source extensions/model-cost/harnesses/pi.ts:152:18
+    source extensions/model-cost/harnesses/pi.ts:152:53
+    source extensions/model-cost/harnesses/pi.ts:152:66
+    source extensions/model-cost/harnesses/pi.ts:152:74
+    source extensions/model-cost/shared-logic/runtime.ts:341:8
+    source extensions/model-cost/shared-logic/runtime.ts:341:47
+    source extensions/model-cost/shared-logic/runtime.ts:915:34
+    source extensions/model-cost/shared-logic/runtime.ts:933:3
+    source extensions/model-cost/shared-logic/runtime.ts:1064:8
+    source extensions/model-cost/shared-logic/runtime.ts:1065:6
+    source extensions/model-cost/shared-logic/runtime.ts:1065:36
+    source extensions/model-cost/shared-logic/runtime.ts:1067:33
+    source extensions/model-cost/shared-logic/runtime.ts:1067:72
+    implementation adapters/pi/port.ts:123:15
+  PROVIDED port:nextTask (required)
+    extension:model-cost → subscription → round-machinery → port:nextTask
+    source extensions/model-cost/shared-logic/runtime.ts:998:6
+    source extensions/model-cost/shared-logic/runtime.ts:999:6
+    source extensions/model-cost/shared-logic/runtime.ts:1000:6
+    source extensions/model-cost/shared-logic/runtime.ts:1001:6
+    source extensions/model-cost/shared-logic/runtime.ts:1002:6
+    source extensions/model-cost/shared-logic/runtime.ts:1005:6
+    implementation adapters/pi/port.ts:134:12
+  PROVIDED port:onDisposal (optional)
+    extension:model-cost → subscription → round-machinery → port:onDisposal
+    source extensions/model-cost/shared-logic/runtime.ts:998:6
+    source extensions/model-cost/shared-logic/runtime.ts:999:6
+    source extensions/model-cost/shared-logic/runtime.ts:1000:6
+    source extensions/model-cost/shared-logic/runtime.ts:1001:6
+    source extensions/model-cost/shared-logic/runtime.ts:1002:6
+    source extensions/model-cost/shared-logic/runtime.ts:1005:6
+    implementation adapters/pi/port.ts:144:14
+  PROVIDED port:onRound (required)
+    extension:model-cost → subscription:session → event:round_end → port:onRound
+    source extensions/model-cost/shared-logic/runtime.ts:998:6
+    source extensions/model-cost/shared-logic/runtime.ts:999:6
+    source extensions/model-cost/shared-logic/runtime.ts:1000:6
+    source extensions/model-cost/shared-logic/runtime.ts:1001:6
+    source extensions/model-cost/shared-logic/runtime.ts:1002:6
+    source extensions/model-cost/shared-logic/runtime.ts:1005:6
+    implementation adapters/pi/native/core/extensions/round.ts:93:12
+  PROVIDED port:onRunInitiation (required)
+    extension:model-cost → definition:cleanup → port:onRunInitiation
+    source extensions/model-cost/harnesses/omp.ts:159:13
+    source extensions/model-cost/harnesses/pi.ts:166:17
+    source extensions/model-cost/harnesses/pi.ts:173:14
+    source extensions/model-cost/shared-logic/runtime.ts:1021:38
+    implementation adapters/pi/native/core/extensions/prompt.ts:17:34
+  PROVIDED port:onSession (required)
+    extension:model-cost → binding:baseline → port:onSession
+    source extensions/model-cost/definition.ts:25:27
+    implementation adapters/pi/native/core/extensions/session.ts:49:12
+  PROVIDED port:onSessionContext (required)
+    extension:model-cost → subscription:session → event:session_context → port:onSessionContext
+    source extensions/model-cost/shared-logic/runtime.ts:1005:6
+    implementation adapters/pi/native/core/extensions/context.ts:30:12
+  PROVIDED port:onTurn (required)
+    extension:model-cost → subscription:session → event:turn_end → port:onTurn
+    source extensions/model-cost/shared-logic/runtime.ts:998:6
+    source extensions/model-cost/shared-logic/runtime.ts:999:6
+    implementation adapters/pi/native/core/extensions/turn.ts:100:11
+  PROVIDED port:onUserInput (required)
+    extension:model-cost → subscription:session → event:user_input → port:onUserInput
+    source extensions/model-cost/shared-logic/runtime.ts:1003:6
+    implementation adapters/pi/native/core/extensions/session.ts:144:21
+  PROVIDED port:providerAccess (optional)
+    extension:model-cost → deferred → function:<anonymous> → context.providerAccess
+    source extensions/model-cost/harnesses/omp.ts:150:9
+    source extensions/model-cost/harnesses/omp.ts:150:17
+    source extensions/model-cost/harnesses/omp.ts:150:55
+    source extensions/model-cost/harnesses/omp.ts:150:71
+    source extensions/model-cost/harnesses/omp.ts:150:79
+    source extensions/model-cost/harnesses/pi.ts:156:10
+    source extensions/model-cost/harnesses/pi.ts:156:18
+    source extensions/model-cost/harnesses/pi.ts:156:56
+    source extensions/model-cost/harnesses/pi.ts:156:72
+    source extensions/model-cost/harnesses/pi.ts:156:80
+    source extensions/model-cost/shared-logic/business/allowance/codex-quota.ts:272:24
+    source extensions/model-cost/shared-logic/business/allowance/codex-quota.ts:272:31
+    source extensions/model-cost/shared-logic/business/pricing/provider-balance.ts:209:25
+    source extensions/model-cost/shared-logic/business/pricing/provider-balance.ts:209:32
+    source extensions/model-cost/shared-logic/runtime.ts:414:14
+    source extensions/model-cost/shared-logic/runtime.ts:414:52
+    source extensions/model-cost/shared-logic/runtime.ts:414:67
+    source extensions/model-cost/shared-logic/runtime.ts:432:14
+    source extensions/model-cost/shared-logic/runtime.ts:432:52
+    source extensions/model-cost/shared-logic/runtime.ts:432:67
+    implementation adapters/pi/port.ts:124:18
+  PROVIDED port:registerCommand (required)
+    extension:model-cost → definition:commands → port:registerCommand
+    source extensions/model-cost/definition.ts:30:3
+    implementation adapters/pi/native/core/extensions/commands.ts:22:23
+  PROVIDED port:reportDiagnostic (required)
+    extension:model-cost → binding:baseline → port:reportDiagnostic
+    source extensions/model-cost/definition.ts:25:27
+    implementation adapters/pi/port.ts:122:20
+  UNAVAILABLE port:sessionObservationAccess (optional) — this adapter does not provide a cross-process session-observation outlet
+    extension:model-cost → binding:baseline → port:sessionObservationAccess
+    source extensions/model-cost/definition.ts:25:27
+  PROVIDED port:setLabel (required)
+    extension:model-cost → binding:baseline → port:setLabel
+    source extensions/model-cost/definition.ts:25:27
+    implementation adapters/pi/port.ts:121:12
+  PROVIDED port:subagentIntegration (optional)
+    extension:model-cost → deferred → function:initialize → port:subagentIntegration
+    source extensions/model-cost/harnesses/pi.ts:167:42
+    source extensions/model-cost/harnesses/pi.ts:167:51
+    implementation extensions/model-cost/harnesses/pi.ts:121:24
+    session-facts mapping DECLARED adapters/pi/mixture/session-facts.ts:35:41
+      MAPPED sessionId (adapters/pi/mixture/session-facts.ts:36:13)
+      MAPPED kind (adapters/pi/mixture/session-facts.ts:37:8)
+      MAPPED parentSessionId (adapters/pi/mixture/session-facts.ts:38:19)
+      MAPPED name (adapters/pi/mixture/session-facts.ts:39:8)
+      UNAVAILABLE taskName — task name (adapters/pi/mixture/session-facts.ts:45:12)
+      MAPPED agentName (adapters/pi/mixture/session-facts.ts:46:13)
+      UNAVAILABLE agentId — agent id (adapters/pi/mixture/session-facts.ts:51:11)
+      MAPPED startup (adapters/pi/mixture/session-facts.ts:52:11)
+      MAPPED unavailable (adapters/pi/mixture/session-facts.ts:54:15)
+chief-chat / omp: COMPLETE
+  PROVIDED framework:prompt-contribution (required)
+    extension:chief-chat → definition:prompts → semantic:prompt-contribution → framework:prompt-contribution
+    source extensions/workflow-chat/chief-chat/definition.ts:10:11
+    implementation adapters/omp/port.ts:105:19
+  PROVIDED framework:session-facts (required)
+    extension:chief-chat → deferred → function:session_end → delivery.session
+    source extensions/workflow-chat/chief-chat/shared-logic/implementation.ts:18:62
+    source extensions/workflow-chat/chief-chat/shared-logic/implementation.ts:19:58
+    source extensions/workflow-chat/common/requests.ts:44:37
+    implementation adapters/omp/port.ts:93:13
+  PROVIDED framework:session-lifecycle (required)
+    extension:chief-chat → subscription → semantic:session-lifecycle → framework:session-lifecycle
+    source extensions/workflow-chat/chief-chat/shared-logic/implementation.ts:18:5
+    source extensions/workflow-chat/chief-chat/shared-logic/implementation.ts:19:5
+    implementation adapters/omp/port.ts:93:13
+  PROVIDED framework:session-lifecycle-events (required)
+    extension:chief-chat → subscription → semantic:session-lifecycle-events → framework:session-lifecycle-events
+    source extensions/workflow-chat/chief-chat/shared-logic/implementation.ts:18:5
+    source extensions/workflow-chat/chief-chat/shared-logic/implementation.ts:19:5
+    implementation adapters/omp/port.ts:93:13
+  PROVIDED framework:session-observation-read (optional)
+    extension:chief-chat → deferred → function:execute → call:postConfirmed → call:<anonymous> → context.session.observations.read
+    source extensions/workflow-chat/common/requests.ts:44:23
+    implementation adapters/omp/port.ts:93:13
+  PROVIDED framework:session-observations (required)
+    extension:chief-chat → deferred → function:execute → call:postConfirmed → call:<anonymous> → context.session.observations.read
+    source extensions/workflow-chat/common/requests.ts:44:23
+    implementation adapters/omp/port.ts:93:13
+  PROVIDED framework:state-persistence (required)
+    extension:chief-chat → definition:state → semantic:state-persistence → framework:state-persistence
+    source extensions/workflow-chat/chief-chat/definition.ts:8:9
+    implementation adapters/omp/native/extensibility/extensions/lifecycle.ts:115:11
+  PROVIDED port:onRunInitiation (required)
+    extension:chief-chat → definition:cleanup → port:onRunInitiation
+    source extensions/workflow-chat/chief-chat/definition.ts:10:11
+    source extensions/workflow-chat/chief-chat/shared-logic/implementation.ts:22:13
+    implementation adapters/omp/native/extensibility/extensions/prompts.ts:32:32
+  PROVIDED port:onSession (required)
+    extension:chief-chat → binding:baseline → port:onSession
+    source extensions/workflow-chat/chief-chat/definition.ts:5:27
+    implementation adapters/omp/native/extensibility/extensions/lifecycle.ts:115:11
+  PROVIDED port:registerTool (required)
+    extension:chief-chat → definition:tools → port:registerTool
+    source extensions/workflow-chat/chief-chat/shared-logic/tools/index.ts:8:73
+    source extensions/workflow-chat/chief-chat/shared-logic/tools/index.ts:35:4
+    source extensions/workflow-chat/chief-chat/shared-logic/tools/index.ts:49:4
+    implementation adapters/omp/native/extensibility/extensions/tools.ts:29:46
+  PROVIDED port:reportDiagnostic (required)
+    extension:chief-chat → binding:baseline → port:reportDiagnostic
+    source extensions/workflow-chat/chief-chat/definition.ts:5:27
+    implementation adapters/omp/port.ts:86:20
+  UNAVAILABLE port:sessionObservationAccess (optional) — this entry observes each session in the process that runs it; no cross-process observation seat exists here
+    extension:chief-chat → binding:baseline → port:sessionObservationAccess
+    source extensions/workflow-chat/chief-chat/definition.ts:5:27
+  PROVIDED port:setLabel (required)
+    extension:chief-chat → binding:baseline → port:setLabel
+    source extensions/workflow-chat/chief-chat/definition.ts:5:27
+    implementation adapters/omp/port.ts:83:12
+    session-facts mapping DECLARED adapters/omp/native/extensibility/extensions/session-facts.ts:138:42
+      MAPPED sessionId (adapters/omp/native/extensibility/extensions/session-facts.ts:139:13)
+      MAPPED kind (adapters/omp/native/extensibility/extensions/session-facts.ts:140:8)
+      MAPPED parentSessionId (adapters/omp/native/extensibility/extensions/session-facts.ts:141:19)
+      MAPPED name (adapters/omp/native/extensibility/extensions/session-facts.ts:148:8)
+      MAPPED taskName (adapters/omp/native/extensibility/extensions/session-facts.ts:156:12)
+      MAPPED agentName (adapters/omp/native/extensibility/extensions/session-facts.ts:161:13)
+      MAPPED agentId (adapters/omp/native/extensibility/extensions/session-facts.ts:167:11)
+      MAPPED startup (adapters/omp/native/extensibility/extensions/session-facts.ts:173:11)
+      MAPPED unavailable (adapters/omp/native/extensibility/extensions/session-facts.ts:179:15)
+chief-chat / pi: COMPLETE
+  PROVIDED framework:prompt-contribution (required)
+    extension:chief-chat → definition:prompts → semantic:prompt-contribution → framework:prompt-contribution
+    source extensions/workflow-chat/chief-chat/definition.ts:10:11
+    implementation adapters/pi/port.ts:148:19
+  PROVIDED framework:session-facts (required)
+    extension:chief-chat → deferred → function:session_end → delivery.session
+    source extensions/workflow-chat/chief-chat/shared-logic/implementation.ts:18:62
+    source extensions/workflow-chat/chief-chat/shared-logic/implementation.ts:19:58
+    source extensions/workflow-chat/common/requests.ts:44:37
+    implementation adapters/pi/port.ts:133:13
+  PROVIDED framework:session-lifecycle (required)
+    extension:chief-chat → subscription → semantic:session-lifecycle → framework:session-lifecycle
+    source extensions/workflow-chat/chief-chat/shared-logic/implementation.ts:18:5
+    source extensions/workflow-chat/chief-chat/shared-logic/implementation.ts:19:5
+    implementation adapters/pi/port.ts:133:13
+  PROVIDED framework:session-lifecycle-events (required)
+    extension:chief-chat → subscription → semantic:session-lifecycle-events → framework:session-lifecycle-events
+    source extensions/workflow-chat/chief-chat/shared-logic/implementation.ts:18:5
+    source extensions/workflow-chat/chief-chat/shared-logic/implementation.ts:19:5
+    implementation adapters/pi/port.ts:133:13
+  PROVIDED framework:session-observation-read (optional)
+    extension:chief-chat → deferred → function:execute → call:postConfirmed → call:<anonymous> → context.session.observations.read
+    source extensions/workflow-chat/common/requests.ts:44:23
+    implementation adapters/pi/port.ts:133:13
+  PROVIDED framework:session-observations (required)
+    extension:chief-chat → deferred → function:execute → call:postConfirmed → call:<anonymous> → context.session.observations.read
+    source extensions/workflow-chat/common/requests.ts:44:23
+    implementation adapters/pi/port.ts:133:13
+  PROVIDED framework:state-persistence (required)
+    extension:chief-chat → definition:state → semantic:state-persistence → framework:state-persistence
+    source extensions/workflow-chat/chief-chat/definition.ts:8:9
+    implementation adapters/pi/native/core/extensions/session.ts:49:12
+  PROVIDED port:onRunInitiation (required)
+    extension:chief-chat → definition:cleanup → port:onRunInitiation
+    source extensions/workflow-chat/chief-chat/definition.ts:10:11
+    source extensions/workflow-chat/chief-chat/shared-logic/implementation.ts:22:13
+    implementation adapters/pi/native/core/extensions/prompt.ts:17:34
+  PROVIDED port:onSession (required)
+    extension:chief-chat → binding:baseline → port:onSession
+    source extensions/workflow-chat/chief-chat/definition.ts:5:27
+    implementation adapters/pi/native/core/extensions/session.ts:49:12
+  PROVIDED port:registerTool (required)
+    extension:chief-chat → definition:tools → port:registerTool
+    source extensions/workflow-chat/chief-chat/shared-logic/tools/index.ts:8:73
+    source extensions/workflow-chat/chief-chat/shared-logic/tools/index.ts:35:4
+    source extensions/workflow-chat/chief-chat/shared-logic/tools/index.ts:49:4
+    implementation adapters/pi/native/core/extensions/tools.ts:29:46
+  PROVIDED port:reportDiagnostic (required)
+    extension:chief-chat → binding:baseline → port:reportDiagnostic
+    source extensions/workflow-chat/chief-chat/definition.ts:5:27
+    implementation adapters/pi/port.ts:122:20
+  UNAVAILABLE port:sessionObservationAccess (optional) — this adapter does not provide a cross-process session-observation outlet
+    extension:chief-chat → binding:baseline → port:sessionObservationAccess
+    source extensions/workflow-chat/chief-chat/definition.ts:5:27
+  PROVIDED port:setLabel (required)
+    extension:chief-chat → binding:baseline → port:setLabel
+    source extensions/workflow-chat/chief-chat/definition.ts:5:27
+    implementation adapters/pi/port.ts:121:12
+    session-facts mapping DECLARED adapters/pi/mixture/session-facts.ts:35:41
+      MAPPED sessionId (adapters/pi/mixture/session-facts.ts:36:13)
+      MAPPED kind (adapters/pi/mixture/session-facts.ts:37:8)
+      MAPPED parentSessionId (adapters/pi/mixture/session-facts.ts:38:19)
+      MAPPED name (adapters/pi/mixture/session-facts.ts:39:8)
+      UNAVAILABLE taskName — task name (adapters/pi/mixture/session-facts.ts:45:12)
+      MAPPED agentName (adapters/pi/mixture/session-facts.ts:46:13)
+      UNAVAILABLE agentId — agent id (adapters/pi/mixture/session-facts.ts:51:11)
+      MAPPED startup (adapters/pi/mixture/session-facts.ts:52:11)
+      MAPPED unavailable (adapters/pi/mixture/session-facts.ts:54:15)
+chief-report / omp: COMPLETE
+  PROVIDED framework:prompt-contribution (required)
+    extension:chief-report → definition:prompts → semantic:prompt-contribution → framework:prompt-contribution
+    source extensions/workflow-chat/chief-report/definition.ts:10:11
+    implementation adapters/omp/port.ts:105:19
+  PROVIDED framework:session-facts (required)
+    extension:chief-report → deferred → function:session_end → delivery.session
+    source extensions/workflow-chat/chief-report/shared-logic/implementation.ts:10:60
+    source extensions/workflow-chat/chief-report/shared-logic/implementation.ts:11:56
+    source extensions/workflow-chat/common/requests.ts:44:37
+    implementation adapters/omp/port.ts:93:13
+  PROVIDED framework:session-lifecycle (required)
+    extension:chief-report → subscription → semantic:session-lifecycle → framework:session-lifecycle
+    source extensions/workflow-chat/chief-report/shared-logic/implementation.ts:10:3
+    source extensions/workflow-chat/chief-report/shared-logic/implementation.ts:11:3
+    implementation adapters/omp/port.ts:93:13
+  PROVIDED framework:session-lifecycle-events (required)
+    extension:chief-report → subscription → semantic:session-lifecycle-events → framework:session-lifecycle-events
+    source extensions/workflow-chat/chief-report/shared-logic/implementation.ts:10:3
+    source extensions/workflow-chat/chief-report/shared-logic/implementation.ts:11:3
+    implementation adapters/omp/port.ts:93:13
+  PROVIDED framework:session-observation-read (optional)
+    extension:chief-report → implementation → tool:chief_report → call:postConfirmed → call:<anonymous> → context.session.observations.read
+    source extensions/workflow-chat/common/requests.ts:44:23
+    implementation adapters/omp/port.ts:93:13
+  PROVIDED framework:session-observations (required)
+    extension:chief-report → implementation → tool:chief_report → call:postConfirmed → call:<anonymous> → context.session.observations.read
+    source extensions/workflow-chat/common/requests.ts:44:23
+    implementation adapters/omp/port.ts:93:13
+  PROVIDED framework:state-persistence (required)
+    extension:chief-report → definition:state → semantic:state-persistence → framework:state-persistence
+    source extensions/workflow-chat/chief-report/definition.ts:8:9
+    implementation adapters/omp/native/extensibility/extensions/lifecycle.ts:115:11
+  PROVIDED port:onRunInitiation (required)
+    extension:chief-report → definition:cleanup → port:onRunInitiation
+    source extensions/workflow-chat/chief-report/definition.ts:10:11
+    source extensions/workflow-chat/chief-report/shared-logic/implementation.ts:14:11
+    implementation adapters/omp/native/extensibility/extensions/prompts.ts:32:32
+  PROVIDED port:onSession (required)
+    extension:chief-report → binding:baseline → port:onSession
+    source extensions/workflow-chat/chief-report/definition.ts:5:29
+    implementation adapters/omp/native/extensibility/extensions/lifecycle.ts:115:11
+  PROVIDED port:registerTool (required)
+    extension:chief-report → definition:tools → port:registerTool
+    source extensions/workflow-chat/common/chief-report.ts:37:64
+    source extensions/workflow-chat/common/chief-report.ts:75:71
+    implementation adapters/omp/native/extensibility/extensions/tools.ts:29:46
+  PROVIDED port:reportDiagnostic (required)
+    extension:chief-report → binding:baseline → port:reportDiagnostic
+    source extensions/workflow-chat/chief-report/definition.ts:5:29
+    implementation adapters/omp/port.ts:86:20
+  UNAVAILABLE port:sessionObservationAccess (optional) — this entry observes each session in the process that runs it; no cross-process observation seat exists here
+    extension:chief-report → binding:baseline → port:sessionObservationAccess
+    source extensions/workflow-chat/chief-report/definition.ts:5:29
+  PROVIDED port:setLabel (required)
+    extension:chief-report → binding:baseline → port:setLabel
+    source extensions/workflow-chat/chief-report/definition.ts:5:29
+    implementation adapters/omp/port.ts:83:12
+    session-facts mapping DECLARED adapters/omp/native/extensibility/extensions/session-facts.ts:138:42
+      MAPPED sessionId (adapters/omp/native/extensibility/extensions/session-facts.ts:139:13)
+      MAPPED kind (adapters/omp/native/extensibility/extensions/session-facts.ts:140:8)
+      MAPPED parentSessionId (adapters/omp/native/extensibility/extensions/session-facts.ts:141:19)
+      MAPPED name (adapters/omp/native/extensibility/extensions/session-facts.ts:148:8)
+      MAPPED taskName (adapters/omp/native/extensibility/extensions/session-facts.ts:156:12)
+      MAPPED agentName (adapters/omp/native/extensibility/extensions/session-facts.ts:161:13)
+      MAPPED agentId (adapters/omp/native/extensibility/extensions/session-facts.ts:167:11)
+      MAPPED startup (adapters/omp/native/extensibility/extensions/session-facts.ts:173:11)
+      MAPPED unavailable (adapters/omp/native/extensibility/extensions/session-facts.ts:179:15)
+chief-report / pi: COMPLETE
+  PROVIDED framework:prompt-contribution (required)
+    extension:chief-report → definition:prompts → semantic:prompt-contribution → framework:prompt-contribution
+    source extensions/workflow-chat/chief-report/definition.ts:10:11
+    implementation adapters/pi/port.ts:148:19
+  PROVIDED framework:session-facts (required)
+    extension:chief-report → deferred → function:session_end → delivery.session
+    source extensions/workflow-chat/chief-report/shared-logic/implementation.ts:10:60
+    source extensions/workflow-chat/chief-report/shared-logic/implementation.ts:11:56
+    source extensions/workflow-chat/common/requests.ts:44:37
+    implementation adapters/pi/port.ts:133:13
+  PROVIDED framework:session-lifecycle (required)
+    extension:chief-report → subscription → semantic:session-lifecycle → framework:session-lifecycle
+    source extensions/workflow-chat/chief-report/shared-logic/implementation.ts:10:3
+    source extensions/workflow-chat/chief-report/shared-logic/implementation.ts:11:3
+    implementation adapters/pi/port.ts:133:13
+  PROVIDED framework:session-lifecycle-events (required)
+    extension:chief-report → subscription → semantic:session-lifecycle-events → framework:session-lifecycle-events
+    source extensions/workflow-chat/chief-report/shared-logic/implementation.ts:10:3
+    source extensions/workflow-chat/chief-report/shared-logic/implementation.ts:11:3
+    implementation adapters/pi/port.ts:133:13
+  PROVIDED framework:session-observation-read (optional)
+    extension:chief-report → implementation → tool:chief_report → call:postConfirmed → call:<anonymous> → context.session.observations.read
+    source extensions/workflow-chat/common/requests.ts:44:23
+    implementation adapters/pi/port.ts:133:13
+  PROVIDED framework:session-observations (required)
+    extension:chief-report → implementation → tool:chief_report → call:postConfirmed → call:<anonymous> → context.session.observations.read
+    source extensions/workflow-chat/common/requests.ts:44:23
+    implementation adapters/pi/port.ts:133:13
+  PROVIDED framework:state-persistence (required)
+    extension:chief-report → definition:state → semantic:state-persistence → framework:state-persistence
+    source extensions/workflow-chat/chief-report/definition.ts:8:9
+    implementation adapters/pi/native/core/extensions/session.ts:49:12
+  PROVIDED port:onRunInitiation (required)
+    extension:chief-report → definition:cleanup → port:onRunInitiation
+    source extensions/workflow-chat/chief-report/definition.ts:10:11
+    source extensions/workflow-chat/chief-report/shared-logic/implementation.ts:14:11
+    implementation adapters/pi/native/core/extensions/prompt.ts:17:34
+  PROVIDED port:onSession (required)
+    extension:chief-report → binding:baseline → port:onSession
+    source extensions/workflow-chat/chief-report/definition.ts:5:29
+    implementation adapters/pi/native/core/extensions/session.ts:49:12
+  PROVIDED port:registerTool (required)
+    extension:chief-report → definition:tools → port:registerTool
+    source extensions/workflow-chat/common/chief-report.ts:37:64
+    source extensions/workflow-chat/common/chief-report.ts:75:71
+    implementation adapters/pi/native/core/extensions/tools.ts:29:46
+  PROVIDED port:reportDiagnostic (required)
+    extension:chief-report → binding:baseline → port:reportDiagnostic
+    source extensions/workflow-chat/chief-report/definition.ts:5:29
+    implementation adapters/pi/port.ts:122:20
+  UNAVAILABLE port:sessionObservationAccess (optional) — this adapter does not provide a cross-process session-observation outlet
+    extension:chief-report → binding:baseline → port:sessionObservationAccess
+    source extensions/workflow-chat/chief-report/definition.ts:5:29
+  PROVIDED port:setLabel (required)
+    extension:chief-report → binding:baseline → port:setLabel
+    source extensions/workflow-chat/chief-report/definition.ts:5:29
+    implementation adapters/pi/port.ts:121:12
+    session-facts mapping DECLARED adapters/pi/mixture/session-facts.ts:35:41
+      MAPPED sessionId (adapters/pi/mixture/session-facts.ts:36:13)
+      MAPPED kind (adapters/pi/mixture/session-facts.ts:37:8)
+      MAPPED parentSessionId (adapters/pi/mixture/session-facts.ts:38:19)
+      MAPPED name (adapters/pi/mixture/session-facts.ts:39:8)
+      UNAVAILABLE taskName — task name (adapters/pi/mixture/session-facts.ts:45:12)
+      MAPPED agentName (adapters/pi/mixture/session-facts.ts:46:13)
+      UNAVAILABLE agentId — agent id (adapters/pi/mixture/session-facts.ts:51:11)
+      MAPPED startup (adapters/pi/mixture/session-facts.ts:52:11)
+      MAPPED unavailable (adapters/pi/mixture/session-facts.ts:54:15)
+manager-chat / omp: COMPLETE
+  PROVIDED framework:prompt-contribution (required)
+    extension:manager-chat → definition:prompts → semantic:prompt-contribution → framework:prompt-contribution
+    source extensions/workflow-chat/manager-chat/definition.ts:10:11
+    implementation adapters/omp/port.ts:105:19
+  PROVIDED framework:session-facts (required)
+    extension:manager-chat → deferred → function:session_end → delivery.session
+    source extensions/workflow-chat/common/requests.ts:44:37
+    source extensions/workflow-chat/manager-chat/shared-logic/implementation.ts:18:60
+    source extensions/workflow-chat/manager-chat/shared-logic/implementation.ts:19:56
+    implementation adapters/omp/port.ts:93:13
+  PROVIDED framework:session-lifecycle (required)
+    extension:manager-chat → subscription → semantic:session-lifecycle → framework:session-lifecycle
+    source extensions/workflow-chat/manager-chat/shared-logic/implementation.ts:18:3
+    source extensions/workflow-chat/manager-chat/shared-logic/implementation.ts:19:3
+    implementation adapters/omp/port.ts:93:13
+  PROVIDED framework:session-lifecycle-events (required)
+    extension:manager-chat → subscription → semantic:session-lifecycle-events → framework:session-lifecycle-events
+    source extensions/workflow-chat/manager-chat/shared-logic/implementation.ts:18:3
+    source extensions/workflow-chat/manager-chat/shared-logic/implementation.ts:19:3
+    implementation adapters/omp/port.ts:93:13
+  PROVIDED framework:session-observation-read (optional)
+    extension:manager-chat → implementation → tool:chief_report → call:postConfirmed → call:<anonymous> → context.session.observations.read
+    source extensions/workflow-chat/common/requests.ts:44:23
+    implementation adapters/omp/port.ts:93:13
+  PROVIDED framework:session-observations (required)
+    extension:manager-chat → implementation → tool:chief_report → call:postConfirmed → call:<anonymous> → context.session.observations.read
+    source extensions/workflow-chat/common/requests.ts:44:23
+    implementation adapters/omp/port.ts:93:13
+  PROVIDED framework:state-persistence (required)
+    extension:manager-chat → definition:state → semantic:state-persistence → framework:state-persistence
+    source extensions/workflow-chat/manager-chat/definition.ts:8:9
+    implementation adapters/omp/native/extensibility/extensions/lifecycle.ts:115:11
+  PROVIDED port:onRunInitiation (required)
+    extension:manager-chat → definition:cleanup → port:onRunInitiation
+    source extensions/workflow-chat/manager-chat/definition.ts:10:11
+    source extensions/workflow-chat/manager-chat/shared-logic/implementation.ts:22:11
+    implementation adapters/omp/native/extensibility/extensions/prompts.ts:32:32
+  PROVIDED port:onSession (required)
+    extension:manager-chat → binding:baseline → port:onSession
+    source extensions/workflow-chat/manager-chat/definition.ts:5:29
+    implementation adapters/omp/native/extensibility/extensions/lifecycle.ts:115:11
+  PROVIDED port:registerTool (required)
+    extension:manager-chat → definition:tools → port:registerTool
+    source extensions/workflow-chat/common/chief-report.ts:37:64
+    source extensions/workflow-chat/common/chief-report.ts:75:71
+    source extensions/workflow-chat/manager-chat/shared-logic/tools/index.ts:12:2
+    source extensions/workflow-chat/manager-chat/shared-logic/tools/index.ts:75:2
+    implementation adapters/omp/native/extensibility/extensions/tools.ts:29:46
+  PROVIDED port:reportDiagnostic (required)
+    extension:manager-chat → binding:baseline → port:reportDiagnostic
+    source extensions/workflow-chat/manager-chat/definition.ts:5:29
+    implementation adapters/omp/port.ts:86:20
+  UNAVAILABLE port:sessionObservationAccess (optional) — this entry observes each session in the process that runs it; no cross-process observation seat exists here
+    extension:manager-chat → binding:baseline → port:sessionObservationAccess
+    source extensions/workflow-chat/manager-chat/definition.ts:5:29
+  PROVIDED port:setLabel (required)
+    extension:manager-chat → binding:baseline → port:setLabel
+    source extensions/workflow-chat/manager-chat/definition.ts:5:29
+    implementation adapters/omp/port.ts:83:12
+    session-facts mapping DECLARED adapters/omp/native/extensibility/extensions/session-facts.ts:138:42
+      MAPPED sessionId (adapters/omp/native/extensibility/extensions/session-facts.ts:139:13)
+      MAPPED kind (adapters/omp/native/extensibility/extensions/session-facts.ts:140:8)
+      MAPPED parentSessionId (adapters/omp/native/extensibility/extensions/session-facts.ts:141:19)
+      MAPPED name (adapters/omp/native/extensibility/extensions/session-facts.ts:148:8)
+      MAPPED taskName (adapters/omp/native/extensibility/extensions/session-facts.ts:156:12)
+      MAPPED agentName (adapters/omp/native/extensibility/extensions/session-facts.ts:161:13)
+      MAPPED agentId (adapters/omp/native/extensibility/extensions/session-facts.ts:167:11)
+      MAPPED startup (adapters/omp/native/extensibility/extensions/session-facts.ts:173:11)
+      MAPPED unavailable (adapters/omp/native/extensibility/extensions/session-facts.ts:179:15)
+manager-chat / pi: COMPLETE
+  PROVIDED framework:prompt-contribution (required)
+    extension:manager-chat → definition:prompts → semantic:prompt-contribution → framework:prompt-contribution
+    source extensions/workflow-chat/manager-chat/definition.ts:10:11
+    implementation adapters/pi/port.ts:148:19
+  PROVIDED framework:session-facts (required)
+    extension:manager-chat → deferred → function:session_end → delivery.session
+    source extensions/workflow-chat/common/requests.ts:44:37
+    source extensions/workflow-chat/manager-chat/shared-logic/implementation.ts:18:60
+    source extensions/workflow-chat/manager-chat/shared-logic/implementation.ts:19:56
+    implementation adapters/pi/port.ts:133:13
+  PROVIDED framework:session-lifecycle (required)
+    extension:manager-chat → subscription → semantic:session-lifecycle → framework:session-lifecycle
+    source extensions/workflow-chat/manager-chat/shared-logic/implementation.ts:18:3
+    source extensions/workflow-chat/manager-chat/shared-logic/implementation.ts:19:3
+    implementation adapters/pi/port.ts:133:13
+  PROVIDED framework:session-lifecycle-events (required)
+    extension:manager-chat → subscription → semantic:session-lifecycle-events → framework:session-lifecycle-events
+    source extensions/workflow-chat/manager-chat/shared-logic/implementation.ts:18:3
+    source extensions/workflow-chat/manager-chat/shared-logic/implementation.ts:19:3
+    implementation adapters/pi/port.ts:133:13
+  PROVIDED framework:session-observation-read (optional)
+    extension:manager-chat → implementation → tool:chief_report → call:postConfirmed → call:<anonymous> → context.session.observations.read
+    source extensions/workflow-chat/common/requests.ts:44:23
+    implementation adapters/pi/port.ts:133:13
+  PROVIDED framework:session-observations (required)
+    extension:manager-chat → implementation → tool:chief_report → call:postConfirmed → call:<anonymous> → context.session.observations.read
+    source extensions/workflow-chat/common/requests.ts:44:23
+    implementation adapters/pi/port.ts:133:13
+  PROVIDED framework:state-persistence (required)
+    extension:manager-chat → definition:state → semantic:state-persistence → framework:state-persistence
+    source extensions/workflow-chat/manager-chat/definition.ts:8:9
+    implementation adapters/pi/native/core/extensions/session.ts:49:12
+  PROVIDED port:onRunInitiation (required)
+    extension:manager-chat → definition:cleanup → port:onRunInitiation
+    source extensions/workflow-chat/manager-chat/definition.ts:10:11
+    source extensions/workflow-chat/manager-chat/shared-logic/implementation.ts:22:11
+    implementation adapters/pi/native/core/extensions/prompt.ts:17:34
+  PROVIDED port:onSession (required)
+    extension:manager-chat → binding:baseline → port:onSession
+    source extensions/workflow-chat/manager-chat/definition.ts:5:29
+    implementation adapters/pi/native/core/extensions/session.ts:49:12
+  PROVIDED port:registerTool (required)
+    extension:manager-chat → definition:tools → port:registerTool
+    source extensions/workflow-chat/common/chief-report.ts:37:64
+    source extensions/workflow-chat/common/chief-report.ts:75:71
+    source extensions/workflow-chat/manager-chat/shared-logic/tools/index.ts:12:2
+    source extensions/workflow-chat/manager-chat/shared-logic/tools/index.ts:75:2
+    implementation adapters/pi/native/core/extensions/tools.ts:29:46
+  PROVIDED port:reportDiagnostic (required)
+    extension:manager-chat → binding:baseline → port:reportDiagnostic
+    source extensions/workflow-chat/manager-chat/definition.ts:5:29
+    implementation adapters/pi/port.ts:122:20
+  UNAVAILABLE port:sessionObservationAccess (optional) — this adapter does not provide a cross-process session-observation outlet
+    extension:manager-chat → binding:baseline → port:sessionObservationAccess
+    source extensions/workflow-chat/manager-chat/definition.ts:5:29
+  PROVIDED port:setLabel (required)
+    extension:manager-chat → binding:baseline → port:setLabel
+    source extensions/workflow-chat/manager-chat/definition.ts:5:29
+    implementation adapters/pi/port.ts:121:12
+    session-facts mapping DECLARED adapters/pi/mixture/session-facts.ts:35:41
+      MAPPED sessionId (adapters/pi/mixture/session-facts.ts:36:13)
+      MAPPED kind (adapters/pi/mixture/session-facts.ts:37:8)
+      MAPPED parentSessionId (adapters/pi/mixture/session-facts.ts:38:19)
+      MAPPED name (adapters/pi/mixture/session-facts.ts:39:8)
+      UNAVAILABLE taskName — task name (adapters/pi/mixture/session-facts.ts:45:12)
+      MAPPED agentName (adapters/pi/mixture/session-facts.ts:46:13)
+      UNAVAILABLE agentId — agent id (adapters/pi/mixture/session-facts.ts:51:11)
+      MAPPED startup (adapters/pi/mixture/session-facts.ts:52:11)
+      MAPPED unavailable (adapters/pi/mixture/session-facts.ts:54:15)
+node-chat / omp: COMPLETE
+  PROVIDED framework:prompt-contribution (required)
+    extension:node-chat → definition:prompts → semantic:prompt-contribution → framework:prompt-contribution
+    source extensions/workflow-chat/node-chat/definition.ts:10:11
+    implementation adapters/omp/port.ts:105:19
+  PROVIDED framework:session-facts (required)
+    extension:node-chat → deferred → function:session_end → delivery.session
+    source extensions/workflow-chat/common/requests.ts:44:37
+    source extensions/workflow-chat/node-chat/shared-logic/implementation.ts:17:60
+    source extensions/workflow-chat/node-chat/shared-logic/implementation.ts:18:56
+    implementation adapters/omp/port.ts:93:13
+  PROVIDED framework:session-lifecycle (required)
+    extension:node-chat → subscription → semantic:session-lifecycle → framework:session-lifecycle
+    source extensions/workflow-chat/node-chat/shared-logic/implementation.ts:17:3
+    source extensions/workflow-chat/node-chat/shared-logic/implementation.ts:18:3
+    implementation adapters/omp/port.ts:93:13
+  PROVIDED framework:session-lifecycle-events (required)
+    extension:node-chat → subscription → semantic:session-lifecycle-events → framework:session-lifecycle-events
+    source extensions/workflow-chat/node-chat/shared-logic/implementation.ts:17:3
+    source extensions/workflow-chat/node-chat/shared-logic/implementation.ts:18:3
+    implementation adapters/omp/port.ts:93:13
+  PROVIDED framework:session-observation-read (optional)
+    extension:node-chat → implementation → tool:report → call:report → call:post → call:<anonymous> → context.session.observations.read
+    source extensions/workflow-chat/common/requests.ts:44:23
+    implementation adapters/omp/port.ts:93:13
+  PROVIDED framework:session-observations (required)
+    extension:node-chat → implementation → tool:report → call:report → call:post → call:<anonymous> → context.session.observations.read
+    source extensions/workflow-chat/common/requests.ts:44:23
+    implementation adapters/omp/port.ts:93:13
+  PROVIDED framework:state-persistence (required)
+    extension:node-chat → definition:state → semantic:state-persistence → framework:state-persistence
+    source extensions/workflow-chat/node-chat/definition.ts:8:9
+    implementation adapters/omp/native/extensibility/extensions/lifecycle.ts:115:11
+  PROVIDED port:onRunInitiation (required)
+    extension:node-chat → definition:cleanup → port:onRunInitiation
+    source extensions/workflow-chat/node-chat/definition.ts:10:11
+    source extensions/workflow-chat/node-chat/shared-logic/implementation.ts:21:11
+    implementation adapters/omp/native/extensibility/extensions/prompts.ts:32:32
+  PROVIDED port:onSession (required)
+    extension:node-chat → binding:baseline → port:onSession
+    source extensions/workflow-chat/node-chat/definition.ts:5:26
+    implementation adapters/omp/native/extensibility/extensions/lifecycle.ts:115:11
+  PROVIDED port:registerTool (required)
+    extension:node-chat → definition:tools → port:registerTool
+    source extensions/workflow-chat/node-chat/shared-logic/tools/index.ts:7:71
+    implementation adapters/omp/native/extensibility/extensions/tools.ts:29:46
+  PROVIDED port:reportDiagnostic (required)
+    extension:node-chat → binding:baseline → port:reportDiagnostic
+    source extensions/workflow-chat/node-chat/definition.ts:5:26
+    implementation adapters/omp/port.ts:86:20
+  UNAVAILABLE port:sessionObservationAccess (optional) — this entry observes each session in the process that runs it; no cross-process observation seat exists here
+    extension:node-chat → binding:baseline → port:sessionObservationAccess
+    source extensions/workflow-chat/node-chat/definition.ts:5:26
+  PROVIDED port:setLabel (required)
+    extension:node-chat → binding:baseline → port:setLabel
+    source extensions/workflow-chat/node-chat/definition.ts:5:26
+    implementation adapters/omp/port.ts:83:12
+    session-facts mapping DECLARED adapters/omp/native/extensibility/extensions/session-facts.ts:138:42
+      MAPPED sessionId (adapters/omp/native/extensibility/extensions/session-facts.ts:139:13)
+      MAPPED kind (adapters/omp/native/extensibility/extensions/session-facts.ts:140:8)
+      MAPPED parentSessionId (adapters/omp/native/extensibility/extensions/session-facts.ts:141:19)
+      MAPPED name (adapters/omp/native/extensibility/extensions/session-facts.ts:148:8)
+      MAPPED taskName (adapters/omp/native/extensibility/extensions/session-facts.ts:156:12)
+      MAPPED agentName (adapters/omp/native/extensibility/extensions/session-facts.ts:161:13)
+      MAPPED agentId (adapters/omp/native/extensibility/extensions/session-facts.ts:167:11)
+      MAPPED startup (adapters/omp/native/extensibility/extensions/session-facts.ts:173:11)
+      MAPPED unavailable (adapters/omp/native/extensibility/extensions/session-facts.ts:179:15)
+node-chat / pi: COMPLETE
+  PROVIDED framework:prompt-contribution (required)
+    extension:node-chat → definition:prompts → semantic:prompt-contribution → framework:prompt-contribution
+    source extensions/workflow-chat/node-chat/definition.ts:10:11
+    implementation adapters/pi/port.ts:148:19
+  PROVIDED framework:session-facts (required)
+    extension:node-chat → deferred → function:session_end → delivery.session
+    source extensions/workflow-chat/common/requests.ts:44:37
+    source extensions/workflow-chat/node-chat/shared-logic/implementation.ts:17:60
+    source extensions/workflow-chat/node-chat/shared-logic/implementation.ts:18:56
+    implementation adapters/pi/port.ts:133:13
+  PROVIDED framework:session-lifecycle (required)
+    extension:node-chat → subscription → semantic:session-lifecycle → framework:session-lifecycle
+    source extensions/workflow-chat/node-chat/shared-logic/implementation.ts:17:3
+    source extensions/workflow-chat/node-chat/shared-logic/implementation.ts:18:3
+    implementation adapters/pi/port.ts:133:13
+  PROVIDED framework:session-lifecycle-events (required)
+    extension:node-chat → subscription → semantic:session-lifecycle-events → framework:session-lifecycle-events
+    source extensions/workflow-chat/node-chat/shared-logic/implementation.ts:17:3
+    source extensions/workflow-chat/node-chat/shared-logic/implementation.ts:18:3
+    implementation adapters/pi/port.ts:133:13
+  PROVIDED framework:session-observation-read (optional)
+    extension:node-chat → implementation → tool:report → call:report → call:post → call:<anonymous> → context.session.observations.read
+    source extensions/workflow-chat/common/requests.ts:44:23
+    implementation adapters/pi/port.ts:133:13
+  PROVIDED framework:session-observations (required)
+    extension:node-chat → implementation → tool:report → call:report → call:post → call:<anonymous> → context.session.observations.read
+    source extensions/workflow-chat/common/requests.ts:44:23
+    implementation adapters/pi/port.ts:133:13
+  PROVIDED framework:state-persistence (required)
+    extension:node-chat → definition:state → semantic:state-persistence → framework:state-persistence
+    source extensions/workflow-chat/node-chat/definition.ts:8:9
+    implementation adapters/pi/native/core/extensions/session.ts:49:12
+  PROVIDED port:onRunInitiation (required)
+    extension:node-chat → definition:cleanup → port:onRunInitiation
+    source extensions/workflow-chat/node-chat/definition.ts:10:11
+    source extensions/workflow-chat/node-chat/shared-logic/implementation.ts:21:11
+    implementation adapters/pi/native/core/extensions/prompt.ts:17:34
+  PROVIDED port:onSession (required)
+    extension:node-chat → binding:baseline → port:onSession
+    source extensions/workflow-chat/node-chat/definition.ts:5:26
+    implementation adapters/pi/native/core/extensions/session.ts:49:12
+  PROVIDED port:registerTool (required)
+    extension:node-chat → definition:tools → port:registerTool
+    source extensions/workflow-chat/node-chat/shared-logic/tools/index.ts:7:71
+    implementation adapters/pi/native/core/extensions/tools.ts:29:46
+  PROVIDED port:reportDiagnostic (required)
+    extension:node-chat → binding:baseline → port:reportDiagnostic
+    source extensions/workflow-chat/node-chat/definition.ts:5:26
+    implementation adapters/pi/port.ts:122:20
+  UNAVAILABLE port:sessionObservationAccess (optional) — this adapter does not provide a cross-process session-observation outlet
+    extension:node-chat → binding:baseline → port:sessionObservationAccess
+    source extensions/workflow-chat/node-chat/definition.ts:5:26
+  PROVIDED port:setLabel (required)
+    extension:node-chat → binding:baseline → port:setLabel
+    source extensions/workflow-chat/node-chat/definition.ts:5:26
+    implementation adapters/pi/port.ts:121:12
+    session-facts mapping DECLARED adapters/pi/mixture/session-facts.ts:35:41
+      MAPPED sessionId (adapters/pi/mixture/session-facts.ts:36:13)
+      MAPPED kind (adapters/pi/mixture/session-facts.ts:37:8)
+      MAPPED parentSessionId (adapters/pi/mixture/session-facts.ts:38:19)
+      MAPPED name (adapters/pi/mixture/session-facts.ts:39:8)
+      UNAVAILABLE taskName — task name (adapters/pi/mixture/session-facts.ts:45:12)
+      MAPPED agentName (adapters/pi/mixture/session-facts.ts:46:13)
+      UNAVAILABLE agentId — agent id (adapters/pi/mixture/session-facts.ts:51:11)
+      MAPPED startup (adapters/pi/mixture/session-facts.ts:52:11)
+      MAPPED unavailable (adapters/pi/mixture/session-facts.ts:54:15)
+pi-suite / pi: NATIVE ONLY (outside framework adapter analysis); entry entrypoints/pi/pi-suite.ts; regression: bun test tests/pi-suite
+Structural integration analysis only; native semantics are not certified and runtime loading is unchanged.

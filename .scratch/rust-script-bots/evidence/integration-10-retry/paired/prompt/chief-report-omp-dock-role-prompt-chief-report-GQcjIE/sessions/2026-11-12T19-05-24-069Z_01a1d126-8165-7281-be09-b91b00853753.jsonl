@@ -1,0 +1,4 @@
+{"type":"title","v":1,"title":"","updatedAt":"2026-11-12T19:05:24.069Z","pad":"                                                                                                                                                                              "}
+{"type":"session","version":3,"id":"01a1d126-8165-7281-be09-b91b00853753","timestamp":"2026-11-12T19:05:24.069Z","cwd":"C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-chief-report-GQcjIE\\work"}
+{"type":"thinking_level_change","id":"aeffdeb8","parentId":null,"timestamp":"2026-11-12T19:05:24.073Z","thinkingLevel":null,"configured":null}
+{"type":"service_tier_change","id":"555844b1","parentId":"aeffdeb8","timestamp":"2026-11-12T19:05:24.073Z","serviceTier":null}
