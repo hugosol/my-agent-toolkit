@@ -76,6 +76,8 @@ export async function headlessTool(host: "omp" | "pi", endpoint: string, role: "
 					parentBun: process.versions.bun, scope: "Actual installed no-UI host; controlled provider/peer only" }, null, 2));
 			}
 			console.log(JSON.stringify({ host, headlessExit: exit, stderr }));
+			writeFileSync(join(run.root.captureDir, "headless-native.json"), JSON.stringify({ stdout, stderr, exit,
+				scope: "Real installed no-UI host; controlled protocol provider, not real-model behavior" }));
 			if (exit !== 0) throw new Error(`Headless ${host} exited ${exit}: ${stderr}\n${stdout}`);
 			const frames: unknown[] = stdout.trim().split(/\r?\n/).map(line => JSON.parse(line));
 			const end = frames.reverse().find(frame => frame && typeof frame === "object" && "type" in frame && frame.type === "tool_execution_end");
@@ -105,13 +107,16 @@ export async function headlessTool(host: "omp" | "pi", endpoint: string, role: "
 			}
 		} catch (error) { cleanupErrors.push(error); }
 		try { run.capture.stop(); } catch (error) { cleanupErrors.push(error); }
-		try { run.root.dispose(); } catch (error) { cleanupErrors.push(error); }
+		// Preserve owned raw evidence if export or capture cleanup failed.
+		if (!cleanupErrors.length) {
+			try { run.root.dispose(); } catch (error) { cleanupErrors.push(error); }
+		}
 		if (cleanupErrors.length) {
 			if (destination) {
 				try { writeFileSync(join(destination, "cleanup-errors.json"), JSON.stringify(cleanupErrors.map(error => error instanceof Error ? error.stack ?? error.message : String(error)), null, 2)); }
 				catch (error) { cleanupErrors.push(error); }
 			}
-			throw Object.assign(new Error("Headless native evidence/cleanup failed"), { originalError, cleanupErrors });
+			throw Object.assign(new Error(`Headless native evidence/cleanup failed; owned raw root: ${run.root.path}`), { originalError, cleanupErrors });
 		}
 	}
 }
