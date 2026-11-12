@@ -1,0 +1,873 @@
+{
+  "scope": "Native tools and real backend; controlled provider/Herdr, not model or real Tab acceptance",
+  "observations": [
+    {
+      "name": "run",
+      "params": {
+        "action": "status"
+      },
+      "isError": false,
+      "body": {
+        "blocked": {
+          "inside": [
+            "Run 输入尚未由管理者检查并确认；请先 prepare_inputs。"
+          ]
+        },
+        "canFinish": false,
+        "pendingReports": {},
+        "ready": [],
+        "reports": [],
+        "snapshot": {
+          "createdAt": 1794512277126,
+          "fileInputs": [],
+          "finished": null,
+          "id": "bc-49eb26272c7f",
+          "inputsReady": false,
+          "manager": {
+            "agentName": "chat-28dd64322425",
+            "paneId": "w-node-dock:pf0a474",
+            "sessionId": "01a1d144-4b75-731f-bea6-8319289a0cca",
+            "tabId": "w-node-dock:tf0a474",
+            "workspaceId": "w-node-dock"
+          },
+          "managerTaskId": "task-18e763687b0a0fe0-0",
+          "managerZoneId": "test/inner",
+          "map": "inner.json",
+          "nodes": {
+            "inside": {
+              "completion": null,
+              "execution": null,
+              "failure": null,
+              "previousExecutions": [],
+              "status": "pending"
+            }
+          },
+          "parent": {
+            "executionId": "bc-c3d259da906a",
+            "nodeId": "call",
+            "runId": "bc-e56564688096"
+          },
+          "status": "running",
+          "userInput": "OUTER",
+          "workspaceName": "omp-dock-workflow-backend-uyqi1M",
+          "zone": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-dual-Gn4tNm\\work",
+          "zoneBindings": {
+            "test/inner": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-dual-Gn4tNm\\work"
+          }
+        }
+      }
+    },
+    {
+      "name": "report",
+      "params": {
+        "body": "Premature",
+        "can_complete": true
+      },
+      "isError": true,
+      "body": {
+        "code": "child-run-not-finished",
+        "message": "子 Run 必须显式 finish 后才能提交 canComplete=true；进展报告请使用 false。"
+      }
+    },
+    {
+      "name": "report",
+      "params": {
+        "body": "Progress only",
+        "can_complete": false
+      },
+      "isError": false,
+      "body": {
+        "diagnostic": {
+          "status": "written"
+        },
+        "guidance": "报告已保存。不要仅因通知失败重复 report；报告不等于完成，管理者仍须显式交接。",
+        "notification": {
+          "reason": "Herdr 已确认输入提交；不代表可靠接收、已呈现或已阅读。",
+          "status": "submitted"
+        },
+        "report": {
+          "at": 1794512277371,
+          "body": "Progress only",
+          "canComplete": false,
+          "executionId": "bc-c3d259da906a",
+          "from": {
+            "agentName": "chat-28dd64322425",
+            "paneId": "w-node-dock:pf0a474",
+            "sessionId": "01a1d144-4b75-731f-bea6-8319289a0cca",
+            "tabId": "w-node-dock:tf0a474",
+            "workspaceId": "w-node-dock"
+          },
+          "id": "bc-9f2fd9f4a03e",
+          "nodeId": "call",
+          "outputs": [],
+          "runId": "bc-e56564688096",
+          "to": {
+            "agentName": "chat-dd603caf98bc",
+            "paneId": "w-node-dock:p891800",
+            "sessionId": "outer-manager",
+            "tabId": "w-node-dock:t891800",
+            "workspaceId": "w-node-dock"
+          },
+          "type": "report"
+        },
+        "saved": true
+      }
+    },
+    {
+      "name": "run",
+      "params": {
+        "action": "prepare_inputs",
+        "fileInputs": [],
+        "confirmed": true,
+        "reason": "已审阅内部文本输入，无文件要求"
+      },
+      "isError": false,
+      "body": {
+        "blocked": {
+          "inside": []
+        },
+        "canFinish": false,
+        "changed": true,
+        "historyError": null,
+        "pendingReports": {},
+        "ready": [
+          "inside"
+        ],
+        "reports": [],
+        "snapshot": {
+          "createdAt": 1794512277126,
+          "fileInputs": [],
+          "finished": null,
+          "id": "bc-49eb26272c7f",
+          "inputsReady": true,
+          "manager": {
+            "agentName": "chat-28dd64322425",
+            "paneId": "w-node-dock:pf0a474",
+            "sessionId": "01a1d144-4b75-731f-bea6-8319289a0cca",
+            "tabId": "w-node-dock:tf0a474",
+            "workspaceId": "w-node-dock"
+          },
+          "managerTaskId": "task-18e763687b0a0fe0-0",
+          "managerZoneId": "test/inner",
+          "map": "inner.json",
+          "nodes": {
+            "inside": {
+              "completion": null,
+              "execution": null,
+              "failure": null,
+              "previousExecutions": [],
+              "status": "pending"
+            }
+          },
+          "parent": {
+            "executionId": "bc-c3d259da906a",
+            "nodeId": "call",
+            "runId": "bc-e56564688096"
+          },
+          "status": "running",
+          "userInput": "OUTER",
+          "workspaceName": "omp-dock-workflow-backend-uyqi1M",
+          "zone": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-dual-Gn4tNm\\work",
+          "zoneBindings": {
+            "test/inner": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-dual-Gn4tNm\\work"
+          }
+        }
+      }
+    },
+    {
+      "name": "run",
+      "params": {
+        "action": "dispatch",
+        "nodes": [
+          "inside"
+        ]
+      },
+      "isError": false,
+      "body": {
+        "blocked": {
+          "inside": [
+            "node 状态为 running，仅 pending 可派发"
+          ]
+        },
+        "canFinish": false,
+        "pendingReports": {},
+        "ready": [],
+        "reports": [],
+        "results": [
+          {
+            "effects": {
+              "agentName": "chat-a32a1716b192",
+              "agentStarted": true,
+              "associationSaved": true,
+              "childRecordsInitialized": false,
+              "inputAttempted": true,
+              "inputOutcome": "submitted",
+              "inputSubmitted": true,
+              "paneId": "w-node-dock:p4c8734",
+              "recordsInitialized": true,
+              "sessionId": "internal-worker",
+              "tabId": "w-node-dock:t4c8734",
+              "workspaceId": "w-node-dock"
+            },
+            "historyError": null,
+            "nodeId": "inside",
+            "status": "running"
+          }
+        ],
+        "snapshot": {
+          "createdAt": 1794512277126,
+          "fileInputs": [],
+          "finished": null,
+          "id": "bc-49eb26272c7f",
+          "inputsReady": true,
+          "manager": {
+            "agentName": "chat-28dd64322425",
+            "paneId": "w-node-dock:pf0a474",
+            "sessionId": "01a1d144-4b75-731f-bea6-8319289a0cca",
+            "tabId": "w-node-dock:tf0a474",
+            "workspaceId": "w-node-dock"
+          },
+          "managerTaskId": "task-18e763687b0a0fe0-0",
+          "managerZoneId": "test/inner",
+          "map": "inner.json",
+          "nodes": {
+            "inside": {
+              "completion": null,
+              "execution": {
+                "agent": "omp",
+                "autoClose": false,
+                "chat": {
+                  "agentName": "chat-a32a1716b192",
+                  "paneId": "w-node-dock:p4c8734",
+                  "sessionId": "internal-worker",
+                  "tabId": "w-node-dock:t4c8734",
+                  "workspaceId": "w-node-dock"
+                },
+                "id": "bc-9db03d83b9e4",
+                "inputRule": [],
+                "inputs": [],
+                "outputRule": [],
+                "reportPolicy": "auto",
+                "taskId": "task-18e763687b5d356c-1",
+                "zone": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-dual-Gn4tNm\\work"
+              },
+              "failure": null,
+              "previousExecutions": [],
+              "status": "running"
+            }
+          },
+          "parent": {
+            "executionId": "bc-c3d259da906a",
+            "nodeId": "call",
+            "runId": "bc-e56564688096"
+          },
+          "status": "running",
+          "userInput": "OUTER",
+          "workspaceName": "omp-dock-workflow-backend-uyqi1M",
+          "zone": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-dual-Gn4tNm\\work",
+          "zoneBindings": {
+            "test/inner": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-dual-Gn4tNm\\work"
+          }
+        }
+      }
+    },
+    {
+      "name": "collect",
+      "params": {},
+      "isError": false,
+      "body": {
+        "blocked": {
+          "inside": [
+            "node 状态为 running，仅 pending 可派发"
+          ]
+        },
+        "canFinish": false,
+        "pendingReports": {
+          "inside": "bc-57d16fcb4da7"
+        },
+        "ready": [],
+        "reason": "notification",
+        "snapshot": {
+          "createdAt": 1794512277126,
+          "fileInputs": [],
+          "finished": null,
+          "id": "bc-49eb26272c7f",
+          "inputsReady": true,
+          "manager": {
+            "agentName": "chat-28dd64322425",
+            "paneId": "w-node-dock:pf0a474",
+            "sessionId": "01a1d144-4b75-731f-bea6-8319289a0cca",
+            "tabId": "w-node-dock:tf0a474",
+            "workspaceId": "w-node-dock"
+          },
+          "managerTaskId": "task-18e763687b0a0fe0-0",
+          "managerZoneId": "test/inner",
+          "map": "inner.json",
+          "nodes": {
+            "inside": {
+              "completion": null,
+              "execution": {
+                "agent": "omp",
+                "autoClose": false,
+                "chat": {
+                  "agentName": "chat-a32a1716b192",
+                  "paneId": "w-node-dock:p4c8734",
+                  "sessionId": "internal-worker",
+                  "tabId": "w-node-dock:t4c8734",
+                  "workspaceId": "w-node-dock"
+                },
+                "id": "bc-9db03d83b9e4",
+                "inputRule": [],
+                "inputs": [],
+                "outputRule": [],
+                "reportPolicy": "auto",
+                "taskId": "task-18e763687b5d356c-1",
+                "zone": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-dual-Gn4tNm\\work"
+              },
+              "failure": null,
+              "previousExecutions": [],
+              "status": "running"
+            }
+          },
+          "parent": {
+            "executionId": "bc-c3d259da906a",
+            "nodeId": "call",
+            "runId": "bc-e56564688096"
+          },
+          "status": "running",
+          "userInput": "OUTER",
+          "workspaceName": "omp-dock-workflow-backend-uyqi1M",
+          "zone": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-dual-Gn4tNm\\work",
+          "zoneBindings": {
+            "test/inner": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-dual-Gn4tNm\\work"
+          }
+        }
+      }
+    },
+    {
+      "name": "run",
+      "params": {
+        "action": "complete",
+        "nodeId": "inside",
+        "reason": "Internal handoff accepted"
+      },
+      "isError": false,
+      "body": {
+        "blocked": {
+          "inside": [
+            "node 状态为 completed，仅 pending 可派发"
+          ]
+        },
+        "canFinish": true,
+        "changed": true,
+        "historyError": null,
+        "pendingReports": {},
+        "ready": [],
+        "reports": [
+          {
+            "at": 1794512277563,
+            "body": "Internal done",
+            "canComplete": true,
+            "executionId": "bc-9db03d83b9e4",
+            "from": {
+              "agentName": "chat-a32a1716b192",
+              "paneId": "w-node-dock:p4c8734",
+              "sessionId": "internal-worker",
+              "tabId": "w-node-dock:t4c8734",
+              "workspaceId": "w-node-dock"
+            },
+            "id": "bc-57d16fcb4da7",
+            "nodeId": "inside",
+            "outputs": [],
+            "runId": "bc-49eb26272c7f",
+            "to": {
+              "agentName": "chat-28dd64322425",
+              "paneId": "w-node-dock:pf0a474",
+              "sessionId": "01a1d144-4b75-731f-bea6-8319289a0cca",
+              "tabId": "w-node-dock:tf0a474",
+              "workspaceId": "w-node-dock"
+            },
+            "type": "report"
+          }
+        ],
+        "snapshot": {
+          "createdAt": 1794512277126,
+          "fileInputs": [],
+          "finished": null,
+          "id": "bc-49eb26272c7f",
+          "inputsReady": true,
+          "manager": {
+            "agentName": "chat-28dd64322425",
+            "paneId": "w-node-dock:pf0a474",
+            "sessionId": "01a1d144-4b75-731f-bea6-8319289a0cca",
+            "tabId": "w-node-dock:tf0a474",
+            "workspaceId": "w-node-dock"
+          },
+          "managerTaskId": "task-18e763687b0a0fe0-0",
+          "managerZoneId": "test/inner",
+          "map": "inner.json",
+          "nodes": {
+            "inside": {
+              "completion": {
+                "actor": {
+                  "agentName": "chat-28dd64322425",
+                  "paneId": "w-node-dock:pf0a474",
+                  "sessionId": "01a1d144-4b75-731f-bea6-8319289a0cca",
+                  "tabId": "w-node-dock:tf0a474",
+                  "workspaceId": "w-node-dock"
+                },
+                "at": 1794512277630,
+                "id": "bc-c578540dc9b8",
+                "reason": "Internal handoff accepted"
+              },
+              "execution": {
+                "agent": "omp",
+                "autoClose": false,
+                "chat": {
+                  "agentName": "chat-a32a1716b192",
+                  "paneId": "w-node-dock:p4c8734",
+                  "sessionId": "internal-worker",
+                  "tabId": "w-node-dock:t4c8734",
+                  "workspaceId": "w-node-dock"
+                },
+                "id": "bc-9db03d83b9e4",
+                "inputRule": [],
+                "inputs": [],
+                "outputRule": [],
+                "reportPolicy": "auto",
+                "taskId": "task-18e763687b5d356c-1",
+                "zone": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-dual-Gn4tNm\\work"
+              },
+              "failure": null,
+              "previousExecutions": [],
+              "status": "completed"
+            }
+          },
+          "parent": {
+            "executionId": "bc-c3d259da906a",
+            "nodeId": "call",
+            "runId": "bc-e56564688096"
+          },
+          "status": "running",
+          "userInput": "OUTER",
+          "workspaceName": "omp-dock-workflow-backend-uyqi1M",
+          "zone": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-dual-Gn4tNm\\work",
+          "zoneBindings": {
+            "test/inner": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-dual-Gn4tNm\\work"
+          }
+        }
+      }
+    },
+    {
+      "name": "report",
+      "params": {
+        "body": "Completed nodes but not finished",
+        "can_complete": true
+      },
+      "isError": true,
+      "body": {
+        "code": "child-run-not-finished",
+        "message": "子 Run 必须显式 finish 后才能提交 canComplete=true；进展报告请使用 false。"
+      }
+    },
+    {
+      "name": "run",
+      "params": {
+        "action": "finish"
+      },
+      "isError": false,
+      "body": {
+        "blocked": {
+          "inside": [
+            "Run 状态为 completed",
+            "node 状态为 completed，仅 pending 可派发"
+          ]
+        },
+        "canFinish": false,
+        "changed": true,
+        "historyError": null,
+        "pendingReports": {},
+        "ready": [],
+        "reports": [
+          {
+            "at": 1794512277563,
+            "body": "Internal done",
+            "canComplete": true,
+            "executionId": "bc-9db03d83b9e4",
+            "from": {
+              "agentName": "chat-a32a1716b192",
+              "paneId": "w-node-dock:p4c8734",
+              "sessionId": "internal-worker",
+              "tabId": "w-node-dock:t4c8734",
+              "workspaceId": "w-node-dock"
+            },
+            "id": "bc-57d16fcb4da7",
+            "nodeId": "inside",
+            "outputs": [],
+            "runId": "bc-49eb26272c7f",
+            "to": {
+              "agentName": "chat-28dd64322425",
+              "paneId": "w-node-dock:pf0a474",
+              "sessionId": "01a1d144-4b75-731f-bea6-8319289a0cca",
+              "tabId": "w-node-dock:tf0a474",
+              "workspaceId": "w-node-dock"
+            },
+            "type": "report"
+          }
+        ],
+        "snapshot": {
+          "createdAt": 1794512277126,
+          "fileInputs": [],
+          "finished": {
+            "actor": {
+              "agentName": "chat-28dd64322425",
+              "paneId": "w-node-dock:pf0a474",
+              "sessionId": "01a1d144-4b75-731f-bea6-8319289a0cca",
+              "tabId": "w-node-dock:tf0a474",
+              "workspaceId": "w-node-dock"
+            },
+            "at": 1794512277702,
+            "id": "bc-5bdf5376454d"
+          },
+          "id": "bc-49eb26272c7f",
+          "inputsReady": true,
+          "manager": {
+            "agentName": "chat-28dd64322425",
+            "paneId": "w-node-dock:pf0a474",
+            "sessionId": "01a1d144-4b75-731f-bea6-8319289a0cca",
+            "tabId": "w-node-dock:tf0a474",
+            "workspaceId": "w-node-dock"
+          },
+          "managerTaskId": "task-18e763687b0a0fe0-0",
+          "managerZoneId": "test/inner",
+          "map": "inner.json",
+          "nodes": {
+            "inside": {
+              "completion": {
+                "actor": {
+                  "agentName": "chat-28dd64322425",
+                  "paneId": "w-node-dock:pf0a474",
+                  "sessionId": "01a1d144-4b75-731f-bea6-8319289a0cca",
+                  "tabId": "w-node-dock:tf0a474",
+                  "workspaceId": "w-node-dock"
+                },
+                "at": 1794512277630,
+                "id": "bc-c578540dc9b8",
+                "reason": "Internal handoff accepted"
+              },
+              "execution": {
+                "agent": "omp",
+                "autoClose": false,
+                "chat": {
+                  "agentName": "chat-a32a1716b192",
+                  "paneId": "w-node-dock:p4c8734",
+                  "sessionId": "internal-worker",
+                  "tabId": "w-node-dock:t4c8734",
+                  "workspaceId": "w-node-dock"
+                },
+                "id": "bc-9db03d83b9e4",
+                "inputRule": [],
+                "inputs": [],
+                "outputRule": [],
+                "reportPolicy": "auto",
+                "taskId": "task-18e763687b5d356c-1",
+                "zone": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-dual-Gn4tNm\\work"
+              },
+              "failure": null,
+              "previousExecutions": [],
+              "status": "completed"
+            }
+          },
+          "parent": {
+            "executionId": "bc-c3d259da906a",
+            "nodeId": "call",
+            "runId": "bc-e56564688096"
+          },
+          "status": "completed",
+          "userInput": "OUTER",
+          "workspaceName": "omp-dock-workflow-backend-uyqi1M",
+          "zone": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-dual-Gn4tNm\\work",
+          "zoneBindings": {
+            "test/inner": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-dual-Gn4tNm\\work"
+          }
+        }
+      }
+    },
+    {
+      "name": "report",
+      "params": {
+        "body": "Finished handoff",
+        "can_complete": true,
+        "outputs": [
+          {
+            "id": "result",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-dual-Gn4tNm\\work\\result.txt"
+          }
+        ]
+      },
+      "isError": false,
+      "body": {
+        "diagnostic": {
+          "status": "written"
+        },
+        "guidance": "报告已保存。不要仅因通知失败重复 report；报告不等于完成，管理者仍须显式交接。",
+        "notification": {
+          "reason": "Herdr 已确认输入提交；不代表可靠接收、已呈现或已阅读。",
+          "status": "submitted"
+        },
+        "report": {
+          "at": 1794512277734,
+          "body": "Finished handoff",
+          "canComplete": true,
+          "executionId": "bc-c3d259da906a",
+          "from": {
+            "agentName": "chat-28dd64322425",
+            "paneId": "w-node-dock:pf0a474",
+            "sessionId": "01a1d144-4b75-731f-bea6-8319289a0cca",
+            "tabId": "w-node-dock:tf0a474",
+            "workspaceId": "w-node-dock"
+          },
+          "id": "bc-d4932810c166",
+          "nodeId": "call",
+          "outputs": [
+            {
+              "id": "result",
+              "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-dual-Gn4tNm\\work\\result.txt"
+            }
+          ],
+          "runId": "bc-e56564688096",
+          "to": {
+            "agentName": "chat-dd603caf98bc",
+            "paneId": "w-node-dock:p891800",
+            "sessionId": "outer-manager",
+            "tabId": "w-node-dock:t891800",
+            "workspaceId": "w-node-dock"
+          },
+          "type": "report"
+        },
+        "saved": true
+      }
+    },
+    {
+      "name": "report",
+      "params": {
+        "body": "Latest report withdraws readiness",
+        "can_complete": false
+      },
+      "isError": false,
+      "body": {
+        "diagnostic": {
+          "status": "written"
+        },
+        "guidance": "报告已保存。不要仅因通知失败重复 report；报告不等于完成，管理者仍须显式交接。",
+        "notification": {
+          "reason": "Herdr 已确认输入提交；不代表可靠接收、已呈现或已阅读。",
+          "status": "submitted"
+        },
+        "report": {
+          "at": 1794512277807,
+          "body": "Latest report withdraws readiness",
+          "canComplete": false,
+          "executionId": "bc-c3d259da906a",
+          "from": {
+            "agentName": "chat-28dd64322425",
+            "paneId": "w-node-dock:pf0a474",
+            "sessionId": "01a1d144-4b75-731f-bea6-8319289a0cca",
+            "tabId": "w-node-dock:tf0a474",
+            "workspaceId": "w-node-dock"
+          },
+          "id": "bc-a3a98ed55d7b",
+          "nodeId": "call",
+          "outputs": [],
+          "runId": "bc-e56564688096",
+          "to": {
+            "agentName": "chat-dd603caf98bc",
+            "paneId": "w-node-dock:p891800",
+            "sessionId": "outer-manager",
+            "tabId": "w-node-dock:t891800",
+            "workspaceId": "w-node-dock"
+          },
+          "type": "report"
+        },
+        "saved": true
+      }
+    },
+    {
+      "name": "report",
+      "params": {
+        "body": "Latest report restores readiness",
+        "can_complete": true,
+        "outputs": [
+          {
+            "id": "result",
+            "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-dual-Gn4tNm\\work\\result.txt"
+          }
+        ]
+      },
+      "isError": false,
+      "body": {
+        "diagnostic": {
+          "status": "written"
+        },
+        "guidance": "报告已保存。不要仅因通知失败重复 report；报告不等于完成，管理者仍须显式交接。",
+        "notification": {
+          "reason": "Herdr 已确认输入提交；不代表可靠接收、已呈现或已阅读。",
+          "status": "submitted"
+        },
+        "report": {
+          "at": 1794512277990,
+          "body": "Latest report restores readiness",
+          "canComplete": true,
+          "executionId": "bc-c3d259da906a",
+          "from": {
+            "agentName": "chat-28dd64322425",
+            "paneId": "w-node-dock:pf0a474",
+            "sessionId": "01a1d144-4b75-731f-bea6-8319289a0cca",
+            "tabId": "w-node-dock:tf0a474",
+            "workspaceId": "w-node-dock"
+          },
+          "id": "bc-0093efbfd90c",
+          "nodeId": "call",
+          "outputs": [
+            {
+              "id": "result",
+              "path": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-dual-Gn4tNm\\work\\result.txt"
+            }
+          ],
+          "runId": "bc-e56564688096",
+          "to": {
+            "agentName": "chat-dd603caf98bc",
+            "paneId": "w-node-dock:p891800",
+            "sessionId": "outer-manager",
+            "tabId": "w-node-dock:t891800",
+            "workspaceId": "w-node-dock"
+          },
+          "type": "report"
+        },
+        "saved": true
+      }
+    },
+    {
+      "name": "run",
+      "params": {
+        "action": "status"
+      },
+      "isError": false,
+      "body": {
+        "blocked": {
+          "inside": [
+            "Run 状态为 completed",
+            "node 状态为 completed，仅 pending 可派发"
+          ]
+        },
+        "canFinish": false,
+        "pendingReports": {},
+        "ready": [],
+        "reports": [
+          {
+            "at": 1794512277563,
+            "body": "Internal done",
+            "canComplete": true,
+            "executionId": "bc-9db03d83b9e4",
+            "from": {
+              "agentName": "chat-a32a1716b192",
+              "paneId": "w-node-dock:p4c8734",
+              "sessionId": "internal-worker",
+              "tabId": "w-node-dock:t4c8734",
+              "workspaceId": "w-node-dock"
+            },
+            "id": "bc-57d16fcb4da7",
+            "nodeId": "inside",
+            "outputs": [],
+            "runId": "bc-49eb26272c7f",
+            "to": {
+              "agentName": "chat-28dd64322425",
+              "paneId": "w-node-dock:pf0a474",
+              "sessionId": "01a1d144-4b75-731f-bea6-8319289a0cca",
+              "tabId": "w-node-dock:tf0a474",
+              "workspaceId": "w-node-dock"
+            },
+            "type": "report"
+          }
+        ],
+        "snapshot": {
+          "createdAt": 1794512277126,
+          "fileInputs": [],
+          "finished": {
+            "actor": {
+              "agentName": "chat-28dd64322425",
+              "paneId": "w-node-dock:pf0a474",
+              "sessionId": "01a1d144-4b75-731f-bea6-8319289a0cca",
+              "tabId": "w-node-dock:tf0a474",
+              "workspaceId": "w-node-dock"
+            },
+            "at": 1794512277702,
+            "id": "bc-5bdf5376454d"
+          },
+          "id": "bc-49eb26272c7f",
+          "inputsReady": true,
+          "manager": {
+            "agentName": "chat-28dd64322425",
+            "paneId": "w-node-dock:pf0a474",
+            "sessionId": "01a1d144-4b75-731f-bea6-8319289a0cca",
+            "tabId": "w-node-dock:tf0a474",
+            "workspaceId": "w-node-dock"
+          },
+          "managerTaskId": "task-18e763687b0a0fe0-0",
+          "managerZoneId": "test/inner",
+          "map": "inner.json",
+          "nodes": {
+            "inside": {
+              "completion": {
+                "actor": {
+                  "agentName": "chat-28dd64322425",
+                  "paneId": "w-node-dock:pf0a474",
+                  "sessionId": "01a1d144-4b75-731f-bea6-8319289a0cca",
+                  "tabId": "w-node-dock:tf0a474",
+                  "workspaceId": "w-node-dock"
+                },
+                "at": 1794512277630,
+                "id": "bc-c578540dc9b8",
+                "reason": "Internal handoff accepted"
+              },
+              "execution": {
+                "agent": "omp",
+                "autoClose": false,
+                "chat": {
+                  "agentName": "chat-a32a1716b192",
+                  "paneId": "w-node-dock:p4c8734",
+                  "sessionId": "internal-worker",
+                  "tabId": "w-node-dock:t4c8734",
+                  "workspaceId": "w-node-dock"
+                },
+                "id": "bc-9db03d83b9e4",
+                "inputRule": [],
+                "inputs": [],
+                "outputRule": [],
+                "reportPolicy": "auto",
+                "taskId": "task-18e763687b5d356c-1",
+                "zone": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-dual-Gn4tNm\\work"
+              },
+              "failure": null,
+              "previousExecutions": [],
+              "status": "completed"
+            }
+          },
+          "parent": {
+            "executionId": "bc-c3d259da906a",
+            "nodeId": "call",
+            "runId": "bc-e56564688096"
+          },
+          "status": "completed",
+          "userInput": "OUTER",
+          "workspaceName": "omp-dock-workflow-backend-uyqi1M",
+          "zone": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-dual-Gn4tNm\\work",
+          "zoneBindings": {
+            "test/inner": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-dual-Gn4tNm\\work"
+          }
+        }
+      }
+    }
+  ],
+  "backendCalls": "{\"argv\":[\"workspace\",\"list\"],\"at\":1794512276965,\"kind\":\"workspace_list\"}\n{\"argv\":[\"tab\",\"create\",\"--workspace\",\"w-node-dock\",\"--cwd\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-workflow-backend-uyqi1M\",\"--label\",\"6170c2\",\"--no-focus\"],\"at\":1794512276978,\"cwd\":\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-workflow-backend-uyqi1M\",\"kind\":\"tab_create\",\"label\":\"6170c2\",\"workspace\":\"w-node-dock\"}\n{\"agent_kind\":\"omp\",\"args\":[\"--no-extensions\",\"--extension\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-4rOpvQ\\\\entrypoints\\\\omp-auto\\\\node-chat.ts\",\"--extension\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-4rOpvQ\\\\entrypoints\\\\omp-auto\\\\node-chat.ts\",\"--extension\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-4rOpvQ\\\\entrypoints\\\\omp-auto\\\\node-chat.ts\",\"--extension\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-4rOpvQ\\\\entrypoints\\\\omp-auto\\\\node-chat.ts\"],\"argv\":[\"agent\",\"start\",\"chat-91d3a4a604fd\",\"--kind\",\"omp\",\"--pane\",\"w-node-dock:p692120\",\"--timeout\",\"30000\",\"--\",\"--no-extensions\",\"--extension\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-4rOpvQ\\\\entrypoints\\\\omp-auto\\\\node-chat.ts\",\"--extension\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-4rOpvQ\\\\entrypoints\\\\omp-auto\\\\node-chat.ts\",\"--extension\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-4rOpvQ\\\\entrypoints\\\\omp-auto\\\\node-chat.ts\",\"--extension\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-4rOpvQ\\\\entrypoints\\\\omp-auto\\\\node-chat.ts\"],\"at\":1794512276994,\"kind\":\"agent_start\",\"name\":\"chat-91d3a4a604fd\",\"pane\":\"w-node-dock:p692120\"}\n{\"argv\":[\"agent\",\"get\",\"chat-91d3a4a604fd\"],\"at\":1794512277008,\"kind\":\"agent_get\",\"pid\":12684,\"target\":\"chat-91d3a4a604fd\"}\n{\"argv\":[\"workspace\",\"list\"],\"at\":1794512277049,\"kind\":\"workspace_list\"}\n{\"argv\":[\"tab\",\"create\",\"--workspace\",\"w-node-dock\",\"--cwd\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-workflow-backend-uyqi1M\",\"--label\",\"e51cab\",\"--no-focus\"],\"at\":1794512277064,\"cwd\":\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-workflow-backend-uyqi1M\",\"kind\":\"tab_create\",\"label\":\"e51cab\",\"workspace\":\"w-node-dock\"}\n{\"agent_kind\":\"omp\",\"args\":[\"--model\",\"openai-codex/gpt-6.1-sol\",\"--thinking\",\"high\",\"--no-extensions\",\"--extension\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-4rOpvQ\\\\entrypoints\\\\omp-auto\\\\node-chat.ts\",\"--extension\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-4rOpvQ\\\\entrypoints\\\\omp-auto\\\\node-chat.ts\",\"--extension\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-4rOpvQ\\\\entrypoints\\\\omp-auto\\\\node-chat.ts\",\"--extension\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-4rOpvQ\\\\entrypoints\\\\omp-auto\\\\node-chat.ts\"],\"argv\":[\"agent\",\"start\",\"chat-dd603caf98bc\",\"--kind\",\"omp\",\"--pane\",\"w-node-dock:p891800\",\"--timeout\",\"30000\",\"--\",\"--model\",\"openai-codex/gpt-6.1-sol\",\"--thinking\",\"high\",\"--no-extensions\",\"--extension\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-4rOpvQ\\\\entrypoints\\\\omp-auto\\\\node-chat.ts\",\"--extension\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-4rOpvQ\\\\entrypoints\\\\omp-auto\\\\node-chat.ts\",\"--extension\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-4rOpvQ\\\\entrypoints\\\\omp-auto\\\\node-chat.ts\",\"--extension\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-4rOpvQ\\\\entrypoints\\\\omp-auto\\\\node-chat.ts\"],\"at\":1794512277079,\"kind\":\"agent_start\",\"name\":\"chat-dd603caf98bc\",\"pane\":\"w-node-dock:p891800\"}\n{\"argv\":[\"agent\",\"get\",\"chat-dd603caf98bc\"],\"at\":1794512277093,\"kind\":\"agent_get\",\"pid\":6536,\"target\":\"chat-dd603caf98bc\"}\n{\"argv\":[\"agent\",\"prompt\",\"chat-dd603caf98bc\",\"Controlled mechanism input\\n\\nRun ID: bc-e56564688096\\nMap: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-workflow-backend-uyqi1M\\\\maps\\\\outer.json\\n运行说明: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-Pe756W\\\\docs\\\\workflow-runtime.md\\n当前状态: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-workflow-backend-uyqi1M\\\\runs\\\\bc-e56564688096\\\\run.json\\n执行历史: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-workflow-backend-uyqi1M\\\\runs\\\\bc-e56564688096\\\\history.jsonl\\n报告记录: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-workflow-backend-uyqi1M\\\\runs\\\\bc-e56564688096\\\\messages.jsonl\\n中间资料位置: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-workflow-backend-uyqi1M\\\\.manager-zone\\\\.workflow\\\\bc-e56564688096\\n\\nNested native mechanism\"],\"at\":1794512277111,\"kind\":\"agent_prompt\",\"target\":\"chat-dd603caf98bc\",\"text\":\"Controlled mechanism input\\n\\nRun ID: bc-e56564688096\\nMap: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-workflow-backend-uyqi1M\\\\maps\\\\outer.json\\n运行说明: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-Pe756W\\\\docs\\\\workflow-runtime.md\\n当前状态: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-workflow-backend-uyqi1M\\\\runs\\\\bc-e56564688096\\\\run.json\\n执行历史: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-workflow-backend-uyqi1M\\\\runs\\\\bc-e56564688096\\\\history.jsonl\\n报告记录: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-workflow-backend-uyqi1M\\\\runs\\\\bc-e56564688096\\\\messages.jsonl\\n中间资料位置: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-workflow-backend-uyqi1M\\\\.manager-zone\\\\.workflow\\\\bc-e56564688096\\n\\nNested native mechanism\"}\n{\"argv\":[\"workspace\",\"list\"],\"at\":1794512277142,\"kind\":\"workspace_list\"}\n{\"argv\":[\"tab\",\"create\",\"--workspace\",\"w-node-dock\",\"--cwd\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-role-prompt-dual-Gn4tNm\\\\work\",\"--label\",\"e1a810\",\"--no-focus\"],\"at\":1794512277155,\"cwd\":\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-role-prompt-dual-Gn4tNm\\\\work\",\"kind\":\"tab_create\",\"label\":\"e1a810\",\"workspace\":\"w-node-dock\"}\n{\"agent_kind\":\"omp\",\"args\":[\"--model\",\"openai-codex/gpt-6.1-sol\",\"--thinking\",\"high\",\"--no-extensions\",\"--extension\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-4rOpvQ\\\\entrypoints\\\\omp-auto\\\\node-chat.ts\",\"--extension\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-4rOpvQ\\\\entrypoints\\\\omp-auto\\\\node-chat.ts\",\"--extension\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-4rOpvQ\\\\entrypoints\\\\omp-auto\\\\node-chat.ts\",\"--extension\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-4rOpvQ\\\\entrypoints\\\\omp-auto\\\\node-chat.ts\",\"--extension\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-4rOpvQ\\\\entrypoints\\\\omp-auto\\\\node-chat.ts\"],\"argv\":[\"agent\",\"start\",\"chat-28dd64322425\",\"--kind\",\"omp\",\"--pane\",\"w-node-dock:pf0a474\",\"--timeout\",\"30000\",\"--\",\"--model\",\"openai-codex/gpt-6.1-sol\",\"--thinking\",\"high\",\"--no-extensions\",\"--extension\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-4rOpvQ\\\\entrypoints\\\\omp-auto\\\\node-chat.ts\",\"--extension\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-4rOpvQ\\\\entrypoints\\\\omp-auto\\\\node-chat.ts\",\"--extension\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-4rOpvQ\\\\entrypoints\\\\omp-auto\\\\node-chat.ts\",\"--extension\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-4rOpvQ\\\\entrypoints\\\\omp-auto\\\\node-chat.ts\",\"--extension\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-4rOpvQ\\\\entrypoints\\\\omp-auto\\\\node-chat.ts\"],\"at\":1794512277170,\"kind\":\"agent_start\",\"name\":\"chat-28dd64322425\",\"pane\":\"w-node-dock:pf0a474\"}\n{\"argv\":[\"agent\",\"get\",\"chat-28dd64322425\"],\"at\":1794512277183,\"kind\":\"agent_get\",\"pid\":18788,\"target\":\"chat-28dd64322425\"}\n{\"argv\":[\"agent\",\"prompt\",\"chat-28dd64322425\",\"Controlled mechanism input\\n\\nNode ID: call\\nNode: Nested call\\n运行说明: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-Pe756W\\\\docs\\\\workflow-runtime.md\\n当前状态: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-workflow-backend-uyqi1M\\\\runs\\\\bc-e56564688096\\\\run.json\\n执行历史: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-workflow-backend-uyqi1M\\\\runs\\\\bc-e56564688096\\\\history.jsonl\\n报告记录: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-workflow-backend-uyqi1M\\\\runs\\\\bc-e56564688096\\\\messages.jsonl\\n\\n中间资料位置: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-workflow-backend-uyqi1M\\\\.manager-zone\\\\.workflow\\\\bc-e56564688096\\n\\n[Run background / userInput]\\nNested native mechanism\\n[/Run background / userInput]\\n\\n[Named file inputs]\\n[/Named file inputs]\\n\\n[Output rules]\\n[{\\\"id\\\":\\\"result\\\"}]\\n[/Output rules]\\n\\n[Report policy control]\\nreport_policy: auto\\nReport handoff-ready results without waiting for user confirmation. Reporting does not complete the node; the manager still decides complete.\\n[/Report policy control]\\n\\n[Business input]\\nOUTER\\n\\n[Child Run manager context]\\nRun ID: bc-49eb26272c7f\\nMap: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-workflow-backend-uyqi1M\\\\maps\\\\inner.json\\n当前状态: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-workflow-backend-uyqi1M\\\\runs\\\\bc-49eb26272c7f\\\\run.json\\n执行历史: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-workflow-backend-uyqi1M\\\\runs\\\\bc-49eb26272c7f\\\\history.jsonl\\n报告记录: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-workflow-backend-uyqi1M\\\\runs\\\\bc-49eb26272c7f\\\\messages.jsonl\\n中间资料位置: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-role-prompt-dual-Gn4tNm\\\\work\\\\.manager-zone\\\\.workflow\\\\bc-49eb26272c7f\\n[/Child Run manager context]\"],\"at\":1794512277205,\"kind\":\"agent_prompt\",\"target\":\"chat-28dd64322425\",\"text\":\"Controlled mechanism input\\n\\nNode ID: call\\nNode: Nested call\\n运行说明: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-Pe756W\\\\docs\\\\workflow-runtime.md\\n当前状态: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-workflow-backend-uyqi1M\\\\runs\\\\bc-e56564688096\\\\run.json\\n执行历史: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-workflow-backend-uyqi1M\\\\runs\\\\bc-e56564688096\\\\history.jsonl\\n报告记录: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-workflow-backend-uyqi1M\\\\runs\\\\bc-e56564688096\\\\messages.jsonl\\n\\n中间资料位置: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-workflow-backend-uyqi1M\\\\.manager-zone\\\\.workflow\\\\bc-e56564688096\\n\\n[Run background / userInput]\\nNested native mechanism\\n[/Run background / userInput]\\n\\n[Named file inputs]\\n[/Named file inputs]\\n\\n[Output rules]\\n[{\\\"id\\\":\\\"result\\\"}]\\n[/Output rules]\\n\\n[Report policy control]\\nreport_policy: auto\\nReport handoff-ready results without waiting for user confirmation. Reporting does not complete the node; the manager still decides complete.\\n[/Report policy control]\\n\\n[Business input]\\nOUTER\\n\\n[Child Run manager context]\\nRun ID: bc-49eb26272c7f\\nMap: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-workflow-backend-uyqi1M\\\\maps\\\\inner.json\\n当前状态: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-workflow-backend-uyqi1M\\\\runs\\\\bc-49eb26272c7f\\\\run.json\\n执行历史: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-workflow-backend-uyqi1M\\\\runs\\\\bc-49eb26272c7f\\\\history.jsonl\\n报告记录: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-workflow-backend-uyqi1M\\\\runs\\\\bc-49eb26272c7f\\\\messages.jsonl\\n中间资料位置: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-role-prompt-dual-Gn4tNm\\\\work\\\\.manager-zone\\\\.workflow\\\\bc-49eb26272c7f\\n[/Child Run manager context]\"}\n{\"argv\":[\"agent\",\"prompt\",\"chat-dd603caf98bc\",\"Workflow report\\nRun: bc-e56564688096\\nnode: call\\nReport: bc-9f2fd9f4a03e\\n\\nProgress only\"],\"at\":1794512277386,\"kind\":\"agent_prompt\",\"target\":\"chat-dd603caf98bc\",\"text\":\"Workflow report\\nRun: bc-e56564688096\\nnode: call\\nReport: bc-9f2fd9f4a03e\\n\\nProgress only\"}\n{\"argv\":[\"workspace\",\"list\"],\"at\":1794512277467,\"kind\":\"workspace_list\"}\n{\"argv\":[\"tab\",\"create\",\"--workspace\",\"w-node-dock\",\"--cwd\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-role-prompt-dual-Gn4tNm\\\\work\",\"--label\",\"6c35f9\",\"--no-focus\"],\"at\":1794512277480,\"cwd\":\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-role-prompt-dual-Gn4tNm\\\\work\",\"kind\":\"tab_create\",\"label\":\"6c35f9\",\"workspace\":\"w-node-dock\"}\n{\"agent_kind\":\"omp\",\"args\":[\"--model\",\"openai-codex/gpt-6.1-sol\",\"--thinking\",\"high\",\"--no-extensions\",\"--extension\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-4rOpvQ\\\\entrypoints\\\\omp-auto\\\\node-chat.ts\",\"--extension\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-4rOpvQ\\\\entrypoints\\\\omp-auto\\\\node-chat.ts\",\"--extension\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-4rOpvQ\\\\entrypoints\\\\omp-auto\\\\node-chat.ts\",\"--extension\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-4rOpvQ\\\\entrypoints\\\\omp-auto\\\\node-chat.ts\"],\"argv\":[\"agent\",\"start\",\"chat-a32a1716b192\",\"--kind\",\"omp\",\"--pane\",\"w-node-dock:p4c8734\",\"--timeout\",\"30000\",\"--\",\"--model\",\"openai-codex/gpt-6.1-sol\",\"--thinking\",\"high\",\"--no-extensions\",\"--extension\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-4rOpvQ\\\\entrypoints\\\\omp-auto\\\\node-chat.ts\",\"--extension\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-4rOpvQ\\\\entrypoints\\\\omp-auto\\\\node-chat.ts\",\"--extension\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-4rOpvQ\\\\entrypoints\\\\omp-auto\\\\node-chat.ts\",\"--extension\",\"C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-4rOpvQ\\\\entrypoints\\\\omp-auto\\\\node-chat.ts\"],\"at\":1794512277494,\"kind\":\"agent_start\",\"name\":\"chat-a32a1716b192\",\"pane\":\"w-node-dock:p4c8734\"}\n{\"argv\":[\"agent\",\"get\",\"chat-a32a1716b192\"],\"at\":1794512277507,\"kind\":\"agent_get\",\"pid\":75116,\"target\":\"chat-a32a1716b192\"}\n{\"argv\":[\"agent\",\"prompt\",\"chat-a32a1716b192\",\"Controlled mechanism input\\n\\nNode ID: inside\\nNode: Internal work\\n运行说明: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-Pe756W\\\\docs\\\\workflow-runtime.md\\n当前状态: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-workflow-backend-uyqi1M\\\\runs\\\\bc-49eb26272c7f\\\\run.json\\n执行历史: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-workflow-backend-uyqi1M\\\\runs\\\\bc-49eb26272c7f\\\\history.jsonl\\n报告记录: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-workflow-backend-uyqi1M\\\\runs\\\\bc-49eb26272c7f\\\\messages.jsonl\\n\\n中间资料位置: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-role-prompt-dual-Gn4tNm\\\\work\\\\.manager-zone\\\\.workflow\\\\bc-49eb26272c7f\\n\\n[Run background / userInput]\\nOUTER\\n[/Run background / userInput]\\n\\n[Named file inputs]\\n[/Named file inputs]\\n\\n[Output rules]\\n[]\\n[/Output rules]\\n\\n[Report policy control]\\nreport_policy: auto\\nReport handoff-ready results without waiting for user confirmation. Reporting does not complete the node; the manager still decides complete.\\n[/Report policy control]\\n\\n[Business input]\\nINTERNAL\"],\"at\":1794512277525,\"kind\":\"agent_prompt\",\"target\":\"chat-a32a1716b192\",\"text\":\"Controlled mechanism input\\n\\nNode ID: inside\\nNode: Internal work\\n运行说明: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\hyper-ticket-Pe756W\\\\docs\\\\workflow-runtime.md\\n当前状态: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-workflow-backend-uyqi1M\\\\runs\\\\bc-49eb26272c7f\\\\run.json\\n执行历史: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-workflow-backend-uyqi1M\\\\runs\\\\bc-49eb26272c7f\\\\history.jsonl\\n报告记录: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-workflow-backend-uyqi1M\\\\runs\\\\bc-49eb26272c7f\\\\messages.jsonl\\n\\n中间资料位置: C:\\\\Users\\\\hugos\\\\AppData\\\\Local\\\\Temp\\\\omp-dock-role-prompt-dual-Gn4tNm\\\\work\\\\.manager-zone\\\\.workflow\\\\bc-49eb26272c7f\\n\\n[Run background / userInput]\\nOUTER\\n[/Run background / userInput]\\n\\n[Named file inputs]\\n[/Named file inputs]\\n\\n[Output rules]\\n[]\\n[/Output rules]\\n\\n[Report policy control]\\nreport_policy: auto\\nReport handoff-ready results without waiting for user confirmation. Reporting does not complete the node; the manager still decides complete.\\n[/Report policy control]\\n\\n[Business input]\\nINTERNAL\"}\n{\"argv\":[\"agent\",\"prompt\",\"chat-28dd64322425\",\"Workflow report\\nRun: bc-49eb26272c7f\\nnode: inside\\nReport: bc-57d16fcb4da7\\n\\nInternal done\"],\"at\":1794512277577,\"kind\":\"agent_prompt\",\"target\":\"chat-28dd64322425\",\"text\":\"Workflow report\\nRun: bc-49eb26272c7f\\nnode: inside\\nReport: bc-57d16fcb4da7\\n\\nInternal done\"}\n{\"argv\":[\"agent\",\"prompt\",\"chat-dd603caf98bc\",\"Workflow report\\nRun: bc-e56564688096\\nnode: call\\nReport: bc-d4932810c166\\n\\nFinished handoff\"],\"at\":1794512277749,\"kind\":\"agent_prompt\",\"target\":\"chat-dd603caf98bc\",\"text\":\"Workflow report\\nRun: bc-e56564688096\\nnode: call\\nReport: bc-d4932810c166\\n\\nFinished handoff\"}\n{\"argv\":[\"agent\",\"prompt\",\"chat-dd603caf98bc\",\"Workflow report\\nRun: bc-e56564688096\\nnode: call\\nReport: bc-a3a98ed55d7b\\n\\nLatest report withdraws readiness\"],\"at\":1794512277821,\"kind\":\"agent_prompt\",\"target\":\"chat-dd603caf98bc\",\"text\":\"Workflow report\\nRun: bc-e56564688096\\nnode: call\\nReport: bc-a3a98ed55d7b\\n\\nLatest report withdraws readiness\"}\n{\"argv\":[\"agent\",\"prompt\",\"chat-dd603caf98bc\",\"Workflow report\\nRun: bc-e56564688096\\nnode: call\\nReport: bc-0093efbfd90c\\n\\nLatest report restores readiness\"],\"at\":1794512278004,\"kind\":\"agent_prompt\",\"target\":\"chat-dd603caf98bc\",\"text\":\"Workflow report\\nRun: bc-e56564688096\\nnode: call\\nReport: bc-0093efbfd90c\\n\\nLatest report restores readiness\"}\n{\"argv\":[\"tab\",\"close\",\"w-node-dock:tf0a474\"],\"at\":1794512278083,\"kind\":\"tab_close\",\"target\":\"w-node-dock:tf0a474\"}\n"
+}
