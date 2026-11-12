@@ -19,7 +19,9 @@ for (const host of ["omp", "pi"] as const) {
 	// fabricates sender eligibility. Only native decisions and the external peer vary.
 	test(`${host} chief report refuses denial dismissal cancellation timeout and headless approval`, async () => {
 		const sent: unknown[] = [];
-		const peer = Bun.serve({ hostname: "127.0.0.1", port: 0, async fetch(request) { sent.push(await request.json()); return Response.json({ saved: true }); } });
+		const peer = Bun.serve({ hostname: "127.0.0.1", port: 0, async fetch(request) {
+			if (request.method !== "POST" || new URL(request.url).pathname !== "/api/chief/reports") return new Response(null, { status: 404 });
+			sent.push(await request.json()); return Response.json({ saved: true }); } });
 		let dock: RoleContractDock | undefined;
 		let pending: Promise<void> | undefined;
 		try {
@@ -47,7 +49,9 @@ for (const host of ["omp", "pi"] as const) {
 
 	test(`${host} chief report rejects forged attribution and incomplete reports and preserves backend refusal`, async () => {
 		const sent: unknown[] = [];
-		const peer = Bun.serve({ hostname: "127.0.0.1", port: 0, async fetch(request) { sent.push(await request.json()); return Response.json({ code: "chief-report-unassociated" }, { status: 403 }); } });
+		const peer = Bun.serve({ hostname: "127.0.0.1", port: 0, async fetch(request) {
+			if (request.method !== "POST" || new URL(request.url).pathname !== "/api/chief/reports") return new Response(null, { status: 404 });
+			sent.push(await request.json()); return Response.json({ code: "chief-report-unassociated" }, { status: 403 }); } });
 		const dock = await roleContractDock(host, peer.url.origin, 2000, "chief-report");
 		let pending: Promise<void> | undefined;
 		try {
@@ -80,7 +84,8 @@ for (const host of ["omp", "pi"] as const) {
 	test(`${host} chief report keeps uncertainty when the response is lost after send`, async () => {
 		let count = 0;
 		const sockets = new Set<Socket>();
-		const peer = createServer(async request => {
+		const peer = createServer(async (request, response) => {
+			if (request.method !== "POST" || request.url !== "/api/chief/reports") { response.writeHead(404).end(); return; }
 			for await (const _chunk of request) { /* consume before dropping acknowledgement */ }
 			count++; request.socket.destroy();
 		});
@@ -125,7 +130,10 @@ for (const host of ["omp", "pi"] as const) {
 		let malformed = false;
 		let status = 200;
 		let count = 0;
-		const peer = Bun.serve({ hostname: "127.0.0.1", port: 0, fetch() { count++; return malformed ? new Response("{broken") : Response.json(answer, { status }); } });
+		const peer = Bun.serve({ hostname: "127.0.0.1", port: 0, fetch(request) {
+			if (request.method !== "POST" || new URL(request.url).pathname !== "/api/chief/reports") return new Response(null, { status: 404 });
+			count++; return malformed ? new Response("{broken") : Response.json(answer, { status });
+		} });
 		const dock = await roleContractDock(host, peer.url.origin, 500, "chief-report");
 		let pending: Promise<void> | undefined;
 		async function approved() {
@@ -161,6 +169,7 @@ for (const host of ["omp", "pi"] as const) {
 		const sent: { path: string; body: unknown }[] = [];
 		const receipt = { saved: true, report: { id: "report-owned-15", body }, notification: { status: "submitted" } };
 		const peer = Bun.serve({ hostname: "127.0.0.1", port: 0, async fetch(request) {
+			if (request.method !== "POST" || new URL(request.url).pathname !== "/api/chief/reports") return new Response(null, { status: 404 });
 			sent.push({ path: new URL(request.url).pathname, body: await request.json() });
 			return Response.json(receipt);
 		} });
