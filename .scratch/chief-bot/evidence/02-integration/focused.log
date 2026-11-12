@@ -1,0 +1,31 @@
+bun test v1.4.4 (38afee6c8)
+
+tests\workflow-chat\manual-report-confirmation.test.ts:
+(pass) approval authorizes only the displayed payload and each subsequent report asks again [35.91ms]
+(pass) manual report never sends when confirmation is unavailable [7.64ms]
+(pass) manual report never sends when confirmation is throws [5.89ms]
+(pass) manual report never sends when confirmation is cancelled [5.29ms]
+(pass) manual report never sends when confirmation is session-ended [5.61ms]
+(pass) unknown or unavailable frozen policy fails closed (undefined, 200) [4.53ms]
+(pass) unknown or unavailable frozen policy fails closed (manual, 503) [5.74ms]
+(pass) unknown or unavailable frozen policy fails closed (invented-policy, 200) [4.87ms]
+(pass) auto report does not require or open user confirmation [7.11ms]
+(pass) manual report refuses an explicit user denial without a report HTTP request [6.59ms]
+
+tests\workflow-chat\node-shared-logic.test.ts:
+(pass) node shared logic rejects extra and identity fields before sending a report [6.86ms]
+(pass) node shared logic validates output IDs atomically and preserves ordered actual paths [15.79ms]
+(pass) node report preserves uncertainty for malformed receipt null [8.36ms]
+(pass) node report preserves uncertainty for malformed receipt [] [6.21ms]
+(pass) node report preserves uncertainty for malformed receipt {} [4.95ms]
+(pass) node report preserves uncertainty for malformed receipt {"saved":"true"} [6.36ms]
+(pass) node report preserves uncertainty for malformed receipt {"sent":false} [6.38ms]
+(pass) node shared logic saved=false is a report failure even when HTTP succeeds [6.51ms]
+(pass) node shared logic saved=true remains successful when auxiliary notification fails [6.69ms]
+(pass) node shared logic saved=true remains successful when the auxiliary diagnostic fails [7.84ms]
+(pass) node shared logic an HTTP refusal remains a failure even if the body says saved=true [14.24ms]
+
+ 21 pass
+ 0 fail
+ 95 expect() calls
+Ran 21 tests across 2 files. [266.00ms]

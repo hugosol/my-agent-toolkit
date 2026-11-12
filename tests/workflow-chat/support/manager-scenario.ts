@@ -27,6 +27,7 @@ export async function managerScenario(budgets: { requestTimeoutMs?: number; coll
 		} }));
 		backend.behavior(managerId, backend.root.path);
 		const started = await backend.post("/api/scheduler/maps/fan-in.json/runs", { managerTaskId: tasks.manager, zone: "test/manager", userInput: "Independent A B C handoff acceptance" });
+		await backend.post("/api/workflow/manager/prepare_inputs", { sessionId: managerId, fileInputs: [], confirmed: true, reason: "已审阅本场景文本输入，无文件要求" });
 		return { backend, dock, transport, calls, managerId, runId: started.id,
 			async dispatch(nodeId: string) {
 				backend.behavior(`node-native-${nodeId}`, backend.root.path);

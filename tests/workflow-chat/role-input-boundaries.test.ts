@@ -31,6 +31,7 @@ test("P27 actual role input preserves backend fixed/work sections and adds only 
 		writeFileSync(join(backend.root.path, "maps/input-map.json"), JSON.stringify({ title: "MAP-TITLE-27", description: "FULL-MAP-DOCUMENT-27", nodes: { A: { title: "A handoff", bot_id: "input-worker", input: "NODE-CURRENT-WORK-27\n保持工作内容", zone: "test/node", blocked_by: [] } } }));
 		backend.behavior(managerId, backend.root.path);
 		await backend.post("/api/scheduler/maps/input-map.json/runs", { managerTaskId: tasks.manager, zone: "test/manager", userInput: "RUN-USER-INPUT-27" });
+		await backend.post("/api/workflow/manager/prepare_inputs", { sessionId: managerId, fileInputs: [], confirmed: true, reason: "已审阅本场景文本输入，无文件要求" });
 		backend.behavior(nodeId, node.root.workDir);
 		await backend.post("/api/workflow/manager/dispatch", { sessionId: managerId, nodes: ["A"] });
 		const calls = readFileSync(join(backend.root.path, "calls.jsonl"), "utf8").trim().split("\n").map(line => JSON.parse(line));
@@ -50,6 +51,14 @@ test("P27 actual role input preserves backend fixed/work sections and adds only 
 			expect(guide).not.toContain("TASK-FIXED-");
 			expect(guide).not.toContain("CURRENT-WORK-27");
 			expect(guide).not.toContain("RUN-USER-INPUT-27");
+			if (role === "manager") {
+				// Observe the actual separately delivered guide: preparation is input-only,
+				// not duplicated per-Map content or a new output-review responsibility.
+				expect(guide).toContain("input_requirements");
+				expect(guide).toContain("prepare_inputs");
+				expect(guide).toContain("完整替换");
+				expect(guide).toContain("stateCommitted");
+			}
 			for (const forbidden of ["BOT-DOCUMENT-27", "BOT-PLAN-27", "BOT-NODE-27", "FULL-MAP-DOCUMENT-27", "MAP-TITLE-27"]) expect(request.raw).not.toContain(forbidden);
 			expect(request.raw).toContain("RUN-USER-INPUT-27");
 		}

@@ -1,0 +1,13 @@
+{
+  "sha256": {
+    "E:/Developer/myhub/herdr-bot/backend/target/debug/examples/safe_shutdown_shell.exe": "93768a1def6845d6830bb6d00ed04c78eef42baeed24a8058c88f191a9ca7f7d",
+    "E:/Developer/myhub/herdr-bot/backend/target/debug/herdr-fixture.exe": "7f2a301932fec9f6341f0006893686498667ce6f1f49f374cb16542cd8a4b409",
+    "D:/Users/hugos/AppData/Local/nvm/v22.19.0/node.exe": "995a3fb3cefad590cd3f4b321532a4b9582fb9c6575320ed2e3e894caac3e362"
+  },
+  "dependencyPolicy": "Existing backend binaries only; no writes/builds in the backend or integration checkout. Native deployments and pinned OMP installation are this worktree's source and isolated dependencies.",
+  "integrationRequirements": {
+    "owner": "Independent hyper integration agent; Main explicitly declined cross-ticket edits in this worktree.",
+    "ticket02": "Preserve WorkflowRequests.postConfirmed(sessionId, route, params, {title,message}, signal?, delivery.confirm?), #prepare immutable wire/session snapshot, Session cancellation, and WorkflowResponse.notSent?:true local-only evidence. Preserve workflowReportResult shared report receipt classification.",
+    "ticket06": "Ticket 06 independently adds WorkflowRequests.get(sessionId, route, signal) via #request(GET|POST), with GET omitting JSON headers/body. common/requests.ts will require a semantic merge that retains both interfaces, not choosing one entire file."
+  }
+}

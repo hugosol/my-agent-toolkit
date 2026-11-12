@@ -1,0 +1,35 @@
+{
+  "ticket": "02-shared-native-confirmation",
+  "baseRevision": "f6bc79b4627dac2279a1083c087020e89c69eac3",
+  "environment": {
+    "bun": "1.4.4 (38afee6c8)",
+    "platform": "win32-x64",
+    "pi": "1.5.2",
+    "piCli": "D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js",
+    "selectedPiNode": "D:/Users/hugos/AppData/Local/nvm/v22.19.0/node.exe",
+    "selectedPiNodeVersion": "v22.19.0",
+    "piRuntimeSelectionReason": "Existing supported Node 22 selected before native tests per repository Windows Node 23+ exit-race guidance; no failed real model or test retry.",
+    "omp": "18.5.0",
+    "ompCli": ".cache/omp-baseline/18.5.0/node_modules/@oh-my-pi/pi-coding-agent/src/cli.ts",
+    "models": "Only controlled local protocol provider responses; no real model or user credentials used. No GPT-6-luna behavior acceptance claimed."
+  },
+  "sha256": {
+    "bun.lock": "28ce4c0d7b7d1d45a44e335a6647b0959c333875af42ca87ba63c87bcf4c2168",
+    "extensions/workflow-chat/common/requests.ts": "e7481b8940665d356b06ddc38e0d3aa663b0741ae95ba9c7baa617d0c04189a3",
+    "extensions/workflow-chat/common/report-result.ts": "8015fa0412b39c7e1ab39820d74802a511619a8c73b48c793c24302c21c6b569",
+    "extensions/workflow-chat/node-chat/shared-logic/report.ts": "5f38646c15d79e99951b1a0dc358140ca3c8396fc20007f48572c0e9d5616715",
+    "ompCli": "45038b6c0491cd01975a122a4dc5c87afba735312f64064fe89e047ad7db2226",
+    "piCli": "e79626f2dd6f94aa45d30f3fa63cd84319a6eefcd150b353cfaf274366926774"
+  },
+  "commands": [
+    {"command":"bun install --frozen-lockfile","exit":0,"result":"14 packages installed; lockfile not changed"},
+    {"command":"bun test tests/workflow-chat/manual-report-confirmation.test.ts (red)","exit":1,"result":"9 pass, 1 fail: complete wire JSON absent from preview","raw":"red-preview.log"},
+    {"command":"bun test tests/workflow-chat/node-shared-logic.test.ts (red)","exit":1,"result":"6 pass, 4 fail: malformed 200 receipts accepted","raw":"red-malformed-receipt.log"},
+    {"command":"bun test tests/workflow-chat/node-shared-logic.test.ts (sent=false red)","exit":1,"result":"10 pass, 1 fail: HTTP sent=false misclassified as local no-send"},
+    {"command":"bun run typecheck (native-support iteration)","exit":1,"result":"5 diagnostics: ES2020 target does not expose Array.at/findLast; fixed without changing tsconfig"},
+    {"command":"bun run typecheck (after fix)","exit":0,"result":"80 authoring files, 6 declarations, 0 diagnostics"},
+    {"command":"bun test tests/workflow-chat/manual-report-confirmation.test.ts tests/workflow-chat/node-shared-logic.test.ts tests/framework/tool-confirmation-adapters.test.ts","exit":0,"result":"37 pass, 0 fail, 145 assertions"},
+    {"command":"bun test tests/workflow-chat/manager-shared-logic.test.ts tests/framework/import-boundary.test.ts","exit":0,"result":"18 pass, 0 fail, 590 assertions"},
+    {"command":"bun run check:integrations","exit":0,"result":"Complete framework-mediated entries; pi-suite native-only by existing policy. Static evidence only.","raw":"integrations.log"}
+  ]
+}

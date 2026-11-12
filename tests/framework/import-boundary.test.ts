@@ -24,10 +24,10 @@ const SCANNED_ROOTS = ["adapters", "framework", "extensions", "entrypoints"] as 
 /** Packages the harness loader resolves for an extension: naming one — by import or by declaration — is an escape hatch. */
 const HARNESS_PACKAGE = /^@(?:oh-my-pi|earendil-works)\//;
 
-/** Extension harness assemblies, including workflow-chat's two independently owned roles. */
+/** Extension harness assemblies, including workflow-chat's independently owned roles. */
 const EXTENSION_HARNESSES = [
 	/^extensions\/[^/]+\/harnesses\//,
-	/^extensions\/workflow-chat\/(?:manager-chat|node-chat)\/harnesses\//,
+	/^extensions\/workflow-chat\/(?:chief-chat|chief-report|manager-chat|node-chat)\/harnesses\//,
 ];
 
 /** Where the native surface may be touched: adapters and extension harness assemblies. */

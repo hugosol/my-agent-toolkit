@@ -1,5 +1,6 @@
 import type { ToolExecutionDelivery } from "../../../../framework/interface/tool";
 import { WorkflowRequests, type WorkflowResponse } from "../../common/requests";
+import { workflowReportResult } from "../../common/report-result";
 
 type ReportResult = WorkflowResponse & { readonly message?: string };
 
@@ -45,22 +46,13 @@ export class NodeReports {
 		} };
 		const policy = context.body && typeof context.body === "object" && "reportPolicy" in context.body ? context.body.reportPolicy : undefined;
 		if (policy !== "auto" && policy !== "manual") return { ...notSent("report-policy-unavailable"), isError: true };
-		if (policy === "manual") {
-			if (!confirm || pendingSignal.aborted) return notSent("confirmation-unavailable");
-			let approved = false;
-			try {
-				approved = await confirm({
-					title: "发送报告？（仅批准本次报告发送）",
-					message: `以下为本次待发送报告的完整内容；业务批准不等于发送批准。\n\nbody:\n${payload.body}\n\ncan_complete: ${payload.canComplete}\n\noutputs:\n${JSON.stringify(payload.outputs ?? [], null, 2)}\n\n只有明确选择“是”才会发送。`,
-					timeoutMs: this.requests.reportConfirmationTimeoutMs,
-					signal: pendingSignal,
-				}) === true;
-			} catch { /* An unavailable or failed interaction never authorizes a report. */ }
-			if (!approved || pendingSignal.aborted) return notSent("confirmation-not-approved");
-		}
 		if (pendingSignal.aborted) return notSent("cancelled");
-		const result = await this.requests.post(sessionId, "/api/workflow/node/report", payload, pendingSignal);
-		const savedFailed = typeof result.body === "object" && result.body !== null && "saved" in result.body && result.body.saved === false;
-		return { ...result, isError: result.isError || savedFailed };
+		const result = policy === "manual"
+			? await this.requests.postConfirmed(sessionId, "/api/workflow/node/report", payload, {
+				title: "发送报告？（仅批准本次报告发送）",
+				message: `以下为本次待发送报告的完整内容；业务批准不等于发送批准。\n\nbody:\n${payload.body}\n\ncan_complete: ${payload.canComplete}`,
+			}, pendingSignal, confirm)
+			: await this.requests.post(sessionId, "/api/workflow/node/report", payload, pendingSignal);
+		return workflowReportResult(result);
 	}
 }

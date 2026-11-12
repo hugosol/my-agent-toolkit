@@ -1,0 +1,365 @@
+bun test v1.4.4 (38afee6c8)
+effects recorded: 2351 (storage root: 13, idle window: 0)
+storage root detail: ["mkdir consumption.json.lock.52672-2-mwcd7pm5.lock","mkdir cost-archive","readFile codex-usage-estimate.json utf8","readFile consumption.json utf8","realpath cost-archive","rename consumption.json","rename consumption.json.lock","unlink 52672-1-mwcd7pm4","unlink consumption.json.52672-3-mwcd7pm6.tmp","writeFile 52672-1-mwcd7pm4 ","writeFile consumption.json.52672-3-mwcd7pm6.tmp {\"schemaVersion\":1,\"periodId\":\"period-fresh\",\"start\":\"2026-11-11T17:00:33.685Z\",\"holiday\":false,\"harnesses\":{\"omp\":{\"sessions\":[{\"id\":\"01a1cb8d-d70c-7693-be9b-72760256c9ed\",\"name\":\"main\",\"parent\":null,\"saveVersion\":1,\"own\":{\"deepseek\":{\"deepseek-flash\":{\"tokens\":{\"input\":7,\"cacheRead\":3,\"cacheWrite\":0,\"output\":7},\"costCny\":0.00003506}}},\"span\":{\"start\":1794416433697,\"end\":1794416433763}}]}}}"]
+idle-window ops: []
+net effects: [{"kind":"net","op":"createConnection","targets":["127.0.0.1","13827"],"at":1794416433688,"outcome":"ok"}]
+capture endpoint port: 13827, widget frames: 12, arrivals: ["balance","model"]
+effects recorded: 2745 (idle window: 0)
+arrivals: ["balance","model","model","model"], widget frames: 26, capture port: 13884
+net effects: [{"kind":"net","op":"createConnection","targets":["127.0.0.1","13884"],"at":1794416439538,"outcome":"ok"}]
+{"promise":"P19","termination":"abort","nativeSessionId":"01a1cb8e-1e50-7669-bf40-e33516ca7bc6","backend":"http://127.0.0.1:1627","head":"HTTP/1.1 200 OK\r\ncontent-type: application/json\r\nconnection: close\r\ntransfer-encoding: chunked\r\ndate: Wed, 11 Nov 2026 17:00:51 GMT","bodyBytes":0,"events":[{"event":"backend-headers","elapsedMs":4},{"event":"headers-forwarded","elapsedMs":4},{"event":"client-fin","elapsedMs":9},{"event":"backend-fin","elapsedMs":9}],"terminationResult":{"error":{"kind":"cancelled","message":"Interrupted by user"},"guidance":"请求未获得确定结果；后端可能已接受，不表示回滚或未生效。不要自动重试，请核实已保存事实。"},"reportId":"bc-a86aeb59df2d","nextReason":"notification"}
+{"promise":"P19","termination":"new_session","nativeSessionId":"01a1cb8e-26d9-715a-a1ff-1ffd64d5b577","backend":"http://127.0.0.1:1664","head":"HTTP/1.1 200 OK\r\ncontent-type: application/json\r\nconnection: close\r\ntransfer-encoding: chunked\r\ndate: Wed, 11 Nov 2026 17:00:54 GMT","bodyBytes":0,"events":[{"event":"backend-headers","elapsedMs":2},{"event":"headers-forwarded","elapsedMs":2},{"event":"client-fin","elapsedMs":5},{"event":"backend-fin","elapsedMs":5}],"terminationResult":{"host":"transferred; no old tool result"},"reportId":"bc-a87eab299b89","nextReason":"notification"}
+{"promise":"P19","termination":"shutdown","nativeSessionId":"01a1cb8e-2f52-7188-a845-142da2469e13","backend":"http://127.0.0.1:1699","head":"HTTP/1.1 200 OK\r\ncontent-type: application/json\r\nconnection: close\r\ntransfer-encoding: chunked\r\ndate: Wed, 11 Nov 2026 17:00:56 GMT","bodyBytes":0,"events":[{"event":"backend-headers","elapsedMs":2},{"event":"headers-forwarded","elapsedMs":2},{"event":"client-fin","elapsedMs":6},{"event":"backend-fin","elapsedMs":6}],"terminationResult":{"error":{"kind":"cancelled","message":"Session ended"},"guidance":"请求未获得确定结果；后端可能已接受，不表示回滚或未生效。不要自动重试，请核实已保存事实。"},"reportId":"bc-cddf96d9819d","nextReason":"notification"}
+{"host":"omp","headlessExit":{"exitCode":0,"stderr":"","timedOut":false}}
+{"host":"omp","condition":"native-no-ui","result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\",\"saved\":false}"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。","saved":false}}},"sent":0}
+{"host":"omp","condition":"approved","dialog":{"type":"extension_ui_request","id":"15ca318358cedb9d","method":"confirm","title":"发送报告？（仅批准本次报告发送）","message":"以下为本次待发送报告的完整内容；业务批准不等于发送批准。\n\nbody:\nComplete approved report\nLast line\n\ncan_complete: false\n\n完整 HTTP JSON 载荷：\n{\n  \"body\": \"Complete approved report\\nLast line\",\n  \"canComplete\": false,\n  \"outputs\": [\n    {\n      \"id\": \"draft\",\n      \"path\": \"E:/owned/draft.txt\"\n    }\n  ],\n  \"sessionId\": \"01a1cb90-b7bf-76dd-88fb-6fb44e278200\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"result":{"content":[{"type":"text","text":"{\"saved\":true,\"notification\":{\"status\":\"failed\",\"reason\":\"controlled notification refusal\"}}"}],"details":{"httpStatus":200,"body":{"saved":true,"notification":{"status":"failed","reason":"controlled notification refusal"}}}},"sent":[{"body":"Complete approved report\nLast line","canComplete":false,"outputs":[{"id":"draft","path":"E:/owned/draft.txt"}],"sessionId":"01a1cb90-b7bf-76dd-88fb-6fb44e278200"}],"confirmationMs":2000,"observationMs":2100}
+{"host":"omp","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+{"host":"omp","condition":"denied","dialog":{"type":"extension_ui_request","id":"15ca31890236befc","method":"confirm","title":"发送报告？（仅批准本次报告发送）","message":"以下为本次待发送报告的完整内容；业务批准不等于发送批准。\n\nbody:\nMust not send: denied\n\ncan_complete: false\n\n完整 HTTP JSON 载荷：\n{\n  \"body\": \"Must not send: denied\",\n  \"canComplete\": false,\n  \"sessionId\": \"01a1cb90-cd13-7024-a73f-7aef749d780c\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\",\"saved\":false}"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。","saved":false}}},"sent":[],"confirmationMs":2000,"observationMs":2100}
+{"host":"omp","condition":"dismissed","dialog":{"type":"extension_ui_request","id":"15ca318b31f6befe","method":"confirm","title":"发送报告？（仅批准本次报告发送）","message":"以下为本次待发送报告的完整内容；业务批准不等于发送批准。\n\nbody:\nMust not send: dismissed\n\ncan_complete: false\n\n完整 HTTP JSON 载荷：\n{\n  \"body\": \"Must not send: dismissed\",\n  \"canComplete\": false,\n  \"sessionId\": \"01a1cb90-cd13-7024-a73f-7aef749d780c\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\",\"saved\":false}"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。","saved":false}}},"sent":[],"confirmationMs":2000,"observationMs":2100}
+{"host":"omp","condition":"cancelled","dialog":{"type":"extension_ui_request","id":"15ca318d4bf6bf00","method":"confirm","title":"发送报告？（仅批准本次报告发送）","message":"以下为本次待发送报告的完整内容；业务批准不等于发送批准。\n\nbody:\nMust not send: cancelled\n\ncan_complete: false\n\n完整 HTTP JSON 载荷：\n{\n  \"body\": \"Must not send: cancelled\",\n  \"canComplete\": false,\n  \"sessionId\": \"01a1cb90-cd13-7024-a73f-7aef749d780c\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\",\"saved\":false}"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。","saved":false}}},"sent":[],"confirmationMs":2000,"observationMs":2100}
+{"host":"omp","condition":"timeout-and-late-approval","dialog":{"type":"extension_ui_request","id":"15ca318f66b6bf03","method":"confirm","title":"发送报告？（仅批准本次报告发送）","message":"以下为本次待发送报告的完整内容；业务批准不等于发送批准。\n\nbody:\nMust not send: timeout-and-late-approval\n\ncan_complete: false\n\n完整 HTTP JSON 载荷：\n{\n  \"body\": \"Must not send: timeout-and-late-approval\",\n  \"canComplete\": false,\n  \"sessionId\": \"01a1cb90-cd13-7024-a73f-7aef749d780c\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\",\"saved\":false}"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。","saved":false}}},"sent":[],"confirmationMs":2000,"observationMs":2100}
+{"host":"omp","condition":"session-ended","dialog":{"type":"extension_ui_request","id":"15ca31937b76bf06","method":"confirm","title":"发送报告？（仅批准本次报告发送）","message":"以下为本次待发送报告的完整内容；业务批准不等于发送批准。\n\nbody:\nMust not send: session-ended\n\ncan_complete: false\n\n完整 HTTP JSON 载荷：\n{\n  \"body\": \"Must not send: session-ended\",\n  \"canComplete\": false,\n  \"sessionId\": \"01a1cb90-cd13-7024-a73f-7aef749d780c\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\",\"saved\":false}"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。","saved":false}}},"sent":[],"confirmationMs":2000,"observationMs":2100}
+{"host":"omp","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+{"host":"omp","condition":"cancel","result":{"content":[{"type":"text","text":"{\"error\":{\"kind\":\"cancelled\",\"message\":\"Interrupted by user\"},\"guidance\":\"请求未获得确定结果；后端可能已接受，不表示回滚或未生效。不要自动重试，请核实已保存事实。\"}"}],"details":{"body":{"error":{"kind":"cancelled","message":"Interrupted by user"},"guidance":{}}},"isError":true},"requests":1,"confirmationMs":2000,"observationMs":2100}
+{"host":"omp","condition":"lost-response","result":{"content":[{"type":"text","text":"{\"error\":{\"kind\":\"transport\",\"message\":\"socket hang up\"},\"guidance\":\"请求未获得确定结果；后端可能已接受，不表示回滚或未生效。不要自动重试，请核实已保存事实。\"}"}],"details":{"body":{"error":{"kind":"transport","message":"socket hang up"},"guidance":{}}},"isError":true},"requests":1,"confirmationMs":2000,"observationMs":2100}
+{"host":"omp","condition":"invalid-json","result":{"content":[{"type":"text","text":"{\"error\":{\"kind\":\"parse\",\"message\":\"后端响应不是完整合法 JSON。\",\"body\":\"{\\\"saved\\\":\"},\"guidance\":\"无法确定动作结果；不表示回滚，不自动重试。\"}"}],"details":{"httpStatus":200,"body":{"error":{"kind":"parse","message":"后端响应不是完整合法 JSON。","body":"{\"saved\":"},"guidance":{}}},"isError":true},"requests":1,"confirmationMs":2000,"observationMs":2100}
+{"host":"omp","condition":"invalid-receipt","result":{"content":[{"type":"text","text":"{\"error\":{\"kind\":\"protocol\",\"message\":\"后端报告响应缺少 boolean saved，无法核实保存结果。\",\"response\":{\"sent\":false}},\"guidance\":\"报告结果不确定；后端可能已保存，不表示未发送、未发生或已回滚。不要自动重试，请核实已保存事实。\"}"}],"details":{"httpStatus":200,"body":{"error":{"kind":"protocol","message":"后端报告响应缺少 boolean saved，无法核实保存结果。","response":{"sent":false}},"guidance":{}}},"isError":true},"requests":1,"confirmationMs":2000,"observationMs":2100}
+{"host":"omp","nativeExit":{"exitCode":0,"stderr":"HTTP cancelled failure (Error)\nHTTP transport failure (Error)\n","timedOut":false}}
+{"host":"pi","headlessExit":0,"stderr":""}
+{"host":"pi","condition":"native-no-ui","result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\",\"saved\":false}"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。","saved":false}},"isError":false},"sent":0}
+{"host":"pi","condition":"approved","dialog":{"type":"extension_ui_request","id":"fe35812c-79d6-4057-a27a-48dca629ae84","method":"confirm","title":"发送报告？（仅批准本次报告发送）","message":"以下为本次待发送报告的完整内容；业务批准不等于发送批准。\n\nbody:\nComplete approved report\nLast line\n\ncan_complete: false\n\n完整 HTTP JSON 载荷：\n{\n  \"body\": \"Complete approved report\\nLast line\",\n  \"canComplete\": false,\n  \"outputs\": [\n    {\n      \"id\": \"draft\",\n      \"path\": \"E:/owned/draft.txt\"\n    }\n  ],\n  \"sessionId\": \"01a1cb91-3b58-75d7-b911-6f32c83d8277\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"result":{"content":[{"type":"text","text":"{\"saved\":true,\"notification\":{\"status\":\"failed\",\"reason\":\"controlled notification refusal\"}}"}],"details":{"httpStatus":200,"body":{"saved":true,"notification":{"status":"failed","reason":"controlled notification refusal"}}},"isError":false},"sent":[{"body":"Complete approved report\nLast line","canComplete":false,"outputs":[{"id":"draft","path":"E:/owned/draft.txt"}],"sessionId":"01a1cb91-3b58-75d7-b911-6f32c83d8277"}],"confirmationMs":2000,"observationMs":2100}
+{"host":"pi","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+{"host":"pi","condition":"denied","dialog":{"type":"extension_ui_request","id":"8b79388b-c0b4-437b-ab57-3eb06f35aa84","method":"confirm","title":"发送报告？（仅批准本次报告发送）","message":"以下为本次待发送报告的完整内容；业务批准不等于发送批准。\n\nbody:\nMust not send: denied\n\ncan_complete: false\n\n完整 HTTP JSON 载荷：\n{\n  \"body\": \"Must not send: denied\",\n  \"canComplete\": false,\n  \"sessionId\": \"01a1cb91-49dd-763d-9ce0-5e3636f61060\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\",\"saved\":false}"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。","saved":false}},"isError":false},"sent":[],"confirmationMs":2000,"observationMs":2100}
+{"host":"pi","condition":"dismissed","dialog":{"type":"extension_ui_request","id":"66ab3101-5663-47ec-b9ee-13032f8a3b5e","method":"confirm","title":"发送报告？（仅批准本次报告发送）","message":"以下为本次待发送报告的完整内容；业务批准不等于发送批准。\n\nbody:\nMust not send: dismissed\n\ncan_complete: false\n\n完整 HTTP JSON 载荷：\n{\n  \"body\": \"Must not send: dismissed\",\n  \"canComplete\": false,\n  \"sessionId\": \"01a1cb91-49dd-763d-9ce0-5e3636f61060\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\",\"saved\":false}"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。","saved":false}},"isError":false},"sent":[],"confirmationMs":2000,"observationMs":2100}
+{"host":"pi","condition":"cancelled","dialog":{"type":"extension_ui_request","id":"a5faadd8-73c5-4ad6-a826-e7d4b96cfeea","method":"confirm","title":"发送报告？（仅批准本次报告发送）","message":"以下为本次待发送报告的完整内容；业务批准不等于发送批准。\n\nbody:\nMust not send: cancelled\n\ncan_complete: false\n\n完整 HTTP JSON 载荷：\n{\n  \"body\": \"Must not send: cancelled\",\n  \"canComplete\": false,\n  \"sessionId\": \"01a1cb91-49dd-763d-9ce0-5e3636f61060\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\",\"saved\":false}"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。","saved":false}},"isError":false},"sent":[],"confirmationMs":2000,"observationMs":2100}
+{"host":"pi","condition":"timeout-and-late-approval","dialog":{"type":"extension_ui_request","id":"e2ac99af-8e73-42b4-a242-30695dff4fb7","method":"confirm","title":"发送报告？（仅批准本次报告发送）","message":"以下为本次待发送报告的完整内容；业务批准不等于发送批准。\n\nbody:\nMust not send: timeout-and-late-approval\n\ncan_complete: false\n\n完整 HTTP JSON 载荷：\n{\n  \"body\": \"Must not send: timeout-and-late-approval\",\n  \"canComplete\": false,\n  \"sessionId\": \"01a1cb91-49dd-763d-9ce0-5e3636f61060\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\",\"saved\":false}"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。","saved":false}},"isError":false},"sent":[],"confirmationMs":2000,"observationMs":2100}
+{"host":"pi","condition":"session-ended","dialog":{"type":"extension_ui_request","id":"c1ebfef8-6a08-48d0-bc7c-85892712f9eb","method":"confirm","title":"发送报告？（仅批准本次报告发送）","message":"以下为本次待发送报告的完整内容；业务批准不等于发送批准。\n\nbody:\nMust not send: session-ended\n\ncan_complete: false\n\n完整 HTTP JSON 载荷：\n{\n  \"body\": \"Must not send: session-ended\",\n  \"canComplete\": false,\n  \"sessionId\": \"01a1cb91-49dd-763d-9ce0-5e3636f61060\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\",\"saved\":false}"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。","saved":false}},"isError":false},"sent":[],"confirmationMs":2000,"observationMs":2100}
+{"host":"pi","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+{"host":"pi","condition":"cancel","result":{"content":[{"type":"text","text":"{\"error\":{\"kind\":\"cancelled\",\"message\":\"This operation was aborted\"},\"guidance\":\"请求未获得确定结果；后端可能已接受，不表示回滚或未生效。不要自动重试，请核实已保存事实。\"}"}],"details":{"body":{"error":{"kind":"cancelled","message":"This operation was aborted"},"guidance":{}}},"isError":true},"requests":1,"confirmationMs":2000,"observationMs":2100}
+{"host":"pi","condition":"lost-response","result":{"content":[{"type":"text","text":"{\"error\":{\"kind\":\"transport\",\"message\":\"socket hang up\"},\"guidance\":\"请求未获得确定结果；后端可能已接受，不表示回滚或未生效。不要自动重试，请核实已保存事实。\"}"}],"details":{"body":{"error":{"kind":"transport","message":"socket hang up"},"guidance":{}}},"isError":true},"requests":1,"confirmationMs":2000,"observationMs":2100}
+{"host":"pi","condition":"invalid-json","result":{"content":[{"type":"text","text":"{\"error\":{\"kind\":\"parse\",\"message\":\"后端响应不是完整合法 JSON。\",\"body\":\"{\\\"saved\\\":\"},\"guidance\":\"无法确定动作结果；不表示回滚，不自动重试。\"}"}],"details":{"httpStatus":200,"body":{"error":{"kind":"parse","message":"后端响应不是完整合法 JSON。","body":"{\"saved\":"},"guidance":{}}},"isError":true},"requests":1,"confirmationMs":2000,"observationMs":2100}
+{"host":"pi","condition":"invalid-receipt","result":{"content":[{"type":"text","text":"{\"error\":{\"kind\":\"protocol\",\"message\":\"后端报告响应缺少 boolean saved，无法核实保存结果。\",\"response\":{\"sent\":false}},\"guidance\":\"报告结果不确定；后端可能已保存，不表示未发送、未发生或已回滚。不要自动重试，请核实已保存事实。\"}"}],"details":{"httpStatus":200,"body":{"error":{"kind":"protocol","message":"后端报告响应缺少 boolean saved，无法核实保存结果。","response":{"sent":false}},"guidance":{}}},"isError":true},"requests":1,"confirmationMs":2000,"observationMs":2100}
+{"host":"pi","nativeExit":{"exitCode":0,"stderr":"HTTP cancelled failure (AbortError)\nHTTP transport failure (Error)\n","timedOut":false}}
+{"host":"omp","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+{"host":"pi","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+{"promise":"P8","role":"manager","failure":"missing","diagnostic":"manager-chat: configuration error (config): the configuration file \"C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-manager-cccm5c\\deployment\\extensions\\workflow-chat\\config.yaml\" does not exist\n","fallbackRequests":0}
+{"promise":"P8","role":"manager","failure":"yaml","diagnostic":"manager-chat: configuration error (config): the configuration file \"C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-manager-aBHjkX\\deployment\\extensions\\workflow-chat\\config.yaml\" is not valid YAML: Flow sequence in block collection must be sufficiently indented and end with a ] at line 2, column 1:\nendpoint: [unterminated\n^\n","fallbackRequests":0}
+{"promise":"P8","role":"manager","failure":"business","diagnostic":"manager-chat: configuration error (config): the configuration file \"C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-manager-FJ79qH\\deployment\\extensions\\workflow-chat\\config.yaml\" declares \"requestTimeoutMs\" as a number, but the extension requires a whole number of milliseconds between 1 and 2147483647\n","fallbackRequests":0}
+{"promise":"P8","role":"node","failure":"missing","diagnostic":"node-chat: configuration error (config): the configuration file \"C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-node-5W8u93\\deployment\\extensions\\workflow-chat\\config.yaml\" does not exist\n","fallbackRequests":0}
+{"promise":"P8","role":"node","failure":"yaml","diagnostic":"node-chat: configuration error (config): the configuration file \"C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-node-BJ2iZ5\\deployment\\extensions\\workflow-chat\\config.yaml\" is not valid YAML: Flow sequence in block collection must be sufficiently indented and end with a ] at line 2, column 1:\nendpoint: [unterminated\n^\n","fallbackRequests":0}
+{"promise":"P8","role":"node","failure":"business","diagnostic":"node-chat: configuration error (config): the configuration file \"C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-node-0Rfcsb\\deployment\\extensions\\workflow-chat\\config.yaml\" declares \"requestTimeoutMs\" as a number, but the extension requires a whole number of milliseconds between 1 and 2147483647\n","fallbackRequests":0}
+{"promises":["P1","P2","P6"],"native":{"manager":"01a1cb92-5485-774c-9c9a-1d9197081f71","node":"01a1cb92-5bbf-74b1-b654-f8528b39428c"},"ownerKeys":["main:01a1cb92-5485-774c-9c9a-1d9197081f71","main:01a1cb92-5bbf-74b1-b654-f8528b39428c"],"cwd":["C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-manager-vW1rll\\work","C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-node-bQN41L\\work"],"runId":"bc-75730450d77e","report":{"at":1794416730390,"body":"E:/acceptance/native-alpha.txt; UTF-8; independent handoff","canComplete":true,"executionId":"bc-68251139272a","from":{"agentName":"chat-48234bde3f00","paneId":"w-node-dock:p2ac71c","sessionId":"01a1cb92-5bbf-74b1-b654-f8528b39428c","tabId":"w-node-dock:t2ac71c","workspaceId":"w-node-dock"},"id":"bc-f7cbba51b3ed","nodeId":"A","outputs":[],"runId":"bc-75730450d77e","to":{"agentName":"chat-8934d4542f54","paneId":"w-node-dock:pc2530","sessionId":"01a1cb92-5485-774c-9c9a-1d9197081f71","tabId":"w-node-dock:tc2530","workspaceId":"w-node-dock"},"type":"report"},"refusals":[{"code":"manager-unassociated","message":"当前原生身份没有唯一的管理者归属。"},{"code":"node-unassociated","message":"当前原生身份没有唯一的当前节点执行归属。","sent":false,"saved":false,"reason":"report-policy-unavailable","guidance":"无法核实本次执行的报告策略，报告未发送；不要自动重试或假定 auto。"},{"code":"node-ambiguous","message":"原生身份关联不唯一。","sent":false,"saved":false,"reason":"report-policy-unavailable","guidance":"无法核实本次执行的报告策略，报告未发送；不要自动重试或假定 auto。"},{"code":"node-role-invalid","message":"管理者身份没有唯一合法的父执行关联。","sent":false,"saved":false,"reason":"report-policy-unavailable","guidance":"无法核实本次执行的报告策略，报告未发送；不要自动重试或假定 auto。"},{"code":"manager-ambiguous","message":"原生身份关联不唯一。"}],"requests":[{"path":"/api/workflow/manager/status","body":{"sessionId":"01a1cb92-5485-774c-9c9a-1d9197081f71"}},{"path":"/api/workflow/node/context","body":{"sessionId":"01a1cb92-5bbf-74b1-b654-f8528b39428c"}},{"path":"/api/workflow/manager/status","body":{"sessionId":"01a1cb92-5485-774c-9c9a-1d9197081f71"}},{"path":"/api/workflow/manager/dispatch","body":{"nodes":["A"],"sessionId":"01a1cb92-5485-774c-9c9a-1d9197081f71"}},{"path":"/api/workflow/node/context","body":{"sessionId":"01a1cb92-5bbf-74b1-b654-f8528b39428c"}},{"path":"/api/workflow/node/report","body":{"body":"E:/acceptance/native-alpha.txt; UTF-8; independent handoff","canComplete":true,"sessionId":"01a1cb92-5bbf-74b1-b654-f8528b39428c"}},{"path":"/api/workflow/manager/collect","body":{"sessionId":"01a1cb92-5485-774c-9c9a-1d9197081f71"}},{"path":"/api/workflow/node/context","body":{"sessionId":"01a1cb92-5bbf-74b1-b654-f8528b39428c"}},{"path":"/api/workflow/node/context","body":{"sessionId":"01a1cb92-5bbf-74b1-b654-f8528b39428c"}},{"path":"/api/workflow/manager/status","body":{"sessionId":"01a1cb92-5485-774c-9c9a-1d9197081f71"}}]}
+{"promise":"P6","role":"manager","scope":"real OMP + external missing native-context fault","normalNativeId":"01a1cb92-6995-74c3-b14a-ac488105bb9a","nativeToolId":"","requests":0}
+{"promise":"P6","role":"node","scope":"real OMP + external missing native-context fault","normalNativeId":"01a1cb92-71b4-7125-9061-5c0be29d2675","nativeToolId":"","requests":0}
+{"promise":"P3","native":{"manager":"01a1cb92-89fb-7593-a35a-b12aca718748","node":"01a1cb92-9073-744b-9913-f589c64a66d0"},"actualOverlap":true,"cancelledConnectionClosed":true,"otherResult":{"saved":true,"report":{"id":"independent-report-3"},"notification":{"status":"submitted"}},"requests":[{"path":"/api/workflow/node/report","body":{"body":"independent concurrent handoff","canComplete":false,"sessionId":"01a1cb92-9073-744b-9913-f589c64a66d0"}},{"path":"/api/workflow/manager/collect","body":{"sessionId":"01a1cb92-89fb-7593-a35a-b12aca718748"}},{"path":"/api/workflow/manager/status","body":{"sessionId":"01a1cb92-89fb-7593-a35a-b12aca718748"}},{"path":"/api/workflow/node/report","body":{"body":"subsequent independent handoff","canComplete":true,"sessionId":"01a1cb92-9073-744b-9913-f589c64a66d0"}}],"scope":"real OMP; controlled HTTP literals"}
+{"promise":"P7","cwd":["C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-manager-00IJpC\\work","C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-node-OpK8PD\\work"],"selectedBudgets":{"requestTimeoutMs":700,"collectTimeoutMs":1600},"fallbackRequests":0,"calls":[{"path":"/api/workflow/manager/status","body":{"sessionId":"01a1cb92-99e3-74c5-a8f7-7db6e3ab9201"},"elapsedMs":91.62239999999292},{"path":"/api/workflow/node/report","body":{"body":"P7 explicit config","canComplete":false,"sessionId":"01a1cb92-a0b7-75f6-8613-5c802e4e6e12"},"elapsedMs":91.50660000002244},{"path":"/api/workflow/manager/status","body":{"sessionId":"01a1cb92-99e3-74c5-a8f7-7db6e3ab9201"},"elapsedMs":703.6211000000476},{"path":"/api/workflow/node/report","body":{"body":"P7 ordinary budget","canComplete":false,"sessionId":"01a1cb92-a0b7-75f6-8613-5c802e4e6e12"},"elapsedMs":870.3369999999995},{"path":"/api/workflow/manager/collect","body":{"sessionId":"01a1cb92-99e3-74c5-a8f7-7db6e3ab9201"},"elapsedMs":1599.527699999977}]}
+{"promise":"P22/P24","action":"pause","nativeId":"01a1cb93-6351-76f9-a200-5d1a283549a3","accepted":{"status":200,"body":{"blocked":{"A":["Run 状态为 paused"],"B":["Run 状态为 paused"],"C":["Run 状态为 paused","前置 A 尚未 completed","前置 B 尚未 completed"]},"canFinish":false,"changed":true,"historyError":null,"pendingReports":{},"ready":[],"reports":[],"snapshot":{"createdAt":1794416797004,"fileInputs":[],"finished":null,"id":"bc-a8e42b88874a","inputsReady":true,"manager":{"agentName":"chat-5e7604147f60","paneId":"w-node-dock:p6eb638","sessionId":"01a1cb93-6351-76f9-a200-5d1a283549a3","tabId":"w-node-dock:t6eb638","workspaceId":"w-node-dock"},"managerTaskId":"task-18e70c91d3a8e0c8-0","managerZoneId":"test/manager","map":"fan-in.json","nodes":{"A":{"completion":null,"execution":null,"failure":null,"previousExecutions":[],"status":"pending"},"B":{"completion":null,"execution":null,"failure":null,"previousExecutions":[],"status":"pending"},"C":{"completion":null,"execution":null,"failure":null,"previousExecutions":[],"status":"pending"}},"status":"paused","userInput":"Independent A B C handoff acceptance","workspaceName":"omp-dock-workflow-backend-XDcJar","zone":"C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-workflow-backend-XDcJar","zoneBindings":{"test/manager":"C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-workflow-backend-XDcJar"}}}},"cancellation":"{\"error\":{\"kind\":\"cancelled\",\"message\":\"Interrupted by user\"},\"guidance\":\"请求未获得确定结果；后端可能已接受，不表示回滚或未生效。不要自动重试，请核实已保存事实。\"}","observationMs":250}
+{"promise":"P22/P24","action":"dispatch","nativeId":"01a1cb93-6351-76f9-a200-5d1a283549a3","accepted":{"status":200,"body":{"blocked":{"A":["node 状态为 running，仅 pending 可派发"],"B":[],"C":["前置 A 尚未 completed","前置 B 尚未 completed"]},"canFinish":false,"pendingReports":{},"ready":["B"],"reports":[],"results":[{"effects":{"agentName":"chat-3cd2078b67e2","agentStarted":true,"associationSaved":true,"childRecordsInitialized":false,"inputAttempted":true,"inputOutcome":"submitted","inputSubmitted":true,"paneId":"w-node-dock:p7bb618","recordsInitialized":true,"sessionId":"P22-native-started-A","tabId":"w-node-dock:t7bb618","workspaceId":"w-node-dock"},"historyError":null,"nodeId":"A","status":"running"}],"snapshot":{"createdAt":1794416797004,"fileInputs":[],"finished":null,"id":"bc-a8e42b88874a","inputsReady":true,"manager":{"agentName":"chat-5e7604147f60","paneId":"w-node-dock:p6eb638","sessionId":"01a1cb93-6351-76f9-a200-5d1a283549a3","tabId":"w-node-dock:t6eb638","workspaceId":"w-node-dock"},"managerTaskId":"task-18e70c91d3a8e0c8-0","managerZoneId":"test/manager","map":"fan-in.json","nodes":{"A":{"completion":null,"execution":{"agent":"omp","autoClose":false,"chat":{"agentName":"chat-3cd2078b67e2","paneId":"w-node-dock:p7bb618","sessionId":"P22-native-started-A","tabId":"w-node-dock:t7bb618","workspaceId":"w-node-dock"},"id":"bc-378909f66f34","inputRule":[],"inputs":[],"outputRule":[{"id":"handoff"}],"reportPolicy":"auto","taskId":"task-18e70c91d3f6da80-1","zone":"C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-workflow-backend-XDcJar"},"failure":null,"previousExecutions":[],"status":"running"},"B":{"completion":null,"execution":null,"failure":null,"previousExecutions":[],"status":"pending"},"C":{"completion":null,"execution":null,"failure":null,"previousExecutions":[],"status":"pending"}},"status":"running","userInput":"Independent A B C handoff acceptance","workspaceName":"omp-dock-workflow-backend-XDcJar","zone":"C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-workflow-backend-XDcJar","zoneBindings":{"test/manager":"C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-workflow-backend-XDcJar"}}}},"cancellation":"{\"error\":{\"kind\":\"cancelled\",\"message\":\"Interrupted by user\"},\"guidance\":\"请求未获得确定结果；后端可能已接受，不表示回滚或未生效。不要自动重试，请核实已保存事实。\"}","observationMs":250}
+{"promise":"P22/P23/P24","nativeId":"01a1cb93-755e-7749-8dd3-e12d4c05f264","accepted":{"status":200,"body":{"diagnostic":{"status":"written"},"guidance":"报告已保存。不要仅因通知失败重复 report；报告不等于完成，管理者仍须显式交接。","notification":{"reason":"Herdr 的 agent prompt 失败：agent_prompt_failed: 受控夹具拒绝提交初始指示","status":"failed"},"report":{"at":1794416801801,"body":"P22 first material: E:/evidence/accepted.txt; read-only, not production","canComplete":false,"executionId":"bc-29e026e9bdaa","from":{"agentName":"chat-095b6856a580","paneId":"w-node-dock:p6c6498","sessionId":"01a1cb93-755e-7749-8dd3-e12d4c05f264","tabId":"w-node-dock:t6c6498","workspaceId":"w-node-dock"},"id":"bc-b0a53b89296d","nodeId":"A","outputs":[],"runId":"bc-f917bdf84dfe","to":{"agentName":"chat-0e6082fcb5d4","paneId":"w-node-dock:p731414","sessionId":"01a1cb93-6e53-7600-bb6b-05a06bd0089c","tabId":"w-node-dock:t731414","workspaceId":"w-node-dock"},"type":"report"},"saved":true}},"explicitReport":{"diagnostic":{"status":"written"},"guidance":"报告已保存。不要仅因通知失败重复 report；报告不等于完成，管理者仍须显式交接。","notification":{"reason":"Herdr 的 agent prompt 失败：agent_prompt_failed: 受控夹具拒绝提交初始指示","status":"failed"},"report":{"at":1794416802146,"body":"P24 distinct explicit follow-up material, not an automatic retry","canComplete":true,"executionId":"bc-29e026e9bdaa","from":{"agentName":"chat-095b6856a580","paneId":"w-node-dock:p6c6498","sessionId":"01a1cb93-755e-7749-8dd3-e12d4c05f264","tabId":"w-node-dock:t6c6498","workspaceId":"w-node-dock"},"id":"bc-c018ef1bad56","nodeId":"A","outputs":[],"runId":"bc-f917bdf84dfe","to":{"agentName":"chat-0e6082fcb5d4","paneId":"w-node-dock:p731414","sessionId":"01a1cb93-6e53-7600-bb6b-05a06bd0089c","tabId":"w-node-dock:t731414","workspaceId":"w-node-dock"},"type":"report"},"saved":true},"observationMs":250,"requestCount":4}
+{"promise":"P23","paused":{"blocked":{"A":["Run 状态为 paused"],"B":["Run 状态为 paused"],"C":["Run 状态为 paused","前置 A 尚未 completed","前置 B 尚未 completed"]},"canFinish":false,"changed":true,"code":"history-append-failed","historyError":"C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-workflow-backend-lKztjt\\runs\\bc-1bb31f90b8b2\\history.jsonl：JSONL 尾部残缺；拒绝读取或继续追加。","message":"当前状态已提交，但执行历史追加失败；状态未回滚。请先查询现场，不要盲目重试。","pendingReports":{},"ready":[],"reports":[],"snapshot":{"createdAt":1794416804410,"fileInputs":[],"finished":null,"id":"bc-1bb31f90b8b2","inputsReady":true,"manager":{"agentName":"chat-d31c158c4098","paneId":"w-node-dock:p229938","sessionId":"01a1cb93-8050-74a3-8781-901c0017048f","tabId":"w-node-dock:t229938","workspaceId":"w-node-dock"},"managerTaskId":"task-18e70c938d0cc1b4-0","managerZoneId":"test/manager","map":"fan-in.json","nodes":{"A":{"completion":null,"execution":null,"failure":null,"previousExecutions":[],"status":"pending"},"B":{"completion":null,"execution":null,"failure":null,"previousExecutions":[],"status":"pending"},"C":{"completion":null,"execution":null,"failure":null,"previousExecutions":[],"status":"pending"}},"status":"paused","userInput":"Independent A B C handoff acceptance","workspaceName":"omp-dock-workflow-backend-lKztjt","zone":"C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-workflow-backend-lKztjt","zoneBindings":{"test/manager":"C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-workflow-backend-lKztjt"}},"stateCommitted":true},"batch":{"blocked":{"A":["node 状态为 running，仅 pending 可派发"],"B":["node 状态为 failed，仅 pending 可派发"],"C":["前置 A 尚未 completed","前置 B 尚未 completed"]},"canFinish":false,"pendingReports":{},"ready":[],"reports":[],"results":[{"code":"history-append-failed","effects":{"agentName":"chat-8b2faa63581a","agentStarted":true,"associationSaved":true,"childRecordsInitialized":false,"inputAttempted":true,"inputOutcome":"submitted","inputSubmitted":true,"paneId":"w-node-dock:p5e704c","recordsInitialized":true,"sessionId":"P23-colliding-native","tabId":"w-node-dock:t5e704c","workspaceId":"w-node-dock"},"historyError":"C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-workflow-backend-lKztjt\\runs\\bc-1bb31f90b8b2\\history.jsonl：JSONL 尾部残缺；拒绝读取或继续追加。","message":"当前状态已提交，但执行历史追加失败；状态未回滚。请先查询现场，不要盲目重试。","nodeId":"A","stateCommitted":true,"status":"running"},{"code":"history-append-failed","effects":{"agentName":"chat-6a0c1cf3ec55","agentStarted":true,"associationSaved":false,"childRecordsInitialized":false,"inputAttempted":false,"inputSubmitted":false,"paneId":"w-node-dock:p655134","recordsInitialized":true,"sessionId":"P23-colliding-native","tabId":"w-node-dock:t655134","workspaceId":"w-node-dock"},"execution":{"agent":"omp","autoClose":false,"chat":null,"id":"bc-0adcba56e40f","inputRule":[],"inputs":[],"outputRule":[],"reportPolicy":"auto","taskId":"task-18e70c938d5a0758-1","zone":"C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-workflow-backend-lKztjt"},"failure":{"effects":{"agentName":"chat-6a0c1cf3ec55","agentStarted":true,"associationSaved":false,"childRecordsInitialized":false,"inputAttempted":false,"inputSubmitted":false,"paneId":"w-node-dock:p655134","recordsInitialized":true,"sessionId":"P23-colliding-native","tabId":"w-node-dock:t655134","workspaceId":"w-node-dock"},"message":"宿主未返回独立的新原生 Chat 身份","stage":"identity"},"historyError":"C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-workflow-backend-lKztjt\\runs\\bc-1bb31f90b8b2\\history.jsonl：JSONL 尾部残缺；拒绝读取或继续追加。","message":"当前状态已提交，但执行历史追加失败；状态未回滚。请先查询现场，不要盲目重试。","nodeId":"B","persistenceError":null,"stateCommitted":true,"status":"failed"}],"snapshot":{"createdAt":1794416804410,"fileInputs":[],"finished":null,"id":"bc-1bb31f90b8b2","inputsReady":true,"manager":{"agentName":"chat-d31c158c4098","paneId":"w-node-dock:p229938","sessionId":"01a1cb93-8050-74a3-8781-901c0017048f","tabId":"w-node-dock:t229938","workspaceId":"w-node-dock"},"managerTaskId":"task-18e70c938d0cc1b4-0","managerZoneId":"test/manager","map":"fan-in.json","nodes":{"A":{"completion":null,"execution":{"agent":"omp","autoClose":false,"chat":{"agentName":"chat-8b2faa63581a","paneId":"w-node-dock:p5e704c","sessionId":"P23-colliding-native","tabId":"w-node-dock:t5e704c","workspaceId":"w-node-dock"},"id":"bc-990eb97e50cc","inputRule":[],"inputs":[],"outputRule":[{"id":"handoff"}],"reportPolicy":"auto","taskId":"task-18e70c938d5a0758-1","zone":"C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-workflow-backend-lKztjt"},"failure":null,"previousExecutions":[],"status":"running"},"B":{"completion":null,"execution":{"agent":"omp","autoClose":false,"chat":null,"id":"bc-0adcba56e40f","inputRule":[],"inputs":[],"outputRule":[],"reportPolicy":"auto","taskId":"task-18e70c938d5a0758-1","zone":"C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-workflow-backend-lKztjt"},"failure":{"effects":{"agentName":"chat-6a0c1cf3ec55","agentStarted":true,"associationSaved":false,"childRecordsInitialized":false,"inputAttempted":false,"inputSubmitted":false,"paneId":"w-node-dock:p655134","recordsInitialized":true,"sessionId":"P23-colliding-native","tabId":"w-node-dock:t655134","workspaceId":"w-node-dock"},"message":"宿主未返回独立的新原生 Chat 身份","stage":"identity"},"previousExecutions":[],"status":"failed"},"C":{"completion":null,"execution":null,"failure":null,"previousExecutions":[],"status":"pending"}},"status":"running","userInput":"Independent A B C handoff acceptance","workspaceName":"omp-dock-workflow-backend-lKztjt","zone":"C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-workflow-backend-lKztjt","zoneBindings":{"test/manager":"C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-workflow-backend-lKztjt"}}}}
+{"promise":"P23","httpStatus":500,"result":{"code":"run-read-failed","message":"C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-workflow-backend-hUOSFy\\runs\\bc-3d8cc638a56e\\run.json：记录损坏：key must be a string at line 1 column 2"}}
+
+
+tests\harness-dock\activity-facts.test.ts:
+(pass) a real session's activity is the reading its own Round transitions leave it in (P10; S3) > one prompt whose run continues through a tool reads as working once and idle once [2399.33ms]
+(pass) a real session's activity is the reading its own Round transitions leave it in (P10; S3) > a second prompt in the same session opens its own Round and reads its own pair [2262.07ms]
+(pass) leaving a session is a transfer, not that session's own end (P33; S3) > a switch while the session is working states no reading of its own and commits nothing [4357.48ms]
+
+tests\harness-dock\baseline.test.ts:
+(pass) baseline dependency paths support a relocated record root without changing absolute paths [0.08ms]
+(pass) baseline record > the isolated install provides exactly the recorded supported version [0.02ms]
+(pass) baseline record > the recorded revision anchor is reachable in the checkout and names the recorded version [165.22ms]
+(pass) baseline record > the run artifact stays byte-identical to the recorded revision for the recorded contract files [134.64ms]
+(pass) baseline record > records the lockfiles of this repository and of the behavior oracle [0.32ms]
+(pass) baseline record > the oracle checkout carries the recorded revision [51.15ms]
+(pass) baseline record > records the accepted environment as conditions, not as pending work [0.07ms]
+
+tests\harness-dock\binding-lifecycle.test.ts:
+(pass) controlled-session startup ownership > live-no-ready reclaims the child and lets the isolated driver exit naturally [2039.50ms]
+(pass) controlled-session startup ownership > early-exit reclaims the child and lets the isolated driver exit naturally [58.60ms]
+(pass) controlled-session startup ownership > eof reclaims the child and lets the isolated driver exit naturally [56.42ms]
+(pass) controlled-session startup ownership > ready reclaims the child and lets the isolated driver exit naturally [2055.78ms]
+(pass) the public binding in a real session (P28, P56) > operation rejection still reclaims the session, capture listener and owned root [1298.62ms]
+(pass) the public binding in a real session (P28, P56) > assertion exception still reclaims the session, capture listener and owned root [1285.72ms]
+(pass) the public binding in a real session (P28, P56) > the host loads it with its validated configuration, waits for its initialization, runs its actions and cleans it up once [3120.80ms]
+(pass) the public binding in a real session (P28, P56) > an ordinary switch keeps the one instance, and the shutdown cleans it once [2925.03ms]
+
+tests\harness-dock\chief-role.test.ts:
+(pass) omp chief loads without Suite and returns existing Bot.when definitions [2338.30ms]
+(pass) omp chief reads real target definitions and registered zones [2373.94ms]
+(pass) omp chief preserves missing-definition errors and rejects caller identities [2594.98ms]
+(pass) pi chief loads without Suite and returns existing Bot.when definitions [1333.09ms]
+(pass) pi chief reads real target definitions and registered zones [1404.54ms]
+(pass) pi chief preserves missing-definition errors and rejects caller identities [1336.82ms]
+
+tests\harness-dock\codex-response-artifact.test.ts:
+(pass) the frozen Codex response-boundary host artifact > the record pins the base revision this repository records as supported, not a newer one [0.14ms]
+(pass) the frozen Codex response-boundary host artifact > every patched file's base hash is the installed base revision's own bytes [0.67ms]
+(pass) the frozen Codex response-boundary host artifact > the materialised host carries exactly the frozen post-patch bytes [0.29ms]
+
+tests\harness-dock\combined-host-artifact.test.ts:
+(pass) the frozen combined host artifact > the record chains both patches on the base revision this repository records as supported [0.09ms]
+(pass) the frozen combined host artifact > each chain step's hashes and files are the single-patch artifact's own frozen ones [0.21ms]
+(pass) the frozen combined host artifact > every file's pre-patch hash is the unpatched install's own bytes, and the patch changes it [1.62ms]
+(pass) the frozen combined host artifact > the materialised host carries exactly the frozen post-patch bytes of both patches [1.61ms]
+(pass) the frozen combined host artifact > neither behaviour is in the unpatched install: both come from the chain [0.38ms]
+
+tests\harness-dock\connect-bot-lifecycle.test.ts:
+(pass) connect-bot's pending startup attempt does not disturb another consumer (P27, P32) > the first request leaves before the register answers, and a late receipt after off leaves codebase-tools' contribution and State standing [1749.45ms]
+(pass) navigation and an owner boundary never apply the startup again (P21, P25) > new, fork, resume and same-owner navigation register nothing; a transfer invalidates the attempt it interrupts [1625.44ms]
+(pass) an edited startup policy document takes effect with the next process (P7) > the running process keeps its armed connection and registration, and a fresh process takes the edited off default [2862.05ms]
+
+tests\harness-dock\connect-bot-startup.test.ts:
+(pass) the automatic entrypoint activates on the real host without a command (P3, P16, P17, P33) > a held register does not stop the first model request, and the marker waits for the receipt [1497.64ms]
+(pass) the automatic entrypoint activates on the real host without a command (P3, P16, P17, P33) > a refused startup receipt leaves the line off and the host still serves turns (P19) [1486.23ms]
+(pass) the manual entrypoint keeps its loadable, command-driven behavior (P2, P15, P4, P33) > two turns start no register; the command then arms and disarms the session [1576.76ms]
+(pass) the automatic path registers with the actual isolated panel (P16, P18) > the panel's own table shows the startup row, its state report, and the command's removal [1523.46ms]
+(pass) a refused automatic registration keeps the real session working and off (P19) > the failure is reported, nothing is armed or retried, turns still run, and the command connects later [1501.70ms]
+(pass) a restored session's old enabled payload is not a connection (P22, P24) > manual then automatic resume ignore a planted payload; only a new receipt enables, and no record is written [4219.02ms]
+(pass) a session with no recorded value resumed at startup takes its mode's choice (P24) > an automatic process resuming a manual session registers without a command and enables on its receipt [2862.62ms]
+
+tests\harness-dock\consumer-regression.test.ts:
+(pass) three deployed consumers bound in one real session (P50) > each consumer's own line and own State, and a refused activation that changes nothing of the others [2293.29ms]
+(pass) three deployed consumers bound in one real session (P50) > the shared round axis ends a cancelled exchange for its consumers, and one consumer's State survives it [2356.86ms]
+(pass) three deployed consumers bound in one real session (P50) > an exchange whose provider refuses every attempt ends as a failure, and both consumers' own terms hold [34968.90ms]
+
+tests\harness-dock\detail-tree.test.ts:
+(pass) the real host's widget: a brief with its own Round, then the static detail tree (P23, P29) > the toggle replaces the Round row with the root and its rows, redrawing at once and asking no provider [3375.55ms]
+(pass) a real spawn's own start facts reach its row, the document and the next process (P26, P27, P19) > the host's answers name the task and the pair, the widget and the document carry them, and a restart restores them [6488.06ms]
+(pass) a resumed process draws the runtime the document already carries (P10, P19, P35) > the child's own row states the saved figure and not a second accumulation of the same execution [4409.57ms]
+
+tests\harness-dock\efficiency-comparison.test.ts:
+(pass) the P51 comparison entry (compare:efficiency) > reports no difference when both runs recorded the same figures [244.78ms]
+(pass) the P51 comparison entry (compare:efficiency) > surfaces a run whose own invariants failed, before that run's figures [237.90ms]
+(pass) the P51 comparison entry (compare:efficiency) > prints a comparable difference and still exits zero, since the judgment is the human's [240.56ms]
+(pass) the P51 comparison entry (compare:efficiency) > hands a window only one side recorded to the reader as absent/present, not as a count [244.03ms]
+(pass) the P51 comparison entry (compare:efficiency) > observes a refused call's count and the wall clock instead of comparing them [240.93ms]
+(pass) the P51 comparison entry (compare:efficiency) > rides the file total with the noise columns, since it counts refused calls too [241.42ms]
+(pass) the P51 comparison entry (compare:efficiency) > states that it cannot measure complexity rather than filling in a missing revision [46.37ms]
+(pass) the P51 comparison entry (compare:efficiency) > measures the migration's product surface from each revision's own tree [237.39ms]
+(pass) the P51 comparison entry (compare:efficiency) > lets the command line name the revisions the artifacts' own heads would otherwise choose [332.67ms]
+(pass) the P51 comparison entry (compare:efficiency) > writes the report it printed, under a directory it creates [242.20ms]
+(pass) the P51 comparison entry (compare:efficiency) > names a missing artifact flag as the error, rather than comparing nothing [46.17ms]
+
+tests\harness-dock\efficiency-effects.test.ts:
+(pass) one real Round's effects and a healthy idle window (P51, P57's P51 item) > the storage root costs one fresh Round's own reads and publish, idle costs nothing, and no local IPC is opened [5781.32ms]
+(pass) a real subagent session's root effects (P51, P57's P51 item) > a subagent's own work adds no second root query, no duplicate root UI and no local IPC [6654.38ms]
+(pass) the in-host recorder's own sensitivity (the control a zero needs) > a process this test knows reads a file and opens a listening endpoint appears in its dump [69.67ms]
+
+tests\harness-dock\lockfile-verification.test.ts:
+(pass) lockfile verification > accepts LF with the same LF-normalized digest [1.37ms]
+(pass) lockfile verification > accepts CRLF with the same LF-normalized digest [1.15ms]
+(pass) lockfile verification > accepts mixed LF and CRLF with the same LF-normalized digest [1.13ms]
+(pass) lockfile verification > rejects dependency changes even with CRLF [1.10ms]
+(pass) lockfile verification > does not ignore other whitespace or lone carriage returns [3.17ms]
+(pass) lockfile verification > reports a missing lockfile as a mismatch [0.60ms]
+(pass) lockfile verification > leaves raw file hashing byte-sensitive for artifact verification [1.09ms]
+
+tests\harness-dock\manager-collect-budget.test.ts:
+(pass) P9/P17 collect outlives the ordinary budget and waits with ready plus running nodes [3168.06ms]
+(pass) P9 collect's own shorter budget expires as a client error, not backend timeout [2328.73ms]
+
+tests\harness-dock\manager-collect-lifecycle.test.ts:
+(pass) P19 real OMP abort releases collect after the real backend response head [2220.97ms]
+(pass) P19 real OMP new_session releases collect after the real backend response head [2125.67ms]
+(pass) P19 real OMP shutdown releases collect after the real backend response head [3553.74ms]
+
+tests\harness-dock\manager-collect-pending.test.ts:
+(pass) P17/P18 collect keeps real handoff pending across reads, completion and interleaved execution reports [7804.72ms]
+
+tests\harness-dock\manager-dispatch-recovery.test.ts:
+(pass) P12 dispatch preserves success rejection and started-but-failed target in one batch [2425.13ms]
+(pass) P14 recover requires human confirmation and resumes original execution while paused [2444.64ms]
+(pass) P12 P14 retry requires confirmation and running Run and retains new and old execution effects [2722.03ms]
+(pass) P14 reconciliation preserves uncertain then absence and verifies created original Chat [2653.60ms]
+
+tests\harness-dock\manager-resume-finish.test.ts:
+(pass) P10/P11/P13 resume restores eligibility without dispatch, retry or termination [2377.16ms]
+(pass) P10/P11/P13 finish obeys all-node completion and retains terminal facts [2743.77ms]
+
+tests\harness-dock\manager-state-actions.test.ts:
+(pass) P10/P11/P13 explicit complete preserves first handoff and only unlocks satisfied dependencies [2380.52ms]
+(pass) P10/P11/P13 pause leaves existing execution alive and rejects new dispatch [2058.40ms]
+(pass) P10/P11/P13 fail preserves original execution and first reason without extra host actions [2192.78ms]
+
+tests\harness-dock\model-cost-accounting.test.ts:
+(pass) a real request reaches the accounting with the host's own facts (P1, P2, P6) > an official monetary request the endpoint reported no usage for is skipped with a warning [2106.38ms]
+(pass) a real request reaches the accounting with the host's own facts (P1, P2, P6) > a model the data does not list is not accounted at all, and says nothing [2218.17ms]
+(pass) a real request reaches the accounting with the host's own facts (P1, P2, P6) > a request with a reliable usage and an applicable price is accounted silently [2102.08ms]
+(pass) a real request reaches the accounting with the host's own facts (P1, P2, P6) > an all-zero usage the endpoint reported is still no reliable reading, and is skipped the same way [2352.06ms]
+
+tests\harness-dock\model-cost-balance.test.ts:
+(pass) the CLI's startup prefetch really leaves the process, and the first exchange waits for it (P37, P38) > the reading the endpoint answered is shown once, and a fresh reading is not queried again [2084.62ms]
+(pass) the CLI's startup prefetch really leaves the process, and the first exchange waits for it (P37, P38) > the first model request is not issued until the prefetch's query has been answered [5271.89ms]
+(pass) the CLI's startup prefetch really leaves the process, and the first exchange waits for it (P37, P38) > a provider that refuses the balance query shows the failure and does not notify or block the model [2100.68ms]
+(pass) a balance query that never answers does not hold the work (P40) > the next exchange is issued while the query is still out, and the query it meets is the one it joins [7276.11ms]
+(pass) a balance query that never answers does not hold the work (P40) > the run ends while the query is still out, and its exit is not held by it [2270.22ms]
+(pass) the credential reaches its own query and no other surface of a real run (P53) > the synthetic sentinel authenticates the balance query and appears in nothing else this run produced [2588.95ms]
+
+tests\harness-dock\model-cost-codex-quota.test.ts:
+(pass) the account query's own windows in a real Codex Turn (P39, P65; S5) > a settled Turn's query moves the windows, and the response's own headers change nothing [2304.26ms]
+(pass) the account query's own windows in a real Codex Turn (P39, P65; S5) > with no response boundary at all, the same Turn still moves the windows [2319.26ms]
+(pass) the success TTL and the one query in flight (P39; S5) > a reading inside the TTL keeps the next settled Turn from asking again [3004.84ms]
+(pass) the success TTL and the one query in flight (P39; S5) > a Turn that arrives while a query is still out joins it instead of asking again [2385.83ms]
+
+tests\harness-dock\model-cost-headless.test.ts:
+(pass) a headless session observes, accounts and saves the same way, with no widget at all (P42, P69) > one session's exchanges are accounted, saved and drawn nowhere, and stdout stays protocol only [2831.06ms]
+(pass) a headless session observes, accounts and saves the same way, with no widget at all (P42, P69) > the provider refresh a settled request begins still happens with no UI, and does not hold the next request [2375.88ms]
+(pass) a headless session observes, accounts and saves the same way, with no widget at all (P42, P69) > a refused balance is visible on stderr and the session goes on issuing requests (P43, P69) [2666.86ms]
+(pass) a headless session's other business notices reach stderr, once, at their own severity (P43) > an unusable baseline pauses the instance with one error line, and the agent still runs [2362.92ms]
+(pass) a headless session's other business notices reach stderr, once, at their own severity (P43) > a command's own result and an unrecognized argument are both on stderr, once each [2343.14ms]
+(pass) a headless session's other business notices reach stderr, once, at their own severity (P43) > another extension's presence in the same process hides none of it [2492.95ms]
+(pass) the allowance windows and the ratio measurement still run with no UI (P42) > two real answers feed the windows and the ratio with no widget in the process [2376.43ms]
+
+tests\harness-dock\model-cost-modes.test.ts:
+(pass) saved-session publication polling > observes a matching write from a later event-loop turn, not an unrelated record [99.09ms]
+(pass) saved-session publication polling > retains the full 15000ms deadline and reports a record that never appears [3.33ms]
+(pass) a hidden model draws no usage widget and still runs (P8, P9) > an unlisted pair shows no widget at all while the model really executes [3010.47ms]
+(pass) a token-only model shows its approved usage with no amount of its own (P8) > the Go ids draw the fixed budget and a token total, and no currency anywhere [2953.92ms]
+(pass) the allowance model draws the Codex budget and the reference its own catalog prices (P7, P10, P25) > a pure Codex session shows 272K, the hand-computed Ref and the four-amount ratio [2634.78ms]
+(pass) one session's two channels keep both currencies across a model switch (P7) > an amount already accounted is not re-priced, and the other channel is added beside it [2828.83ms]
+(pass) a monetary model shows the fixed budget and the accounted cost (P10) > the DeepSeek budget is displayed at 450K while the request the host sends is unchanged [4298.11ms]
+(pass) the balance the CLI holds stays visible beside a current non-monetary channel (P8, P67) > a held reading survives a real switch to a Go id and back, followed by the tree's own Cost [3142.98ms]
+
+tests\harness-dock\model-cost-persistence.test.ts:
+(pass) the production documents of one storage root, read back independently (P52) > one root holds the approved activity document and the independent estimate, both written by the run [2229.49ms]
+(pass) the production documents of one storage root, read back independently (P52) > a period close archives the whole file it closes and leaves the estimate exactly as it was [3947.45ms]
+(pass) the production documents of one storage root, read back independently (P52) > a later process reads both documents back and continues from them (P52) [3753.14ms]
+(pass) the production documents of one storage root, read back independently (P52) > a subagent's own record is saved before its parent's, naming the parent it has (P52) [3518.04ms]
+
+tests\harness-dock\model-cost-runtime-gap.test.ts:
+(pass) a process that died with an activity open leaves the measured subtotal (P26) > the real host's figure survives the crash, no offline stretch is filled in, and the next process continues [5561.49ms]
+
+tests\harness-dock\model-cost-session-span.test.ts:
+(pass) a real submission establishes and advances the main session's span (P1, P2, P8, P14) > each background task result advances the real widget before the next main Turn ends [15149.27ms]
+(pass) a real submission establishes and advances the main session's span (P1, P2, P8, P14) > one submission yields a saved span whose start is the submission, and the real widget draws it [3835.40ms]
+(pass) a real submission establishes and advances the main session's span (P1, P2, P8, P14) > a second submission in the same session keeps the start and moves the end [3794.95ms]
+(pass) a real submission establishes and advances the main session's span (P1, P2, P8, P14) > a user-invoked skill's submission is the start, at the instant the user submitted it [4035.82ms]
+
+tests\harness-dock\model-cost-store.test.ts:
+(pass) the consumption store in a real session (P47, P51) > an unusable baseline is reported to the operator and the file is left exactly as it was [2244.23ms]
+(pass) the consumption store in a real session (P47, P51) > a readable baseline is not rewritten, and an absent one is not created [2233.00ms]
+(pass) the consumption store in a real session (P47, P51) > a root with no document is left without one: an empty start is not a save [2520.34ms]
+
+tests\harness-dock\native-report-confirmation.test.ts:
+(pass) omp actual headless mode cannot authorize a manual report [2693.42ms]
+(pass) omp native manual report sends only the full approved payload [5446.17ms]
+(pass) omp native denial cancellation timeout late approval and Session end never send [16472.36ms]
+(pass) omp native report retains uncertainty after send without retry [11042.58ms]
+(pass) pi actual headless mode cannot authorize a manual report [1658.12ms]
+(pass) pi native manual report sends only the full approved payload [3687.02ms]
+(pass) pi native denial cancellation timeout late approval and Session end never send [14208.25ms]
+(pass) pi native report retains uncertainty after send without retry [9939.12ms]
+
+tests\harness-dock\nested-role-completion.test.ts:
+(pass) omp native dual roles keep nested finish, outer readiness and explicit completion independent [2983.53ms]
+(pass) pi native dual roles keep nested finish, outer readiness and explicit completion independent [2487.68ms]
+
+tests\harness-dock\node-report-contract.test.ts:
+(pass) omp: P7/P8/P26 report rejects malformed and legacy calls without persistence and preserves native identity [3023.07ms]
+(pass) pi: P7/P8/P26 report rejects malformed and legacy calls without persistence and preserves native identity [1963.23ms]
+
+tests\harness-dock\node-report.test.ts:
+(pass) P15/P16 actual node report is backend-attributed, saved and retrievable despite real notification refusal, without completing node [2492.37ms]
+
+tests\harness-dock\period-switch.test.ts:
+(pass) the real host's period switch archives the period it closes and opens the next one (P30, P31, P32, P34, P35, P36) > the prompt returns with the archive and the new period already on disk, and a repeated holiday switches nothing [2280.84ms]
+
+tests\harness-dock\role-config-failures.test.ts:
+(pass) P8 manager missing configuration fails recognizably without a fallback request [1838.26ms]
+(pass) P8 manager yaml configuration fails recognizably without a fallback request [1875.44ms]
+(pass) P8 manager business configuration fails recognizably without a fallback request [1830.38ms]
+(pass) P8 node missing configuration fails recognizably without a fallback request [1871.50ms]
+(pass) P8 node yaml configuration fails recognizably without a fallback request [1886.71ms]
+(pass) P8 node business configuration fails recognizably without a fallback request [1789.05ms]
+
+tests\harness-dock\role-dual-load.test.ts:
+(pass) omp same native Session co-loads both roles with separate once-only layered guidance [1892.76ms]
+(pass) omp dual roles preserve strict identity, finish, cancellation and native process recovery [4000.67ms]
+(pass) pi same native Session co-loads both roles with separate once-only layered guidance [1816.44ms]
+(pass) pi dual roles preserve strict identity, finish, cancellation and native process recovery [2576.98ms]
+
+tests\harness-dock\role-guidance-rehearsal.test.ts:
+(pass) P26 injected guidance supports notification failure, original recovery, independent retry and real manual handoff rehearsal [6865.09ms]
+
+tests\harness-dock\role-identity-integration.test.ts:
+(pass) P1/P2/P6 independent automatic roles use native identity and preserve real backend association decisions [5371.05ms]
+
+tests\harness-dock\role-missing-identity.test.ts:
+(pass) P6 manager refuses missing native tool identity without guessing name, Owner or cwd [2064.20ms]
+(pass) P6 node refuses missing native tool identity without guessing name, Owner or cwd [2000.91ms]
+
+tests\harness-dock\role-prompts.test.ts:
+(pass) P26 manager Prompt identity is persisted once and ordinary rounds and switches do not reset it [2134.38ms]
+(pass) P26 node Prompt identity is persisted once and ordinary rounds and switches do not reset it [2069.19ms]
+
+tests\harness-dock\role-session-isolation.test.ts:
+(pass) P3 overlapping native role Sessions cancel independently and both accept subsequent explicit requests [4103.00ms]
+
+tests\harness-dock\role-stable-config.test.ts:
+(pass) P7 both automatic roles select deployment endpoint and budgets despite two misleading cwd trees [7658.46ms]
+
+tests\harness-dock\round-facts.test.ts:
+(pass) one prompt's tool continuation is one Round, and the round end saves it (P3, P15) > two requests, one Round, one save, and the round end after the host's own settle [2590.15ms]
+(pass) consecutive prompts are consecutive Rounds (P15) > a second prompt opens a second Round, with its own round identity and its own save [2667.65ms]
+
+tests\harness-dock\session-driver.test.ts:
+(pass) controlled session > starts the isolated artifact under a temporary agent state, not the default environment [1144.10ms]
+(pass) controlled session > executes an extension command, runs a turn, and reads the session JSONL and outbound request back [1293.16ms]
+(pass) controlled session > reports diagnosable output when a session cannot start [24.99ms]
+
+tests\harness-dock\session-ownership-tree.test.ts:
+(pass) a real delegating run accounts each actual session's own requests (P12, P13, P24) > three sessions save their own record, with the direct parent the host reported [2955.93ms]
+(pass) a real delegating run accounts each actual session's own requests (P12, P13, P24) > switching the session the host displays leaves every session's own record where it was [2817.98ms]
+(pass) a session renamed while it runs and nobody views it (P24, S5) > the host's own rename reaches a subscriber where it happens, and only the next normal save writes it [3399.59ms]
+
+tests\harness-dock\session-recovery.test.ts:
+(pass) a saved session resumes in the next process (P16, P18) > an independent restart continues its totals, version and period, and reads no history [3911.79ms]
+(pass) a save that did not land is reported and dropped, and the model keeps running (P46) > another writer's record of that session stands, the refused consumption is dropped, and the next process resumes the disk's version [3918.02ms]
+(pass) navigating the session's own tree does not roll back its consumption (P17, P18) > a rewind stands up another session from the copied entries, and coming back continues the first one's record [2330.74ms]
+(pass) a fork is its own session, from zero (P19) > the harness's own fork copies the transcript without consuming, and adds only the fork's own requests [2343.83ms]
+
+tests\harness-dock\startup-modes-loading.test.ts:
+(pass) one explicit entrypoint binds only its own extension (P1, P5) > a policy entry for another extension neither loads it nor produces its business request [1620.50ms]
+(pass) the automatic entrypoints of both consumers bind together with one effect each (P1, P29) > two commands, one register and one contribution, and each command's own off transition [1780.61ms]
+(pass) a manual entrypoint beside an automatic one consumes only its own document (P29) > the automatic policy's connect-bot entry does not start the manually loaded connect-bot [1804.16ms]
+(pass) the same automatic entrypoint ignores same-named files in the project directory (P31) > two working directories carrying different decoys still use the deployment's policy and endpoint [2868.30ms]
+(pass) an unparseable selected document refuses its binding while a valid adjacent one runs (P34) > the diagnostic is visible, the refused command is absent, and the other extension's operation still works [1781.74ms]
+
+tests\harness-dock\turn-facts.test.ts:
+(pass) a real session's request delivers Turn facts to both scopes (P57) > the request's start facts, the same Turn's end with reliable usage, and the HTTP boundary [1353.37ms]
+(pass) a real session's request delivers Turn facts to both scopes (P57) > a delegating run delivers each actual session's own identity, parent and Turn, and never drives the owner group from a subagent [1548.00ms]
+(pass) a real session's request delivers Turn facts to both scopes (P57) > a real tool runs between two Turns, and the harness's own turn_end neither ends one nor starts another [1515.71ms]
+
+tests\harness-dock\uncertain-effects.test.ts:
+(pass) P22 P24 accepted state and dispatch survive caller cancellation without automatic redo [2828.16ms]
+(pass) P22 P23 P24 saved report remains queryable after disconnect and explicit new report remains usable [4577.99ms]
+(pass) P23 real history failure preserves committed state and target-level external effects [2375.42ms]
+(pass) P23 real non-success body remains visible and a repaired backend accepts explicit new calls [2131.88ms]
+
+tests\harness-dock\viewed-marker.test.ts:
+(pass) the frozen host renders the displayed session's own marker area (S5, P27) > a subagent's own run renders its effective projection, not every line the Owner's session shows [1721.79ms]
+
+tests\harness-dock\viewed-session-host.test.ts:
+(pass) the frozen Viewed session host publishes the outlet (S5) > an extension reads the displayed session's identity, name, model, effort and context with nothing unavailable [1228.94ms]
+(pass) the frozen Viewed session host publishes the outlet (S5) > a subscriber is told when the displayed session's effort, model and context change, and unsubscribe stops it [1242.50ms]
+(pass) the frozen Viewed session host publishes the outlet (S5) > switching the session the host displays is readable as a live identity change [1195.18ms]
+(pass) the frozen Viewed session host publishes the outlet (S5) > the unpatched baseline install reports no outlet to the same extension (control) [1122.18ms]
+
+tests\harness-dock\viewed-session-total.test.ts:
+(pass) the widget's Effort is the host's actual level, re-read when it changes (P11) > a real level is displayed, and a same-target change is read again without another request [2108.01ms]
+(pass) a model with no settable effort is displayed as a question mark (P11) > the widget says ? rather than borrowing a configured or default level [2064.34ms]
+
+tests\harness-dock\viewed-session.test.ts:
+(pass) the frozen Viewed session host artifact > the record pins the base revision this repository records as supported, not a newer one [0.17ms]
+(pass) the frozen Viewed session host artifact > every patched file's base hash agrees with the baseline record's own revision anchor [0.10ms]
+(pass) the frozen Viewed session host artifact > the materialised host carries exactly the frozen post-patch bytes [1.34ms]
+(pass) the frozen Viewed session host artifact > the unpatched baseline install carries no outlet: the patch is what publishes it [0.22ms]
+(pass) the viewed session contract, as the frozen artifact implements it > a fact the host cannot obtain is named unavailable instead of guessed [0.12ms]
+(pass) the viewed session contract, as the frozen artifact implements it > a target switch, a same-target fact change and an invalidation each notify; unsubscribe stops it [0.31ms]
+(pass) the viewed session contract, as the frozen artifact implements it > a source over one live session reads its facts and follows its own model, effort and context events [0.10ms]
+
+ 195 pass
+ 0 fail
+ 2438 expect() calls
+Ran 195 tests across 52 files. [497.02s]

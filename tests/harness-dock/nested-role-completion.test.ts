@@ -9,7 +9,7 @@ import { dualRoleDock } from "../workflow-chat/support/dual-role-dock";
 // and remain usable after finish; latest report and explicit parent completion gate close.
 // Provider tool selection and external Herdr are controlled. This is NOT autonomous
 // model/manual-approval acceptance or real Herdr Tab-lifetime evidence.
-for (const host of ["omp", "pi"] as const) test(`${host} native dual roles keep nested finish, outer readiness and explicit completion independent`, async () => {
+for (const host of ["omp", "pi"] as const) for (const chiefDelegated of [false, true]) test(`${host} P18 ${chiefDelegated ? "chief-delegated" : "ordinary"} native dual roles keep nested finish, outer readiness and explicit completion independent`, async () => {
 	const backend = await workflowBackend();
 	const observations: unknown[] = [];
 	try {
@@ -57,8 +57,29 @@ for (const host of ["omp", "pi"] as const) test(`${host} native dual roles keep 
 			consumer: { title: "Consumer", bot_id: "worker", input: "CONSUME", zone: "test/inner", blocked_by: ["call"] },
 		} }));
 		const identify = (sessionId: string, cwd: string) => writeFileSync(join(backend.root.path, "behavior.json"), JSON.stringify({ native_session: { source: `herdr:${host}`, agent: host, kind: "id", value: sessionId }, native_cwd: cwd }));
+		const chiefCreated = await backend.post("/api/tasks", { name: "P18 chief", taskType: "chief", agent: host, chatName: "{chat.id}", model: "default", prompt: "" });
+		const chiefTask = chiefCreated.tasks.find((task: { name: string }) => task.name === "P18 chief").id;
+		identify("P18-chief", backend.root.path);
+		const chiefPreview = await backend.post("/api/chats/preview", { zone: "test/outer", taskId: chiefTask });
+		const chiefStart = await backend.post("/api/chats", { zone: "test/outer", taskId: chiefTask, chatId: chiefPreview.chatId });
+		const chiefDeadline = Date.now() + 20_000;
+		let chiefReady = false;
+		while (Date.now() < chiefDeadline) {
+			const state = await fetch(`${backend.endpoint}/api/chats/${chiefStart.id}`).then(response => response.json());
+			if (state.stage === "failed") throw new Error(JSON.stringify(state));
+			if (state.stage === "succeeded") { chiefReady = true; break; }
+			await Bun.sleep(25); // Separate backend process owns startup/publication.
+		}
+		expect(chiefReady).toBe(true);
+		await backend.post("/api/sessions/events", { sessionId: "P18-chief", kind: "register", data: { cwd: backend.root.path, agentType: host } });
 		identify("outer-manager", backend.root.path);
-		const outer = await backend.post("/api/scheduler/maps/outer.json/runs", { managerTaskId: tasks.manager, zone: "test/outer", userInput: "Nested native mechanism" });
+		let outer;
+		if (chiefDelegated) {
+			await backend.post("/api/scheduler/bots/save", { id: "outer", revision: null, content: JSON.stringify({ name: "Outer", when: "", plan_guide: "", node_guide: "", map_file: "outer.json" }) });
+			const preview = await backend.post("/api/chief/delegations/preview", { sessionId: "P18-chief", botId: "outer", managerTaskId: tasks.manager, zoneId: "test/outer", input: "Nested native mechanism", materials: [] });
+			outer = await backend.post("/api/chief/delegations", { sessionId: "P18-chief", previewId: preview.previewId });
+		} else outer = await backend.post("/api/scheduler/maps/outer.json/runs", { managerTaskId: tasks.manager, zone: "test/outer", userInput: "Nested native mechanism" });
+		await backend.post("/api/workflow/manager/prepare_inputs", { sessionId: "outer-manager", fileInputs: [], confirmed: true, reason: "已审阅外层文本输入，无文件要求" });
 		identify(nativeId, dock.root.workDir);
 		const dispatched = await backend.post("/api/workflow/manager/dispatch", { sessionId: "outer-manager", nodes: ["call"] });
 		const execution = dispatched.snapshot.nodes.call.execution;
@@ -72,6 +93,12 @@ for (const host of ["omp", "pi"] as const) test(`${host} native dual roles keep 
 		expect((await detail(outer.id)).reports).toEqual([]);
 		await call("report", { body: "Progress only", can_complete: false });
 		expect(await parentAction(409)).toMatchObject({ code: "report-not-completable" });
+		expect(status.body.snapshot.inputsReady).toBe(false);
+		const prepared = await call("run", { action: "prepare_inputs", fileInputs: [], confirmed: true, reason: "已审阅内部文本输入，无文件要求" });
+		expect(prepared.body).toMatchObject({ snapshot: { id: childId, inputsReady: true } });
+		expect(prepared.body.changed === true || prepared.body.stateCommitted === true).toBe(true);
+		expect(prepared.body.error).toBeUndefined();
+		expect(prepared.body.historyError).toBeNull();
 		identify("internal-worker", dock.root.workDir);
 		const internal = await call("run", { action: "dispatch", nodes: ["inside"] });
 		expect(internal.body.snapshot.id).toBe(childId);
@@ -79,6 +106,8 @@ for (const host of ["omp", "pi"] as const) test(`${host} native dual roles keep 
 		await backend.post("/api/workflow/node/report", { sessionId: "internal-worker", body: "Internal done", canComplete: true });
 		const collected = await call("collect", {});
 		const child = await detail(childId);
+		expect(child.reports[0]).toMatchObject({ from: { sessionId: "internal-worker" }, to: { sessionId: nativeId }, runId: childId });
+		expect((await fetch(`${backend.endpoint}/api/chief/reports`).then(response => response.json())).reports).toEqual([]);
 		expect(collected.body).toMatchObject({ reason: "notification", pendingReports: { inside: child.reports[0].id } });
 		await call("run", { action: "complete", nodeId: "inside", reason: "Internal handoff accepted" });
 		expect((await detail(childId)).run.nodes.inside.status).toBe("completed");
@@ -121,7 +150,7 @@ for (const host of ["omp", "pi"] as const) test(`${host} native dual roles keep 
 			const evidence = process.env.WORKFLOW_PROMPT_EVIDENCE_DIR;
 			if (evidence) {
 				mkdirSync(evidence, { recursive: true });
-				writeFileSync(join(evidence, `nested-native-${host}.json`), JSON.stringify({ scope: "Native tools and real backend; controlled provider/Herdr, not model or real Tab acceptance", observations,
+				writeFileSync(join(evidence, `nested-native-${host}-${chiefDelegated ? "chief" : "ordinary"}.json`), JSON.stringify({ scope: "Native tools and real backend; controlled provider/Herdr, not model or real Tab acceptance", observations,
 					backendCalls: existsSync(join(backend.root.path, "calls.jsonl")) ? readFileSync(join(backend.root.path, "calls.jsonl"), "utf8") : null }, null, 2));
 			}
 		} finally { await backend.close(); }

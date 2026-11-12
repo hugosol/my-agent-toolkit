@@ -16,7 +16,7 @@ export interface RoleDock {
 }
 
 /** S1: shipped automatic role entry, real OMP Prompt/history, controlled provider only. */
-export async function promptDock(role: "manager" | "node" | "dual", options: {
+export async function promptDock(role: "manager" | "node" | "chief" | "dual" | "chief-report", options: {
 	/** undefined preserves shipped configuration; null exercises a missing deployment file. */
 	config?: string | null;
 	/** Place valid but wrong files in cwd and ID-derived directories before loading. */
@@ -25,6 +25,10 @@ export async function promptDock(role: "manager" | "node" | "dual", options: {
 	missingNativeIdentity?: boolean;
 	/** Observe the actual public Session/Owner facts without altering them. */
 	observeIdentity?: boolean;
+	/** Exercise the host's real headless extension context. */
+	headless?: boolean;
+	/** Keep native confirmation tests away from the user's OS home/config roots. */
+	isolatedHome?: boolean;
 } = {}): Promise<RoleDock> {
 	const root = createRunRoot(`role-prompt-${role}`);
 	const deployment = join(root.path, "deployment");
@@ -49,7 +53,7 @@ export async function promptDock(role: "manager" | "node" | "dual", options: {
 			}
 		}
 	}
-	let entry = join(deployment, `entrypoints/omp-auto/${role}-chat.ts`);
+	let entry = join(deployment, `entrypoints/omp-auto/${role === "chief-report" ? role : `${role}-chat`}.ts`);
 	if (options.missingNativeIdentity) {
 		const fixture = "tests/harness-dock/fixtures/workflow-missing-identity";
 		cpSync(join(REPO_ROOT, fixture), join(deployment, fixture), { recursive: true });
@@ -69,13 +73,16 @@ export async function promptDock(role: "manager" | "node" | "dual", options: {
 	} });
 	let session: ControlledSession | undefined;
 	try {
-		const options = { harness: await ensureIsolatedHarness(), runRoot: root, extensions,
-			model: DOCK_MODEL_SELECTOR, env: { [DOCK_CAPTURE_BASE_URL_ENV]: capture.baseUrl, WORKFLOW_DOCK_ROLE: role } };
-		session = await ControlledSession.start(options);
+		const startup = { harness: await ensureIsolatedHarness(), runRoot: root, extensions,
+			extraArgs: options.headless ? ["--no-ui"] : [],
+			model: DOCK_MODEL_SELECTOR, env: { [DOCK_CAPTURE_BASE_URL_ENV]: capture.baseUrl, WORKFLOW_DOCK_ROLE: role,
+				...(options.isolatedHome ? { HOME: root.path, USERPROFILE: root.path, APPDATA: root.path, LOCALAPPDATA: root.path,
+					XDG_CONFIG_HOME: root.path, XDG_DATA_HOME: root.path, XDG_STATE_HOME: root.path, XDG_CACHE_HOME: root.path } : {}) } };
+		session = await ControlledSession.start(startup);
 		return { root, get session() { return session!; }, capture,
 			select(name: string, params: unknown) { next = { name, arguments: JSON.stringify(params) }; },
 			async reopen(sessionPath: string) {
-				if (session!.exited()) session = await ControlledSession.start(options);
+				if (session!.exited()) session = await ControlledSession.start(startup);
 				const restored = await session!.request({ type: "switch_session", sessionPath });
 				if (restored.success !== true) throw new Error(`OMP role restore failed: ${JSON.stringify(restored)}`);
 			},

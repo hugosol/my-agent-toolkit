@@ -81,6 +81,7 @@ test("P1/P2/P6 independent automatic roles use native identity and preserve real
 		const status = await call(manager, "run", { action: "status" });
 		expect(status.details.httpStatus).toBe(200);
 		expect(status.body.snapshot.id).toBe(started.id);
+		await backend.post("/api/workflow/manager/prepare_inputs", { sessionId: managerId, fileInputs: [], confirmed: true, reason: "已审阅本场景文本输入，无文件要求" });
 		backend.behavior(nodeId, node.root.workDir);
 		const dispatch = await call(manager, "run", { action: "dispatch", nodes: ["A"] });
 		expect(dispatch.body.results[0].status).toBe("running");
