@@ -6,6 +6,18 @@
 - **身份**由公共 Session 提供。调用时不填写 sessionId、Run、执行或接收者，也不用名称或 cwd 推断身份。
 - **显式推进**：ready 表示可派发，不表示已派发；交接、恢复派发资格和实际启动执行是不同动作。
 
+# 无 Chat 的 Rust 脚本节点
+
+后端公开 execution 的 `kind: "rust_script"`、`rustScript: "create_blank_bot"|"save_bot_guides"` 表示固定 Rust 工作。使用原 `run` / `collect`，不新增脚本工具或单独接收工具，不填写 Run、execution、来源或收件者身份。此分支没有 taskId、agent、chat、childRunId，没有节点 Chat、Session 或 Tab 可供寻找、恢复或关闭；不要把缺少 Chat 当作派发失败。普通 Task/Map 的 Chat 和嵌套角色规则不变。
+
+- `dispatch` 返回表示已派发，不表示业务结束；不等待业务完成才解释派发结果。`execution.lifecycle.status` 的 running / succeeded / failed 是本次工作生命周期，外层 node.status 是 pending / running / failed / completed；执行结束与 node 交接不能混同。
+- 脚本固定自动报告（reportPolicy=auto、autoClose=false），不等待节点模型调用 report 或用户批准，也无需关闭会话。自动报告进入原通知/collect；collect 不含正文时，按 pendingReports 标识读取已提供的 messages.jsonl 或 Run 详情，不期待节点 Chat。报告 `from=null` 且 `source={kind:"rust_script",rustScript:能力值}` 是合法后端来源，不伪造发送 Session；原 body、canComplete、outputs、executionId 和 manager to 均保持原归属。
+- 成功 true 表示 Rust 已完成确定性业务检查、合法写入、完整读回及必要材料检查；不要求模型重复确定性 Rust 业务验收。阅读报告结论、限制、部分效果及待决事项，当前执行最新 true 只允许 manager 显式 complete，不强迫立即完成。报告或 succeeded 不自动 complete，不自动派发下游；旧报告不能完成新执行，缺字段/最新 false 仍遵守原门禁。
+
+脚本失败时，保留报告原错误和 `execution.lifecycle.failure` 的 stage、code、message、effects；write、readBack、materials 的 succeeded / failed / not_attempted / unknown 分别表示实际效果，不把 unknown 说成未发生。业务失败报告 false 不自动把 node 记为 failed；先显式 fail，再按原确认规则 retry（明确 confirmed、reason，人工检查已有写入、材料和旧副作用；paused 先显式 resume）。重跑产生新执行，但没有新 Chat；旧执行和报告保留，新执行不继承旧输出或完成资格。已结束的脚本不适用 recover，不创建 Chat 代替恢复。
+
+已保存后材料生成/读回失败，不能据此声称业务写入回滚；不自动刷新 baseline，不因正文相同认定成功，原 baseline 重跑仍可能因 revision 冲突拒绝。报告保存与通知分开，通知失败不撤销已保存报告或 outputs，不自动重投业务。传输不确定先查 status/记录，再显式决定。
+
 # 同一 Session 的内外职责
 
 普通管理者只管理自身 Run；只有后端合法建立父 execution 与子 Run 关联的嵌套管理者，才在同一原生 Session 同时承担两种角色。双角色时，`run` / `collect` 只管理**内部 Run**，`report` 只向**外层**对应的父 execution 交接；两份工具指引同时适用，不互相替代。工具可见不表示已获授权，归属始终由后端依据公共 Session 解析，不填写或猜测 Run、execution、接收者来选择层级。
@@ -106,14 +118,14 @@ Map 的 `input` 工作文本不变；文件来源由 `input_rule` 数组声明�
 
 | 动作 | 前提 | 效果与边界 |
 | --- | --- | --- |
-| `recover` | 人工修复并确认原 Chat 可继续。 | 保留原执行和 Chat，只恢复跟踪；不启动或 Resume 进程、不补发输入。paused 时也可使用。 |
-| `retry` | 确需独立重做，人工已检查原 Chat、部分产物和旧副作用。 | 启动新执行和新 Chat，保留旧历史与副作用。paused 时被拒绝，须先显式 resume。 |
+| `recover` | Task/Map 执行，人工修复并确认原 Chat 可继续。 | 保留原执行和 Chat，只恢复跟踪；不启动或 Resume 进程、不补发输入。paused 时也可使用；已结束脚本不适用。 |
+| `retry` | 确需独立重做，人工已检查部分产物和旧副作用；Task/Map 还须检查原 Chat。 | Task/Map 启动新执行和新 Chat；脚本只启动新执行、没有 Chat。均保留旧历史与副作用。paused 时被拒绝，须先显式 resume。 |
 
-retry 的单项 `result` 同样须检查失败阶段、`effects` 和可得关联；失败不代表没有新 Chat。
+retry 的单项 `result` 同样须检查失败阶段、`effects` 和可得关联；Task/Map 的失败不代表没有新 Chat，脚本则核对真实新执行与业务效果，不寻找 Chat。
 
 ## 记录失败
 
-`run action=fail` 仅记录已核实的执行失败与首次原因，保留原 Chat；不隐含暂停、终止或重试。
+`run action=fail` 仅记录已核实的执行失败与首次原因，保留原执行、实际效果以及 Task/Map 的原 Chat；不隐含暂停、终止或重试。脚本失败报告仍须先作这个显式决定。
 
 # 暂停与恢复派发
 
