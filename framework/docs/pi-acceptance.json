@@ -4,22 +4,32 @@
     "workflow-chat": {
       "schemaVersion": 1,
       "scope": "workflow-chat",
-      "startedAt": "2026-11-12T07:04:59.303Z",
+      "startedAt": "2026-11-12T19:25:30.664Z",
       "cli": {
         "command": [
           "D:/Users/hugos/AppData/Local/nvm/v22.19.0/node.exe",
-          "D:/Users/hugos/AppData/Local/nvm/v24.18.0/node_modules/@earendil-works/pi-coding-agent/dist/cli.js"
+          "D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js"
         ],
-        "path": "D:/Users/hugos/AppData/Local/nvm/v24.18.0/node_modules/@earendil-works/pi-coding-agent/dist/cli.js",
+        "path": "D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js",
         "source": "node script"
       },
       "source": {
-        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-qXkTJ1",
-        "head": "b13fe8dc765197a6ddcac9c99ccf6bd60f963a5f",
-        "status": [],
-        "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-        "untrackedFiles": [],
-        "sha256": "f8eeaee2784ceede1d516978174c78b8a8086e9db63cca372078f03369bdf42f"
+        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-9Z2J1e",
+        "head": "a7591d05b7d3e9c9ad68eed14e605e0f580a7626",
+        "status": [
+          " M .gitignore",
+          " M extensions/workflow-chat/README.md",
+          " M tests/harness-dock/chief-role.test.ts",
+          "?? scripts/rust-script-acceptance.ts"
+        ],
+        "diffSha256": "fe015256c26a954e5e1dddef26067570f46a4b777ed5dabae8e9b6f732e4270f",
+        "untrackedFiles": [
+          {
+            "path": "scripts/rust-script-acceptance.ts",
+            "sha256": "4ae03bb312e91fcea76c30b9659a2311562bfc2fa9b7fe78e8ba797ecf9e1c50"
+          }
+        ],
+        "sha256": "308f642b2c952401ff09207f9f3aeaf7707031a97f097d91119a338458598428"
       },
       "lockfiles": [
         {
@@ -40,9 +50,9 @@
           "bun": null
         },
         "artifact": {
-          "path": "D:/Users/hugos/AppData/Local/nvm/v24.18.0/node_modules/@earendil-works/pi-coding-agent/dist/cli.js",
-          "bytes": 169,
-          "sha256": "8189b66abc4f9f431dbb70941dcba690d76d040de1fbfff212886be35a53639d"
+          "path": "D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js",
+          "bytes": 160,
+          "sha256": "e79626f2dd6f94aa45d30f3fa63cd84319a6eefcd150b353cfaf274366926774"
         },
         "platform": "win32",
         "arch": "x64"
@@ -56,14 +66,24 @@
         "Pi tool AbortSignal releases transport, switch preserves auto startup, and shutdown releases active collect"
       ],
       "complete": true,
-      "finishedAt": "2026-11-12T07:05:10.607Z",
+      "finishedAt": "2026-11-12T19:25:39.036Z",
       "finishedSource": {
-        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-qXkTJ1",
-        "head": "b13fe8dc765197a6ddcac9c99ccf6bd60f963a5f",
-        "status": [],
-        "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-        "untrackedFiles": [],
-        "sha256": "f8eeaee2784ceede1d516978174c78b8a8086e9db63cca372078f03369bdf42f"
+        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-9Z2J1e",
+        "head": "a7591d05b7d3e9c9ad68eed14e605e0f580a7626",
+        "status": [
+          " M .gitignore",
+          " M extensions/workflow-chat/README.md",
+          " M tests/harness-dock/chief-role.test.ts",
+          "?? scripts/rust-script-acceptance.ts"
+        ],
+        "diffSha256": "fe015256c26a954e5e1dddef26067570f46a4b777ed5dabae8e9b6f732e4270f",
+        "untrackedFiles": [
+          {
+            "path": "scripts/rust-script-acceptance.ts",
+            "sha256": "4ae03bb312e91fcea76c30b9659a2311562bfc2fa9b7fe78e8ba797ecf9e1c50"
+          }
+        ],
+        "sha256": "308f642b2c952401ff09207f9f3aeaf7707031a97f097d91119a338458598428"
       },
       "finishedLockfiles": [
         {
@@ -72,7 +92,7 @@
           "sha256": "28ce4c0d7b7d1d45a44e335a6647b0959c333875af42ca87ba63c87bcf4c2168"
         }
       ],
-      "acceptedAt": "2026-11-12T07:05:10.607Z"
+      "acceptedAt": "2026-11-12T19:25:39.036Z"
     },
     "close-out": {
       "schemaVersion": 1,
