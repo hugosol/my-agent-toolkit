@@ -9,6 +9,7 @@
  * `openai-codex-responses` request in particular is shape-only: it says nothing about
  * whether a real provider would accept the shapes it carries.
  */
+import { randomInt } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 
@@ -270,9 +271,9 @@ export function startCaptureServer(options: CaptureServerOptions): CaptureServer
 	const heldBalance = Promise.withResolvers<void>();
 	let sequence = 0;
 
-	const server = Bun.serve({
+	const bind = (port: number) => Bun.serve({
 		hostname: "127.0.0.1",
-		port: 0,
+		port,
 		async fetch(request) {
 			const url = new URL(request.url);
 			if (url.pathname.endsWith("/models")) {
@@ -447,7 +448,21 @@ export function startCaptureServer(options: CaptureServerOptions): CaptureServer
 		},
 	});
 
-	const port = server.port;
+	// Bun's port=0 can select a low port that Node's Fetch implementation blocks.
+	// The IANA dynamic range contains no Fetch-forbidden ports. Retry only an
+	// actual bind collision, before any host or business request has started.
+	let server: Bun.Server<undefined> | undefined;
+	for (let attempt = 0; attempt < 32; attempt++) {
+		try {
+			server = bind(randomInt(49152, 65536));
+			break;
+		} catch (error) {
+			if (!(error instanceof Error) || !("code" in error) || error.code !== "EADDRINUSE" || attempt === 31) throw error;
+		}
+	}
+	if (server === undefined) throw new Error("capture server did not bind a port");
+	const runningServer = server;
+	const port = runningServer.port;
 	if (port === undefined) throw new Error("capture server did not bind a port");
 	return {
 		port,
@@ -461,7 +476,7 @@ export function startCaptureServer(options: CaptureServerOptions): CaptureServer
 			// A run that stopped while a balance answer was still held would otherwise leave the handler
 			// waiting on a promise nothing will open.
 			heldBalance.resolve();
-			server.stop(true);
+			runningServer.stop(true);
 		},
 	};
 }

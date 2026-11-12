@@ -4,7 +4,7 @@
     "workflow-chat": {
       "schemaVersion": 1,
       "scope": "workflow-chat",
-      "startedAt": "2026-11-12T19:25:30.664Z",
+      "startedAt": "2026-11-12T20:20:51.384Z",
       "cli": {
         "command": [
           "D:/Users/hugos/AppData/Local/nvm/v22.19.0/node.exe",
@@ -15,21 +15,14 @@
       },
       "source": {
         "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-9Z2J1e",
-        "head": "a7591d05b7d3e9c9ad68eed14e605e0f580a7626",
+        "head": "208453735f37678bdc9228b20b733f0c3578ac2c",
         "status": [
-          " M .gitignore",
-          " M extensions/workflow-chat/README.md",
-          " M tests/harness-dock/chief-role.test.ts",
-          "?? scripts/rust-script-acceptance.ts"
+          " M docs/agents/testing.md",
+          " M tests/harness-dock/capture-server.ts"
         ],
-        "diffSha256": "fe015256c26a954e5e1dddef26067570f46a4b777ed5dabae8e9b6f732e4270f",
-        "untrackedFiles": [
-          {
-            "path": "scripts/rust-script-acceptance.ts",
-            "sha256": "4ae03bb312e91fcea76c30b9659a2311562bfc2fa9b7fe78e8ba797ecf9e1c50"
-          }
-        ],
-        "sha256": "308f642b2c952401ff09207f9f3aeaf7707031a97f097d91119a338458598428"
+        "diffSha256": "7585d910381a349968bd2ce5fb7a63ed172f5f79b9539c972c5417ae3621db60",
+        "untrackedFiles": [],
+        "sha256": "a4893fee10d4dde64e7862e6e7a5b62dfeba15cd71e992398d692b444be7c589"
       },
       "lockfiles": [
         {
@@ -66,24 +59,17 @@
         "Pi tool AbortSignal releases transport, switch preserves auto startup, and shutdown releases active collect"
       ],
       "complete": true,
-      "finishedAt": "2026-11-12T19:25:39.036Z",
+      "finishedAt": "2026-11-12T20:20:59.544Z",
       "finishedSource": {
         "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-9Z2J1e",
-        "head": "a7591d05b7d3e9c9ad68eed14e605e0f580a7626",
+        "head": "208453735f37678bdc9228b20b733f0c3578ac2c",
         "status": [
-          " M .gitignore",
-          " M extensions/workflow-chat/README.md",
-          " M tests/harness-dock/chief-role.test.ts",
-          "?? scripts/rust-script-acceptance.ts"
+          " M docs/agents/testing.md",
+          " M tests/harness-dock/capture-server.ts"
         ],
-        "diffSha256": "fe015256c26a954e5e1dddef26067570f46a4b777ed5dabae8e9b6f732e4270f",
-        "untrackedFiles": [
-          {
-            "path": "scripts/rust-script-acceptance.ts",
-            "sha256": "4ae03bb312e91fcea76c30b9659a2311562bfc2fa9b7fe78e8ba797ecf9e1c50"
-          }
-        ],
-        "sha256": "308f642b2c952401ff09207f9f3aeaf7707031a97f097d91119a338458598428"
+        "diffSha256": "7585d910381a349968bd2ce5fb7a63ed172f5f79b9539c972c5417ae3621db60",
+        "untrackedFiles": [],
+        "sha256": "a4893fee10d4dde64e7862e6e7a5b62dfeba15cd71e992398d692b444be7c589"
       },
       "finishedLockfiles": [
         {
@@ -92,7 +78,7 @@
           "sha256": "28ce4c0d7b7d1d45a44e335a6647b0959c333875af42ca87ba63c87bcf4c2168"
         }
       ],
-      "acceptedAt": "2026-11-12T19:25:39.036Z"
+      "acceptedAt": "2026-11-12T20:20:59.544Z"
     },
     "close-out": {
       "schemaVersion": 1,

@@ -1,0 +1,35 @@
+[
+  {
+    "package": ".cache\\omp-baseline\\18.5.0-codex-response-boundary\\node_modules\\@oh-my-pi\\omp-stats",
+    "source": "published dist/client real assets",
+    "files": {
+      "index.css": "60b667feae9295a3fe63e9937dba6d9b2dc8eaa7bfeb761b30282ef81f933d0c",
+      "index.html": "3255d20a702a4160f5d5314277b3f07e004af74b209583062aeff790b1b4d117",
+      "index.js": "fd4bba5330bd6ed7fa8e9734ed1edaccc7bb8b2f669e4e2c5e79cba671c8343c"
+    },
+    "archiveSha256": "bea3726aa0893c0826c037c2613f470d9f9e62e901a88f739f376f9dfe559d73",
+    "allArchiveBytesVerified": true
+  },
+  {
+    "package": ".cache\\omp-baseline\\18.5.0-viewed-session\\node_modules\\@oh-my-pi\\omp-stats",
+    "source": "published dist/client real assets",
+    "files": {
+      "index.css": "60b667feae9295a3fe63e9937dba6d9b2dc8eaa7bfeb761b30282ef81f933d0c",
+      "index.html": "3255d20a702a4160f5d5314277b3f07e004af74b209583062aeff790b1b4d117",
+      "index.js": "fd4bba5330bd6ed7fa8e9734ed1edaccc7bb8b2f669e4e2c5e79cba671c8343c"
+    },
+    "archiveSha256": "bea3726aa0893c0826c037c2613f470d9f9e62e901a88f739f376f9dfe559d73",
+    "allArchiveBytesVerified": true
+  },
+  {
+    "package": ".cache\\omp-baseline\\18.5.0-viewed-session-codex-response\\node_modules\\@oh-my-pi\\omp-stats",
+    "source": "published dist/client real assets",
+    "files": {
+      "index.css": "60b667feae9295a3fe63e9937dba6d9b2dc8eaa7bfeb761b30282ef81f933d0c",
+      "index.html": "3255d20a702a4160f5d5314277b3f07e004af74b209583062aeff790b1b4d117",
+      "index.js": "fd4bba5330bd6ed7fa8e9734ed1edaccc7bb8b2f669e4e2c5e79cba671c8343c"
+    },
+    "archiveSha256": "bea3726aa0893c0826c037c2613f470d9f9e62e901a88f739f376f9dfe559d73",
+    "allArchiveBytesVerified": true
+  }
+]
