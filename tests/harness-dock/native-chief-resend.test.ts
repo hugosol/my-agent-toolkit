@@ -49,6 +49,10 @@ for (const host of ["omp", "pi"] as const) {
 		let pending: Promise<void> | undefined;
 		try {
 			dock = await roleContractDock(host, peer.url.origin, 2000, role, 2000, "chief_resend_report");
+			const state = await dock.state();
+			const data = state.data;
+			if (!data || typeof data !== "object" || !("sessionId" in data) || typeof data.sessionId !== "string") throw new Error("Actual native sender Session unavailable");
+			const sessionId = data.sessionId;
 			for (let attempt = 0; attempt < 2; attempt++) {
 				pending = dock.call({ id: report.id });
 				const dialog = await dock.confirmation();
@@ -59,7 +63,7 @@ for (const host of ["omp", "pi"] as const) {
 			}
 			expect(calls).toEqual(Array.from({ length: 2 }, () => [
 				{ method: "GET", path: "/api/chief/reports/immutable%2Fresend-18" },
-				{ method: "POST", path: "/api/chief/reports/immutable%2Fresend-18/resend", body: { sessionId: expect.any(String) } },
+				{ method: "POST", path: "/api/chief/reports/immutable%2Fresend-18/resend", body: { sessionId } },
 			]).flat());
 		} catch (error) { console.error(`${host} native resend failure before cleanup`, error); throw error; }
 		finally { try { if (pending) { await dock?.cancel(); await pending; } } finally { try { await dock?.close(); } finally { peer.stop(true); } } }
