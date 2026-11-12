@@ -4,22 +4,22 @@
     "workflow-chat": {
       "schemaVersion": 1,
       "scope": "workflow-chat",
-      "startedAt": "2026-11-11T20:46:10.500Z",
+      "startedAt": "2026-11-12T01:42:26.093Z",
       "cli": {
         "command": [
-          "node",
-          "D:\\nvm4w\\nodejs\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js"
+          "D:/Users/hugos/AppData/Local/nvm/v22.19.0/node.exe",
+          "D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js"
         ],
-        "path": "D:\\nvm4w\\nodejs\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js",
-        "source": "the shim D:\\nvm4w\\nodejs\\pi.cmd (run through node: a shell shim cannot be spawned without a shell)"
+        "path": "D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js",
+        "source": "node script"
       },
       "source": {
         "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-j29fMp",
-        "head": "8b2e12a42f191338f01f05da1138e3f5bff4ed81",
+        "head": "d6b6a8fff8e62711bf3b4dadb0c85fbe3a613cc2",
         "status": [],
         "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "untrackedFiles": [],
-        "sha256": "efdba13f4b6d1a9eb932ed461399e73f7c31c9a8b6d58e7dd3f13cdbb7ce6ba2"
+        "sha256": "cf02240259830a3fcf1fd2863a9def63042070f3efd3a68a9f9567aa8eec67b8"
       },
       "lockfiles": [
         {
@@ -35,12 +35,12 @@
           "bun": "1.4.4"
         },
         "cli": {
-          "execPath": "D:\\nvm4w\\nodejs\\node.exe",
-          "node": "24.18.0",
+          "execPath": "D:\\Users\\hugos\\AppData\\Local\\nvm\\v22.19.0\\node.exe",
+          "node": "22.19.0",
           "bun": null
         },
         "artifact": {
-          "path": "D:\\nvm4w\\nodejs\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js",
+          "path": "D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js",
           "bytes": 160,
           "sha256": "e79626f2dd6f94aa45d30f3fa63cd84319a6eefcd150b353cfaf274366926774"
         },
@@ -56,14 +56,14 @@
         "Pi tool AbortSignal releases transport, switch preserves auto startup, and shutdown releases active collect"
       ],
       "complete": true,
-      "finishedAt": "2026-11-11T20:46:17.103Z",
+      "finishedAt": "2026-11-12T01:42:34.378Z",
       "finishedSource": {
         "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-j29fMp",
-        "head": "8b2e12a42f191338f01f05da1138e3f5bff4ed81",
+        "head": "d6b6a8fff8e62711bf3b4dadb0c85fbe3a613cc2",
         "status": [],
         "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "untrackedFiles": [],
-        "sha256": "efdba13f4b6d1a9eb932ed461399e73f7c31c9a8b6d58e7dd3f13cdbb7ce6ba2"
+        "sha256": "cf02240259830a3fcf1fd2863a9def63042070f3efd3a68a9f9567aa8eec67b8"
       },
       "finishedLockfiles": [
         {
@@ -72,7 +72,7 @@
           "sha256": "28ce4c0d7b7d1d45a44e335a6647b0959c333875af42ca87ba63c87bcf4c2168"
         }
       ],
-      "acceptedAt": "2026-11-11T20:46:17.103Z"
+      "acceptedAt": "2026-11-12T01:42:34.378Z"
     },
     "close-out": {
       "schemaVersion": 1,
