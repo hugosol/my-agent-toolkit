@@ -16,6 +16,8 @@ export interface ChiefLookupResult {
 export interface ChiefDock {
 	readonly capture: CaptureServer;
 	call(params: unknown, tool?: "chief_definitions" | "chief_read_report"): Promise<ChiefLookupResult>;
+	input(text: string): Promise<void>;
+	state(): Promise<Readonly<Record<string, unknown>>>;
 	history(): Promise<string>;
 	close(): Promise<void>;
 }
@@ -53,6 +55,19 @@ export async function chiefDock(host: "omp" | "pi", endpoint: string): Promise<C
 		}
 		const running = session;
 		return { capture,
+			state: () => running.request({ type: "get_state" }),
+			async input(text) {
+				if (running instanceof PiSession) await running.run(text);
+				else {
+					// OMP absorbed input returns response.data.agentInvoked=false and no
+					// prompt_result; normal prompts publish both native outcomes.
+					const response = await running.request({ type: "prompt", message: text });
+					const data = response.data;
+					if (data && typeof data === "object" && "agentInvoked" in data && data.agentInvoked === false) return;
+					const outcome = await running.awaitFrame(frame => frame.type === "prompt_result" && frame.id === response.id, "chief input settles", 30_000);
+					if (outcome.status !== "completed") throw new Error(`Chief input failed: ${JSON.stringify(outcome)}`);
+				}
+			},
 			async call(params: unknown, tool = "chief_definitions") {
 				next = { name: tool, arguments: JSON.stringify(params) };
 				const mark = running.frames().length;
@@ -70,7 +85,8 @@ export async function chiefDock(host: "omp" | "pi", endpoint: string): Promise<C
 			async close() {
 				try {
 					const outcome = await running.stop();
-					if (running instanceof PiSession && outcome && (outcome.timedOut || outcome.exitCode !== 0)) throw new Error(`Chief Pi cleanup failed: ${JSON.stringify(outcome)}`);
+					console.log(JSON.stringify({ host, chiefNativeExit: outcome }));
+					if (outcome && (outcome.timedOut || outcome.exitCode !== 0)) throw new Error(`Chief ${host} cleanup failed: ${JSON.stringify(outcome)}`);
 				} finally {
 					try {
 						const evidence = process.env.WORKFLOW_PROMPT_EVIDENCE_DIR;

@@ -10,7 +10,7 @@ export const CHIEF_TOOLS: readonly ToolDeclaration<ChiefToolState>[] = [{
 	description: "只读查询现有 Bot.when 与能力定义；不派发、不创建、不授予 chief 身份。",
 	parameters: { type: "object", properties: {
 		kind: { type: "string", enum: ["bots", "tasks", "maps", "zones"], description: "bots 优先按 when 寻找能力；tasks/maps 核对执行目标，zones 读取显式位置。" },
-		id: { type: "string", description: "仅 tasks/maps 可选：Task ID 或 Map 文件名；省略时列出目录。不接受 endpoint、目录路径或会话身份。" },
+		id: { type: "string", description: "仅 tasks/maps 可选：Task ID 或完整 Map JSON 文件名。maps 的 id 从 Bot.map_file 原样使用，包含 .json 后缀，不用 Bot ID 或去后缀名称；省略时列出目录。不接受 endpoint、目录路径或会话身份。" },
 	}, required: ["kind"], additionalProperties: false },
 	async execute(state, params, delivery) {
 		const invalid = () => workflowToolResult({ isError: true, body: { code: "invalid-parameters", message: "需要 kind=bots/tasks/maps/zones；仅 tasks/maps 可提供非空字符串 id，不接受额外字段。" } });
@@ -44,13 +44,13 @@ export const CHIEF_TOOLS: readonly ToolDeclaration<ChiefToolState>[] = [{
 			|| typeof params.id !== "string" || !params.id.trim()) {
 			return workflowToolResult({ isError: true, body: { code: "invalid-parameters", message: "只接受非空字符串 id。" } });
 		}
-		return workflowToolResult(await state.requests.get(delivery.sessionId, `/api/chief/reports/${encodeURIComponent(params.id)}`, delivery.signal));
+		return workflowToolResult(await state.requests.post(delivery.sessionId, `/api/chief/reports/${encodeURIComponent(params.id)}/view`, {}, delivery.signal));
 	},
 }, {
 	name: "chief_delegate", label: "Chief delegate",
-	description: "按 Bot 委派独立 Task Chat 或真实 Map Run。先解析完整目标/位置/输入供用户原生确认，仅批准本次预览后启动；不等待业务完成，不自动重试。聊天同意不是批准。",
+	description: "按 Bot 委派独立 Task Chat 或真实 Map Run。调用前先用 chief_definitions 的 tasks/maps 加目标 id 成功读取实际执行定义；Bot 目录不是执行定义。再解析完整目标/位置/输入供用户原生确认，仅批准本次预览后启动；不等待业务完成，不自动重试。聊天同意不是批准。",
 	parameters: { type: "object", properties: {
-		botId: { type: "string", description: "已核对 when 与执行目标的 Bot ID，不是 Task ID。" },
+		botId: { type: "string", description: "从 chief_definitions 的实际 Bot 对象逐字复制其 id；不得由 name、Map 文件名、任务名拼接或改写，不是 Task ID。" },
 		zoneId: { type: "string", description: "显式登记的稳定 zone ID：Task 执行目录或 Map manager 目录；不覆盖 Map 内部节点 zone。" },
 		input: { type: "string", description: "本次完整业务要求，吸收用户最新修正，不是固定 Task 职能。" },
 		materials: { type: "array", description: "本次必要材料；无材料传 []。Map 的 id 对应 input_files。路径相对于显式材料 zone。", items: { type: "object", properties: {

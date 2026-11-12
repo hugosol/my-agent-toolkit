@@ -1,0 +1,156 @@
+{
+  "ticket": "18-native-report-recovery",
+  "source": {
+    "base": "3b5b638825a2a0ad8b57a1726850326c719a2948",
+    "implementationCommits": [
+      "c366745",
+      "bf00523"
+    ],
+    "startupPrerequisite": {
+      "local": "e3d6f20",
+      "upstream16": "9397037"
+    },
+    "pairedBackend": "a9c28664d1c0d63cc2c7a4cf5a51fd13f0dd5f92"
+  },
+  "environment": {
+    "bun": "1.4.4",
+    "omp": "18.5.0 exact isolated dock install",
+    "pi": "1.5.2",
+    "node": "22.19.0",
+    "variables": {
+      "OMP_BASELINE_RECORD_ROOT": "E:/Developer/myhub/my-agent-toolkit",
+      "PI_NODE": "D:/Users/hugos/AppData/Local/nvm/v22.19.0/node.exe",
+      "PI_CLI": "D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js",
+      "HERDR_BOT_REPO": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-RGYC82\\.scratch\\chief-bot\\paired-backend-final",
+      "CARGO_TARGET_DIR": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-RGYC82\\.scratch\\chief-bot\\paired-target",
+      "HERDR_BOT_BINARY": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-RGYC82\\.scratch\\chief-bot\\paired-target\\debug\\examples\\safe_shutdown_shell.exe",
+      "HERDR_BOT_METADATA": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-RGYC82\\.scratch\\chief-bot\\paired-backend-final\\meta-data\\task-options.toml",
+      "WORKFLOW_PROMPT_EVIDENCE_DIR": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-RGYC82\\.scratch\\chief-bot\\evidence\\18-native-report-recovery\\native"
+    }
+  },
+  "checks": [
+    {
+      "command": "bun test tests/harness-dock/native-chief-reception.test.ts tests/harness-dock/native-chief-resend.test.ts tests/harness-dock/chief-read-report.test.ts tests/harness-dock/native-chief-receipt-backend.test.ts",
+      "exitCode": 0,
+      "result": "12 passed, 0 failed; actual native input/Session/confirmation and paired persistent backend",
+      "log": "native-focused-green.log"
+    },
+    {
+      "command": "bun test tests/harness-dock",
+      "exitCode": 0,
+      "log": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-RGYC82\\.scratch\\chief-bot\\evidence\\18-native-report-recovery\\dock-final.log"
+    },
+    {
+      "command": "bun run test",
+      "exitCode": 0,
+      "log": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-RGYC82\\.scratch\\chief-bot\\evidence\\18-native-report-recovery\\full-final.log"
+    },
+    {
+      "command": "bun run typecheck",
+      "exitCode": 0,
+      "log": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-RGYC82\\.scratch\\chief-bot\\evidence\\18-native-report-recovery\\typecheck-final.log"
+    },
+    {
+      "command": "bun run check:integrations --json",
+      "exitCode": 0,
+      "log": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-RGYC82\\.scratch\\chief-bot\\evidence\\18-native-report-recovery\\integrations-final.log"
+    }
+  ],
+  "counts": {
+    "dock": {
+      "passed": 237,
+      "failed": 0,
+      "files": 58
+    },
+    "canonicalFull": {
+      "passed": 1922,
+      "failed": 0,
+      "files": 243
+    }
+  },
+  "criteria": [
+    {
+      "criterion": 1,
+      "evidence": [
+        "native-chief-reception.test.ts: hold receipt before any provider request",
+        "native-chief-receipt-backend.test.ts: Herdr submitted leaves receipt false; actual native input persists real receipt for both hosts"
+      ]
+    },
+    {
+      "criterion": 2,
+      "evidence": [
+        "native-chief-reception.test.ts: duplicate and malformed grants never add provider requests",
+        "native-chief-resend.test.ts: original receipt outcome unchanged; no presentation claim"
+      ]
+    },
+    {
+      "criterion": 3,
+      "evidence": [
+        "native-chief-resend.test.ts: both hosts, chief-report and manager original ID/content, renewed native approval, denial/dismiss/cancel/timeout/headless/session-end",
+        "chief-report-recovery.test.ts: changed content/identity rejected; refusal retains original saved fact"
+      ]
+    },
+    {
+      "criterion": 4,
+      "evidence": [
+        "native-chief-resend.test.ts: 500ms HTTP and confirmation budgets; 600ms observation after each nonapproval/late approval; no POST",
+        "dependency-17.json: upstream S2 restart/reregistration and 46s bounded maintenance observation",
+        "implementation has no startup scan, queue, polling or retry; all report effects require native input or explicit tool invocation"
+      ],
+      "limit": "Full real-model lifecycle/no-auto cases are owned by 19; not claimed here"
+    },
+    {
+      "criterion": 5,
+      "evidence": [
+        "chief-read-report.test.ts: fresh real chief Sessions view complete original success/failure/blocked/capability reports through authorized POST /view",
+        "native-chief-receipt-backend.test.ts: actual stored original and receipt viewed without another receive grant"
+      ]
+    },
+    {
+      "criterion": 6,
+      "evidence": [
+        "chief-report-recovery.test.ts: current chief refusal preserved; session end invalidates pending confirmation; submitted external effect remains uncertain, not undone",
+        "dependency-17.json: restored independent/direct-manager sender relation and same-Task refusal"
+      ],
+      "limit": "Real-model recovery and cross-host old-chief revocation remain 19/20 ownership"
+    }
+  ],
+  "retainedFailures": [
+    "resend-red.json",
+    "revoked-view-red.json",
+    "incomplete-preview-red.json",
+    "receive-red.json",
+    "omp-handled-driver-failure.json",
+    "malformed-receipt-red.json",
+    "refused-resend-original-red.json",
+    "compiler-diagnostic.json",
+    "native-focused.log: OMP journal begins with title, not session; fixture now locates actual session record; assertions unchanged"
+  ],
+  "toolchainRecovery": "Initial typecheck later could not resolve @typescript/typescript-win32-x64. Frozen reinstall made no changes; bun install --frozen-lockfile --linker hoisted --backend copyfile restored local dependency resolution. Final required typecheck and integration checks passed.",
+  "evidenceCorrection": "Bun matchers mutated fields in a local receipt object in the first focused log. Final fixture snapshots actual response before assertions; final native logs retain real numeric at/string claimId. No product or expectation weakening.",
+  "identitySha256": {
+    "bun.lock": "28ce4c0d7b7d1d45a44e335a6647b0959c333875af42ca87ba63c87bcf4c2168",
+    "package.json": "78baa6e3b147f4ef192e3d2e3ec86bfe1d318efcaefab9f6ce7aa520d308210d",
+    ".scratch/chief-bot/paired-backend-final/backend/Cargo.lock": "ecf45bd9047d8772dd8c3abddee0f503e843f91230cc12a00725f593246bb36f",
+    ".scratch/chief-bot/paired-target/debug/examples/safe_shutdown_shell.exe": "59bc8f5b555e88a8d8b374ff4a0f780879bf7815296dbb6261c22d252b1ea506",
+    ".scratch/chief-bot/paired-target/debug/herdr-fixture.exe": "ae67a465b015e9aee8f5d3a8f1c2f1174ac1d65285f1dc5b0e089e6aff16360e",
+    "extensions/workflow-chat/common/chief-report.ts": "60e742164622d1b94fa985707cc1cac2c0decf40fec16fd62ceeb56b9b0ba891",
+    "extensions/workflow-chat/chief-chat/shared-logic/implementation.ts": "aad85c3b955f407ff81a6f019d3185fca22c6837f4661559df5365a276f6ae47",
+    "tests/harness-dock/native-chief-receipt-backend.test.ts": "86f9c4f28eda61656d091e173e7ad935a6c66ab9c0088967d2e2415af42e8f9f",
+    "tests/harness-dock/native-chief-resend.test.ts": "ef1b360ca4eeafb69ae3c8611955a184f3cf58a95ebe3dfe866dd0eb686e5e7d"
+  },
+  "logSha256": {
+    "dock-final.log": "57dd6623d802f45d0994a46af722bae9b9ed193af2bb1d44b1ea7cd232789e36",
+    "full-final.log": "47eaad954f65339f733c1eec1a827ed42952eb5d8c9a820b3d3ab0822e95df81",
+    "integrations-final.log": "9854665e13269d4855347e7caba902ef39ee48fdc9828a75ca9eb14ac407db2e",
+    "native-focused-green.log": "b55b7b6f816504b38596490be38bdf1f09be13141611f61ca5b060290426ca2c",
+    "native-focused.log": "d7fb8385b44d08a470ebefda2b81e9f9f9aa4f75ec7595772865815f6fb1b9b6",
+    "typecheck-final.log": "a6d4816cdc54248883c105ae82b3eccc315e863634bec612ab82cea1af1c3b7c"
+  },
+  "limits": [
+    "No actual external-model calls in this ticket. Controlled provider verifies protocol, not GPT-6-luna behavior.",
+    "Dependency 17 result is explicitly upstream S2 evidence, not this worktree regression.",
+    "Full P23-P27/P34/P35 real-model recovery acceptance belongs to 19 and cross-host chief revocation to 20."
+  ],
+  "unresolvedOwnedScope": []
+}

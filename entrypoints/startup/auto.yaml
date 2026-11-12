@@ -29,3 +29,5 @@ manager-chat:
   enabled: true
 chief-chat:
   enabled: true
+chief-report:
+  enabled: true
