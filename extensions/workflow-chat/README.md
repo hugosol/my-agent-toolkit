@@ -28,17 +28,13 @@ pi -e /absolute/my-agent-toolkit/entrypoints/pi-auto/chief-chat.ts
 
 ### 澄清、复用与能力缺口
 
-首次指引把需求判断与工具启动分开：
+首次指引把需求判断与工具启动分开：已知匹配按 Bot.when 说明复用理由，再读取实际 Task／Map 与登记 zone，核对用途、输入和材料；含糊需求先澄清，不借当前 cwd 或唯一候选暗补，不把读取失败当作无匹配。Map 明确 manager Task 与 manager zone，保留内部节点位置。
 
-- 已知匹配先按 Bot.when 说明复用理由，再读取实际 Task／Map 与登记 zone，核对用途、输入要求和材料。目录命中（包括唯一候选）不是有效目标或补齐未知输入的依据；后端读取失败也不是无匹配。
-- 含糊需求先澄清目标、范围、业务输入、材料和执行位置；明确采用用户最新修正，不借 chief 的 cwd 或唯一候选暗补。Map 另外明确 manager Task 与 manager zone，不覆盖内部节点位置。
-- 确认无匹配后，单执行者能力缺口寻找既有完整创建 Task 能力 Bot，多步骤流程缺口寻找既有完整创建 Map 能力 Bot；选择依据是创建能力的 when 和实际定义，不是名称，也不要求创建者自身必须是 Task／Map 中某一种执行类型。找不到有效创建能力就说明受阻，等待明确指示，不发明同名工具、不保存裸 Task 冒充完整流程。
-- 用户仅否决复用时等待，不自行换候选或进入创建。明确要求创建 Task／创建 Map 才按该授权核对相应创建能力；明确放弃则停止本次需求。缺少必要信息先澄清，缺原生批准不启动。
-- 创建委派的 input 只请求创建能力，不夹带创建后执行原始业务的指令。创建流程已有阶段审批仍分别生效；创建授权不代替它们或新业务的批准。
-- 委派启动回执不是最终交付；最终结果返回后如实呈现、询问是否满足要求，然后等待。成功、失败、受阻及能力创建结果都不触发自动检索下一方案、下一次执行确认或新业务。
+无匹配时，单执行者缺口选择既有完整创建 Task 能力 Bot，多步骤缺口选择完整创建 Map 能力 Bot，按 when 和实际定义而非名称或创建者自身执行类型判断；无有效能力则说明受阻，不发明工具或保存裸 Task。仅否决复用时等待，明确创建 Task／Map 才核对相应能力，明确放弃则停止。缺必要信息先澄清，缺原生批准不启动。创建 input 不夹带创建后执行业务的指令，既有每阶段审批仍生效，创建授权不代替新业务批准。启动回执不是最终交付；最终结果后呈现、询问是否满足并等待，不自动检索下一方案、请求下一执行确认或启动新业务。
 
-这些是交付给两个宿主的模型职责指引，不是自然语言授权解析器或本机安全沙箱。`tests/harness-dock/chief-role.test.ts` 在真实原生 provider 请求中检查指引消费；受控 provider 只证明指引到达，GPT-6-luna 的实际澄清／选择／等待由跨仓真实模型验收独占，不能从指引文字断言推导为已通过。
-`chief_read_report {"id":"原报告ID"}` 仅在用户明确要求查看时，通过 `POST /api/chief/reports/{id}/view` 以活动原生 Session 读取完整原报告及持久接收事实；后端实时检查当前 chief，失权返回真实拒绝。只接受非空 id，不接收 Session 或归属参数，不新建接收授权（`process:false`），不重派业务。新 chief 可仅凭报告的 background、execution、result、summary、deliverables、pendingDecisions 呈现成功、失败、受阻或能力创建结果；未知明确说未知，呈现后询问是否满足要求并等待，不发起下一执行确认、不启动业务。已给出完整报告时不必再读。
+这些是模型职责指引，不是自然语言授权解析器或本机安全沙箱。`tests/harness-dock/chief-role.test.ts` 检查真实原生 provider 请求中的指引消费；受控 provider 不证明 GPT-6-luna 实际澄清／选择／等待。
+
+`chief_read_report {"id":"原报告ID"}` 仅在用户明确要求查看时，通过 `POST /api/chief/reports/{id}/view` 以活动原生 Session 读取完整原报告及持久接收事实；后端实时检查当前 chief，失权返回真实拒绝。只接受非空 id，不接收 Session 或归属参数，不新建接收授权（`process:false`），不重派业务。新 chief 可仅凭报告的 background、execution、result、summary、deliverables、pendingDecisions 呈现成功、失败、受阻或能力创建结果，逐项明确说明原始需求背景与授权限制、实际执行对象、结果、交付物及待判断项；受阻或无交付物也不省略背景与执行对象。未知明确说未知，呈现后询问是否满足要求并等待，不发起下一执行确认、不启动业务。已给出完整权威报告时直接据此呈现，不调用 read、shell、HTTP 等工具自行读取或核验交付物，不重做报告中的操作；按报告来源转述，未知保留为未知。
 
 本入口不注册能力定义写入或 chief 报告发送占位工具，也不能通过 run/report 冒充其他角色；委派使用下述 chief_delegate 原生确认，不建议直接 HTTP 绕过确认。加载本入口不建立后端当前 chief 身份，herdr-bot 固定角色装配、发起／恢复与有效身份需要跨仓联调。`bun test tests/harness-dock/chief-role.test.ts` 的受控 provider 只证明两宿主原生加载、指引消费和真实后端定义读回，不认领真实模型职责或完整发起／恢复验收。
 
@@ -55,6 +51,7 @@ pi -e /absolute/my-agent-toolkit/entrypoints/pi-auto/chief-chat.ts
 body 必须完整包含非空 `background`、`execution`、`summary`，`result: "success"|"failure"|"blocked"`，以及 `deliverables: string[]`、`pendingDecisions: string[]`（无项明确 `[]`）。每次原生对话框展示包含实际 Session 的完整 HTTP JSON，只有该次明确批准才发送；聊天同意、业务完成或节点 auto 策略不替代。拒绝、关闭、取消、超时及无确认能力均不发送，不自动重试。
 
 分别解释 `saved`、原 `report`、`notification` 与不确定事实：保存不等于通知；`submitted` 仅为 Herdr 接受输入，不是可靠接收、呈现、已读或验收。`failed`／`not-attempted` 不撤销保存，`uncertain` 及传输／解析错误不证明未发生或回滚。工具不为通知失败重提业务报告，不自动补投。
+
 
 只有用户在原发送方 Chat 明确要求重发时，调用 `chief_resend_report {"id":"原报告ID"}`（独立 chief-report 与直接 manager 共用）。工具先 `GET /api/chief/reports/{id}` 核对并预览完整原 ID/原内容，再原生确认本次 `POST /api/chief/reports/{id}/resend`；请求仅加入实际 Session，不接受 body、身份或批准参数。拒绝、关闭、取消、超时、不可用、Session 结束不重发；原生迟到批准无效。未发送本次重发不抹去已读回的原保存事实，返回 `saved:true,report,sent:false`，不是撤销原报告。后端沿真实持久委派关联授权恢复的发送方；同 Task 的其他 Chat 不获资格。改内容使用 `chief_report` 的新确认和新报告身份。已接收时后端只反馈原接收事实，不再通知；`received:true` 不是呈现完成、用户已读或业务验收。不确定结果不解释成外部效果回滚，也不自动重新确认或发送。
 
