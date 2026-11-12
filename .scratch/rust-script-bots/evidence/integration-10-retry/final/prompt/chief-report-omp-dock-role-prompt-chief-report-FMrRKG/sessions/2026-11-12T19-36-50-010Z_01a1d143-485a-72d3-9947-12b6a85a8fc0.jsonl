@@ -1,0 +1,4 @@
+{"type":"title","v":1,"title":"","updatedAt":"2026-11-12T19:36:50.010Z","pad":"                                                                                                                                                                              "}
+{"type":"session","version":3,"id":"01a1d143-485a-72d3-9947-12b6a85a8fc0","timestamp":"2026-11-12T19:36:50.010Z","cwd":"C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-chief-report-FMrRKG\\work"}
+{"type":"thinking_level_change","id":"9736e595","parentId":null,"timestamp":"2026-11-12T19:36:50.014Z","thinkingLevel":null,"configured":null}
+{"type":"service_tier_change","id":"4a14e9fd","parentId":"9736e595","timestamp":"2026-11-12T19:36:50.014Z","serviceTier":null}
