@@ -57,6 +57,9 @@ for (const host of ["omp", "pi"] as const) test(`${host}: P7/P8/P26 report rejec
 			expect(actual.reports).toEqual([]);
 			expect(actual.run.nodes.A.status).toBe("running");
 		}
+		// P36: a real controlled Herdr rejection happens only after backend save.
+		// Keep both native host consumers and the existing completion gates real.
+		writeFileSync(join(backend.root.path, "behavior.json"), JSON.stringify({ native_session: { source: `herdr:${host}`, agent: host, kind: "id", value: nativeId }, native_cwd: dock.root.workDir, fail_prompt: true }));
 		const handoff = join(dock.root.workDir, "independent-handoff.txt");
 		await dock.call({ body: "Partial effect; input still missing", can_complete: false, outputs: [{ id: "handoff", path: handoff }] });
 		const blocked = await detail();
@@ -64,13 +67,21 @@ for (const host of ["omp", "pi"] as const) test(`${host}: P7/P8/P26 report rejec
 		expect(blocked.reports[0]).toMatchObject({ from: { sessionId: nativeId }, runId: started.id, nodeId: "A", executionId: execution.id, canComplete: false, body: "Partial effect; input still missing", outputs: [{ id: "handoff", path: handoff }] });
 		await dock.call({ body: "Ready; harmless cleanup remains", can_complete: true });
 		const ready = await detail();
+		expect(dock.lastResult()).toMatchObject({ details: { body: { saved: true, notification: { status: "failed" } } } });
 		expect(ready.reports).toHaveLength(2);
 		expect(ready.reports[1]).toMatchObject({ from: { sessionId: nativeId }, runId: started.id, nodeId: "A", executionId: execution.id, canComplete: true, body: "Ready; harmless cleanup remains" });
 		expect(ready.run.nodes.A.status).toBe("running");
 		const requests = dock.capture.requests().map(request => request.json);
 		expect(JSON.stringify(requests[0])).toContain('"name":"report"');
 		expect(JSON.stringify(requests)).toContain('saved');
-		observations.push({ nativeId, execution, blocked, ready, requests });
+		const callsBefore = readFileSync(join(backend.root.path, "calls.jsonl"), "utf8");
+		const quietStart = Date.now();
+		// Separate native/backend clocks cannot be faked. Cover shipped 30s
+		// request/startup and 10s online + 30s retention + 5s maintenance budgets.
+		await Bun.sleep(46_000);
+		expect(readFileSync(join(backend.root.path, "calls.jsonl"), "utf8")).toBe(callsBefore);
+		expect(await detail()).toEqual(ready);
+		observations.push({ nativeId, execution, blocked, ready, requests, quietWindow: { start: quietStart, end: Date.now(), seconds: 46 } });
 	} finally {
 		const evidence = process.env.WORKFLOW_PROMPT_EVIDENCE_DIR;
 		if (evidence) {
