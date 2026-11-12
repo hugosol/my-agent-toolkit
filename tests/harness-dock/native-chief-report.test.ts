@@ -191,6 +191,8 @@ for (const host of ["omp", "pi"] as const) {
 					return tool.function.name;
 				});
 				expect(names.filter(name => name === "chief_report")).toHaveLength(1);
+				// Native tools alone do not prove first-run role guidance was active.
+				if (role === "chief-report") expect(JSON.stringify(request)).toContain("你是 chief 实际委派的独立执行者");
 				if (role === "chief-report") for (const forbidden of ["report", "run", "collect"]) expect(names).not.toContain(forbidden);
 				if (role === "dual") for (const required of ["report", "run", "collect"]) expect(names).toContain(required);
 				await dock.close(); dock = undefined;

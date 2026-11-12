@@ -38,9 +38,15 @@ pi -e /absolute/my-agent-toolkit/entrypoints/pi-auto/chief-chat.ts
 - 委派启动回执不是最终交付；最终结果返回后如实呈现、询问是否满足要求，然后等待。成功、失败、受阻及能力创建结果都不触发自动检索下一方案、下一次执行确认或新业务。
 
 这些是交付给两个宿主的模型职责指引，不是自然语言授权解析器或本机安全沙箱。`tests/harness-dock/chief-role.test.ts` 在真实原生 provider 请求中检查指引消费；受控 provider 只证明指引到达，GPT-6-luna 的实际澄清／选择／等待由跨仓真实模型验收独占，不能从指引文字断言推导为已通过。
-`chief_read_report {"id":"原报告ID"}` 通过 `GET /api/chief/reports/{id}` 读取完整原报告；只接受非空 id，不接收 Session 或归属参数，不虚构接收确认。新 chief 可仅凭报告的 background、execution、result、summary、deliverables、pendingDecisions 呈现成功、失败、受阻或能力创建结果；未知明确说未知，呈现后询问是否满足要求并等待，不发起下一执行确认、不启动业务。已给出完整报告时不必再读。
+`chief_read_report {"id":"原报告ID"}` 仅在用户明确要求查看时，通过 `POST /api/chief/reports/{id}/view` 以活动原生 Session 读取完整原报告及持久接收事实；后端实时检查当前 chief，失权返回真实拒绝。只接受非空 id，不接收 Session 或归属参数，不新建接收授权（`process:false`），不重派业务。新 chief 可仅凭报告的 background、execution、result、summary、deliverables、pendingDecisions 呈现成功、失败、受阻或能力创建结果；未知明确说未知，呈现后询问是否满足要求并等待，不发起下一执行确认、不启动业务。已给出完整报告时不必再读。
 
 本入口不注册能力定义写入或 chief 报告发送占位工具，也不能通过 run/report 冒充其他角色；委派使用下述 chief_delegate 原生确认，不建议直接 HTTP 绕过确认。加载本入口不建立后端当前 chief 身份，herdr-bot 固定角色装配、发起／恢复与有效身份需要跨仓联调。`bun test tests/harness-dock/chief-role.test.ts` 的受控 provider 只证明两宿主原生加载、指引消费和真实后端定义读回，不认领真实模型职责或完整发起／恢复验收。
+
+### 可靠接收与呈现中断
+
+两个 chief 原生入口在 `input` admission 识别后端 `Chief report\nReport: ID` 通知，在任何模型请求前以实际活动 Session 调用 `POST /api/chief/reports/{id}/receive`。通知正文不授予资格；后端实时核验当前 chief 并持久保存接收事实。仅有效的 `received:true,process:true`、对应完整原报告与包含 `reportId/sessionId/claimId/at` 的持久接收记录可进入模型；首次处理的接收 Session 必须是本原生 Session。使用后端权威正文而非通知正文。`process:false` 的重复输入由原生层吸收，只提示已接收，不再次触发模型或询问。拒绝、存储/传输/解析失败或不完整确认同样不进模型，保持不确定事实，不重试。原生 admission 请求受部署 HTTP 预算与 20 秒上限中较小者约束，先于 OMP 的 30 秒 handler 截止；不是新的轮询或重投策略。
+
+接收确认不是模型已呈现、用户已读或业务验收。接收后、呈现前崩溃保留后端接收事实，不自动重播；用户可在当前 chief 明确要求 `chief_read_report` 查看原报告，不迁移旧上下文，不重新派发业务。入口没有启动扫描、积压队列、轮询或重试，chief 创建/恢复/重新登记及后端重启不调用这些报告操作。
 
 ## chief 报告发送
 
@@ -48,9 +54,17 @@ pi -e /absolute/my-agent-toolkit/entrypoints/pi-auto/chief-chat.ts
 
 body 必须完整包含非空 `background`、`execution`、`summary`，`result: "success"|"failure"|"blocked"`，以及 `deliverables: string[]`、`pendingDecisions: string[]`（无项明确 `[]`）。每次原生对话框展示包含实际 Session 的完整 HTTP JSON，只有该次明确批准才发送；聊天同意、业务完成或节点 auto 策略不替代。拒绝、关闭、取消、超时及无确认能力均不发送，不自动重试。
 
-分别解释 `saved`、原 `report`、`notification` 与不确定事实：保存不等于通知；`submitted` 仅为 Herdr 接受输入，不是可靠接收、呈现、已读或验收。`failed`／`not-attempted` 不撤销保存，`uncertain` 及传输／解析错误不证明未发生或回滚。工具不为通知失败重提业务报告，也不提供假接收、自动补投或原 ID 人工重发兼容路径。
+分别解释 `saved`、原 `report`、`notification` 与不确定事实：保存不等于通知；`submitted` 仅为 Herdr 接受输入，不是可靠接收、呈现、已读或验收。`failed`／`not-attempted` 不撤销保存，`uncertain` 及传输／解析错误不证明未发生或回滚。工具不为通知失败重提业务报告，不自动补投。
 
-受控协议回归：`bun test tests/harness-dock/native-chief-report.test.ts tests/harness-dock/chief-read-report.test.ts`，两宿主使用真实原生加载、Session、工具与确认，只替换 provider 和 HTTP 对端；它不证明真实模型职责或后端持久接收。已有节点兼容检查仍由 `native-report-confirmation.test.ts`、`node-report-contract.test.ts`、`nested-role-completion.test.ts` 维护。
+只有用户在原发送方 Chat 明确要求重发时，调用 `chief_resend_report {"id":"原报告ID"}`（独立 chief-report 与直接 manager 共用）。工具先 `GET /api/chief/reports/{id}` 核对并预览完整原 ID/原内容，再原生确认本次 `POST /api/chief/reports/{id}/resend`；请求仅加入实际 Session，不接受 body、身份或批准参数。拒绝、关闭、取消、超时、不可用、Session 结束不重发；原生迟到批准无效。未发送本次重发不抹去已读回的原保存事实，返回 `saved:true,report,sent:false`，不是撤销原报告。后端沿真实持久委派关联授权恢复的发送方；同 Task 的其他 Chat 不获资格。改内容使用 `chief_report` 的新确认和新报告身份。已接收时后端只反馈原接收事实，不再通知；`received:true` 不是呈现完成、用户已读或业务验收。不确定结果不解释成外部效果回滚，也不自动重新确认或发送。
+
+原生发送/恢复协议回归：`bun test tests/harness-dock/native-chief-report.test.ts tests/harness-dock/native-chief-resend.test.ts tests/harness-dock/native-chief-reception.test.ts tests/harness-dock/chief-read-report.test.ts`。两宿主使用真实原生加载、Session、工具、input admission 与确认，只替换 provider 和 HTTP 对端；受控接收用例持有后端确认，观察确认前无模型请求，并检查重复通知不再调用模型。
+
+`bun test tests/harness-dock/native-chief-receipt-backend.test.ts` 保留原生路径并连接配对真实后端/隔离持久存储，区别 Herdr 接受输入和可靠接收；外部 Herdr CLI 及 provider 仍受控，不证明真实模型职责。
+
+共同工具边界与失权/修改内容拒绝见 `bun test tests/workflow-chat/chief-report-recovery.test.ts`。原生重发拒绝用例明确配置 HTTP 与确认预算各 500ms，每次拒绝/关闭/取消/超时/Session 结束及迟到批准后观察 600ms 无 POST；该入口没有维护定时器。接收用例通过持有确认的事件同步证明顺序，不以即时断言声称覆盖时间流逝或重启。
+
+全链路人工恢复/崩溃/无自动行为和旧 chief 跨宿主失权须使用对应真实模型专项，不从这些协议检查推断。已有节点兼容检查仍由 `native-report-confirmation.test.ts`、`node-report-contract.test.ts`、`nested-role-completion.test.ts` 维护。
 
 ### 原生确认式委派
 

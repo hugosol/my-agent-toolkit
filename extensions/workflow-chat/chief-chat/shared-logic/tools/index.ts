@@ -44,7 +44,7 @@ export const CHIEF_TOOLS: readonly ToolDeclaration<ChiefToolState>[] = [{
 			|| typeof params.id !== "string" || !params.id.trim()) {
 			return workflowToolResult({ isError: true, body: { code: "invalid-parameters", message: "只接受非空字符串 id。" } });
 		}
-		return workflowToolResult(await state.requests.get(delivery.sessionId, `/api/chief/reports/${encodeURIComponent(params.id)}`, delivery.signal));
+		return workflowToolResult(await state.requests.post(delivery.sessionId, `/api/chief/reports/${encodeURIComponent(params.id)}/view`, {}, delivery.signal));
 	},
 }, {
 	name: "chief_delegate", label: "Chief delegate",

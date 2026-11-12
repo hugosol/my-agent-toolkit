@@ -8,8 +8,8 @@ import { promptDock } from "./prompt-dock";
 
 /** Real no-UI host modes, not a replacement confirmation implementation. */
 export async function headlessTool(host: "omp" | "pi", endpoint: string, role: "node" | "chief" | "chief-report", params: unknown,
-	options: { readonly ompPackage?: string } = {}): Promise<unknown> {
-	const name = role === "chief" ? "chief_delegate" : role === "chief-report" ? "chief_report" : "report";
+	options: { readonly ompPackage?: string; readonly toolName?: string } = {}): Promise<unknown> {
+	const name = options.toolName ?? (role === "chief" ? "chief_delegate" : role === "chief-report" ? "chief_report" : "report");
 	if (host === "omp" && options.ompPackage === undefined) {
 		const dock = await promptDock(role, { headless: true, isolatedHome: true,
 			config: `endpoint: ${endpoint}\nrequestTimeoutMs: 2000\nreportConfirmationTimeoutMs: 2000\ncollectTimeoutMs: 3000\n` });
