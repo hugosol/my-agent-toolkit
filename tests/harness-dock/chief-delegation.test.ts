@@ -16,6 +16,7 @@ for (const host of ["omp", "pi"] as const) {
 			let facts: unknown;
 			const server = Bun.serve({ hostname: "127.0.0.1", port: 0, async fetch(request) {
 				const route = new URL(request.url).pathname;
+				if (request.method !== "POST" || !["/api/chief/delegations/preview", "/api/chief/delegations"].includes(route)) return new Response(null, { status: 404 });
 				const body = await request.json(); requests.push({ route, body });
 				if (route.endsWith("/preview")) {
 					facts = { request: body, bot: { id: `literal-${kind}-bot`, when: "Summarize drafts", ...(kind === "map" ? { map: "literal.json" } : { task_id: "literal-worker" }) }, task: { id: kind === "map" ? "literal-manager" : "literal-worker", prompt: "Fixed business instructions" }, cwd: "E:/isolated/manager", name: "Independent Chat", materials: [{ id: "draft", zoneId: "work/source", path: "E:/isolated/source/draft.txt" }], prompt: "Fixed business instructions\nSummarize only the approved draft", ...(kind === "map" ? { map: { zoneBindings: { "work/node": "E:/isolated/node" }, nodes: { A: { zone: "work/node" } } } } : {}) };
@@ -56,6 +57,8 @@ for (const host of ["omp", "pi"] as const) {
 			let committed = 0;
 			const params = { botId: "literal-bot", zoneId: "work/explicit", input: "User said yes in chat, not in native UI", materials: [], ...(kind === "map" ? { managerTaskId: "literal-manager" } : {}) };
 			const server = Bun.serve({ hostname: "127.0.0.1", port: 0, async fetch(request) {
+				const route = new URL(request.url).pathname;
+				if (request.method !== "POST" || !["/api/chief/delegations/preview", "/api/chief/delegations"].includes(route)) return new Response(null, { status: 404 });
 				const body = await request.json();
 				if (new URL(request.url).pathname.endsWith("/preview")) return Response.json({ previewId: "literal-preview", facts: controlledFacts(body, kind) });
 				committed++; return Response.json({ id: "must-not-start" }, { status: 202 });
@@ -88,6 +91,8 @@ for (const host of ["omp", "pi"] as const) {
 		test(`${host} ${kind} chief rejects malformed and forged native tool arguments before HTTP`, async () => {
 			let requests = 0;
 			const server = Bun.serve({ hostname: "127.0.0.1", port: 0, async fetch(request) {
+				const route = new URL(request.url).pathname;
+				if (request.method !== "POST" || !["/api/chief/delegations/preview", "/api/chief/delegations"].includes(route)) return new Response(null, { status: 404 });
 				requests++; return Response.json({ previewId: "unexpected", facts: controlledFacts(await request.json(), kind) });
 			} });
 			const dock = await roleContractDock(host, server.url.origin, 2000, "chief", 2000).catch(error => { server.stop(true); throw error; });
@@ -104,6 +109,8 @@ for (const host of ["omp", "pi"] as const) {
 		test(`${host} ${kind} chief cannot approve in actual headless mode`, async () => {
 			let committed = 0;
 			const server = Bun.serve({ hostname: "127.0.0.1", port: 0, async fetch(request) {
+				const route = new URL(request.url).pathname;
+				if (request.method !== "POST" || !["/api/chief/delegations/preview", "/api/chief/delegations"].includes(route)) return new Response(null, { status: 404 });
 				const body = await request.json();
 				if (new URL(request.url).pathname.endsWith("/preview")) return Response.json({ previewId: "literal-preview", facts: controlledFacts(body, kind) });
 				committed++; return Response.json({ id: "must-not-start" }, { status: 202 });
@@ -126,6 +133,7 @@ for (const host of ["omp", "pi"] as const) for (const kind of ["task", "map"] as
 		let previews = 0;
 		const sockets = new Set<Socket>();
 		const peer = createServer(async (incoming, response) => {
+			if (incoming.method !== "POST" || !["/api/chief/delegations/preview", "/api/chief/delegations"].includes(incoming.url ?? "")) { response.writeHead(404); response.end(); return; }
 			let raw = ""; for await (const chunk of incoming) raw += String(chunk);
 			if (incoming.url?.endsWith("/preview")) {
 				previews++; response.end(JSON.stringify({ previewId: "literal-preview", facts: controlledFacts(JSON.parse(raw), kind) })); return;
