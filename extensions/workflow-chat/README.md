@@ -42,6 +42,8 @@ pi -e /absolute/my-agent-toolkit/entrypoints/pi-auto/chief-chat.ts
 
 两个 chief 原生入口在 `input` admission 识别后端 `Chief report\nReport: ID` 通知，在任何模型请求前以实际活动 Session 调用 `POST /api/chief/reports/{id}/receive`。通知正文不授予资格；后端实时核验当前 chief 并持久保存接收事实。仅有效的 `received:true,process:true`、对应完整原报告与包含 `reportId/sessionId/claimId/at` 的持久接收记录可进入模型；首次处理的接收 Session 必须是本原生 Session。使用后端权威正文而非通知正文。`process:false` 的重复输入由原生层吸收，只提示已接收，不再次触发模型或询问。拒绝、存储/传输/解析失败或不完整确认同样不进模型，保持不确定事实，不重试。原生 admission 请求受部署 HTTP 预算与 20 秒上限中较小者约束，先于 OMP 的 30 秒 handler 截止；不是新的轮询或重投策略。
 
+只有就绪／等待／暂停指示、尚无业务需求时，chief 简短回应并等待，不因新会话或角色加载查询 Bot／zone、扫描报告或启动工具。
+
 接收确认不是模型已呈现、用户已读或业务验收。接收后、呈现前崩溃保留后端接收事实，不自动重播；用户可在当前 chief 明确要求 `chief_read_report` 查看原报告，不迁移旧上下文，不重新派发业务。入口没有启动扫描、积压队列、轮询或重试，chief 创建/恢复/重新登记及后端重启不调用这些报告操作。
 
 ## chief 报告发送
@@ -60,6 +62,8 @@ body 必须完整包含非空 `background`、`execution`、`summary`，`result: 
 `bun test tests/harness-dock/native-chief-receipt-backend.test.ts` 保留原生路径并连接配对真实后端/隔离持久存储，区别 Herdr 接受输入和可靠接收；外部 Herdr CLI 及 provider 仍受控，不证明真实模型职责。
 
 共同工具边界与失权/修改内容拒绝见 `bun test tests/workflow-chat/chief-report-recovery.test.ts`。原生重发拒绝用例明确配置 HTTP 与确认预算各 500ms，每次拒绝/关闭/取消/超时/Session 结束及迟到批准后观察 600ms 无 POST；该入口没有维护定时器。接收用例通过持有确认的事件同步证明顺序，不以即时断言声称覆盖时间流逝或重启。
+
+跨仓恢复矩阵由参与的 herdr-bot worktree 中 `python scripts/accept-chief-recovery.py --herdr-bot-worktree "$HERDR_BOT_WT" --toolkit-worktree "$TOOLKIT_WT" --backend "$HERDR_BOT_BINARY" --hosts omp,pi --paths-file "$ISOLATED_PATHS" --model-config "$GPT6_LUNA_CONFIG" --evidence-dir "$NEW_EVIDENCE_DIR"` 执行。显式绝对路径、当前源码产物、独占定义／存储／原生进程／Herdr／HOME／APPDATA／XDG 和全新证据目录；实际 GPT-6-luna 再次原生批准／拒绝原报告、接收后呈现前终止进程、新 chief 明确查看、并发／丢失回执／后端重启去重，以及独立 Chat／直接 manager 新进程恢复分别留证。每次无自动行为窗口46秒，覆盖45秒服务就绪与10＋30＋5秒维护上界、30秒请求／原生启动、20秒确认，不添加产品等待／重投策略。受控故障只证明机制；缺任一宿主、实际模型返回身份或进程退出证据均非零，不以本仓 dock 通过代替矩阵。模型配置、验收专用通知故障代理构建与独立只读授权 Codex 传输见配对 Herdr 的现有测试说明；正常服务／用户 Chat／认证不作为可变夹具。
 
 全链路人工恢复/崩溃/无自动行为和旧 chief 跨宿主失权须使用对应真实模型专项，不从这些协议检查推断。已有节点兼容检查仍由 `native-report-confirmation.test.ts`、`node-report-contract.test.ts`、`nested-role-completion.test.ts` 维护。
 
@@ -334,7 +338,7 @@ Map node 的 `input` 工作文本保持原样；文件交接使用 `input_rule` 
 - `auto`：直接提交报告，不打开确认界面。
 - `manual`：调用工具后，在当前宿主原生确认界面展示本次完整 `body`、`can_complete` 和 `outputs`。只有用户明确选择“是”才发送；自然语言同意、业务批准、内部 finish 和可交接声明都不构成发送批准。
 - 批准仅适用于本次展示的内容和本次调用；待发送内容在等待前固定，完整 HTTP JSON 预览包含实际 `sessionId`、`body`、`canComplete` 与显式提供的 `outputs`（省略仍保持省略）。批准不重新读取身份或调用参数；补充、更正或再次调用均重新确认，不复用批准。
-- 拒绝、关闭、取消、超时、会话结束、无交互能力或交互异常均返回 `sent=false`、`saved=false`，不触发报告请求；迟到批准无效。不自动重试、补发或反复询问，模型应结束本轮等待用户重新要求发送。不增加跨调用锁定机制。
+- 拒绝、关闭、取消、超时、会话结束、无交互能力或交互异常均返回 `sent=false`、`saved=false`，不触发报告请求；迟到批准无效。不自动重试、补发或反复询问，模型应结束本轮等待用户重新要求发送。不增加跨调用锁定机制。对 chief 原报告的人工重发同样如此：前次拒绝只终结那次调用，用户下一条明确重发请求是新的用户决定，应重新进入工具的完整原文预览与原生确认；不是客户端自主重试，也不复用旧批准。
 - 确认等待使用 toolkit 配置 `reportConfirmationTimeoutMs`，随部署提供的值为 20000 毫秒。与 HTTP 预算独立，模型不能修改；从调用原生确认界面开始计时。RPC 客户端须实际实现宿主确认请求/响应；没有响应即超时拒绝，无 UI 的模式不发送 manual 报告。
 - 一旦报告请求已发出，取消或传输错误仍可能意味着后端已保存，沿用下述不确定结果处理，不能报告为“未发送”。
 

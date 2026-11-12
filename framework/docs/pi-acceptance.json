@@ -4,22 +4,22 @@
     "workflow-chat": {
       "schemaVersion": 1,
       "scope": "workflow-chat",
-      "startedAt": "2026-11-12T04:42:45.899Z",
+      "startedAt": "2026-11-12T06:47:26.286Z",
       "cli": {
         "command": [
           "D:/Users/hugos/AppData/Local/nvm/v22.19.0/node.exe",
-          "D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/cli.js"
+          "D:/Users/hugos/AppData/Local/nvm/v24.18.0/node_modules/@earendil-works/pi-coding-agent/dist/cli.js"
         ],
-        "path": "D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/cli.js",
+        "path": "D:/Users/hugos/AppData/Local/nvm/v24.18.0/node_modules/@earendil-works/pi-coding-agent/dist/cli.js",
         "source": "node script"
       },
       "source": {
-        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-TkkeSW",
-        "head": "980b6b81ea3772796158bc18f31f7e950c0e8ecf",
+        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-qXkTJ1",
+        "head": "215ab66e7d2d7f7a3d2a82971cfe32fd03cebe4b",
         "status": [],
         "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "untrackedFiles": [],
-        "sha256": "f7f351a4038bf4782a80dc9f87268274bd1512ad2352b32361692357774ddeb7"
+        "sha256": "f35c2c5a75a170e2ee23c00c9ec21d75bb3a4c053d02e54b7f103e1721219d34"
       },
       "lockfiles": [
         {
@@ -40,7 +40,7 @@
           "bun": null
         },
         "artifact": {
-          "path": "D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/cli.js",
+          "path": "D:/Users/hugos/AppData/Local/nvm/v24.18.0/node_modules/@earendil-works/pi-coding-agent/dist/cli.js",
           "bytes": 169,
           "sha256": "8189b66abc4f9f431dbb70941dcba690d76d040de1fbfff212886be35a53639d"
         },
@@ -56,14 +56,14 @@
         "Pi tool AbortSignal releases transport, switch preserves auto startup, and shutdown releases active collect"
       ],
       "complete": true,
-      "finishedAt": "2026-11-12T04:42:57.310Z",
+      "finishedAt": "2026-11-12T06:47:37.509Z",
       "finishedSource": {
-        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-TkkeSW",
-        "head": "980b6b81ea3772796158bc18f31f7e950c0e8ecf",
+        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-qXkTJ1",
+        "head": "215ab66e7d2d7f7a3d2a82971cfe32fd03cebe4b",
         "status": [],
         "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "untrackedFiles": [],
-        "sha256": "f7f351a4038bf4782a80dc9f87268274bd1512ad2352b32361692357774ddeb7"
+        "sha256": "f35c2c5a75a170e2ee23c00c9ec21d75bb3a4c053d02e54b7f103e1721219d34"
       },
       "finishedLockfiles": [
         {
@@ -72,7 +72,7 @@
           "sha256": "28ce4c0d7b7d1d45a44e335a6647b0959c333875af42ca87ba63c87bcf4c2168"
         }
       ],
-      "acceptedAt": "2026-11-12T04:42:57.310Z"
+      "acceptedAt": "2026-11-12T06:47:37.509Z"
     },
     "close-out": {
       "schemaVersion": 1,
