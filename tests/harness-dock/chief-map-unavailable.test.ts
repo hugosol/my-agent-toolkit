@@ -18,7 +18,7 @@ for (const host of ["omp", "pi"] as const) {
 			requests.push({ route, body });
 			return Response.json({ previewId: "unavailable-map-preview-13", facts: { request: body,
 				bot: { id: input.botId, map_file: "review-13.json" }, task: { id: input.managerTaskId },
-				cwd: "C:/owned/manager", materials: [{ id: "source", zoneId: "accept/materials", path: "C:/owned/materials/corrected.csv" }],
+				cwd: "C:/owned/manager", name: "Owned Map manager", materials: [{ id: "source", zoneId: "accept/materials", path: "C:/owned/materials/corrected.csv" }],
 				map: { file: "review-13.json", zoneBindings: { "accept/node": "C:/owned/node" } }, prompt: input.input } });
 		} });
 		try {
