@@ -9,5 +9,6 @@ framework/.runtime/
 /.scratch/chief-bot/evidence/
 /.scratch/pi-version-acceptance/
 /.scratch/pi-suite/evidence/
+/.scratch/rust-script-bots/evidence/
 *.log
 .idea/

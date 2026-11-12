@@ -35,17 +35,16 @@ for (const host of ["omp", "pi"] as const) {
 		// This checks delivered guidance, not real-model responsibility (12/13).
 		const messages = JSON.stringify(dock.capture.requests()[0]!.json);
 		expect(messages).toContain("只有一个候选都不能代替核对与用户决定");
-		expect(messages).toContain("不猜测或补造输入");
-		expect(messages).toContain("chief 当前目录不是默认执行位置");
+		expect(messages).toContain("补齐缺项后再进入派发");
 		// AC2 oracle: a single-executor gap needs complete Task creation,
 		// a multi-step gap complete Map creation. Violation: generic creation
 		// guidance reaches the model but never distinguishes the two routes.
-		expect(messages).toContain("已有的完整创建能力 Bot");
+		expect(messages).toContain("能力缺口通过已有的完整创建能力 Bot 处理");
 		expect(messages).toContain("单执行者能力缺口选择创建 Task");
 		expect(messages).toContain("多步骤流程缺口选择创建 Map");
 		// AC3: explicit abandonment must stop this request, not be treated as
 		// a veto that permits an alternative. Observe the delivered distinction.
-		expect(messages).toContain("仅否决复用");
+		expect(messages).toContain("仅否决复用就停止等待");
 		expect(messages).toContain("明确要求创建 Task 或 Map 就核对对应创建能力，不互换");
 		expect(messages).toContain("明确放弃就结束本次需求");
 		// AC4: a creation request must not grant later-stage or business
@@ -53,7 +52,8 @@ for (const host of ["omp", "pi"] as const) {
 		// execute the original work, or searches for a next plan on return.
 		expect(messages).toContain("不夹带执行原始业务的指令");
 		expect(messages).toContain("创建流程各阶段审批仍由对应流程取得，chief 不代批或跳过");
-		expect(messages).toContain("不自动检索方案、提出下一次执行确认、启动业务、创建能力或重试");
+		expect(messages).toContain("收到结果不是后续执行授权");
+		expect(messages).toContain("不自动检索方案、提出下一次执行确认");
 	} finally { try { await dock?.close(); } finally { await backend.close(); } }
 	}, 180_000);
 
