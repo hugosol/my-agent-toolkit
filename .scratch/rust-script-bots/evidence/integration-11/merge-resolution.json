@@ -1,0 +1,12 @@
+{
+  "repository": "toolkit",
+  "worktree": "C:/Users/hugos/AppData/Local/Temp/hyper-ticket-9Z2J1e",
+  "incomingIntegrationCommit": "35f0ca19aa01789507e5109a7722459f4f3300ef",
+  "resolutionCommit": "2084537",
+  "conflictedFile": "framework/docs/pi-acceptance.json",
+  "resolution": "Preserved HEAD's entire newer generated workflow-chat acceptance snapshot (2026-11-12T19:25:30.664Z, ticket 11 worktree), rather than mixing fields with older incoming ticket 10 snapshot (2026-11-12T16:30:41.607Z). All other incoming files were already staged by the retained merge and were included in its commit.",
+  "command": "git show HEAD:framework/docs/pi-acceptance.json > framework/docs/pi-acceptance.json; git add framework/docs/pi-acceptance.json; git commit -m \"Merge toolkit integration preserving newer ticket acceptance snapshot\"",
+  "exit": 0,
+  "warning": "LF will be replaced by CRLF the next time Git touches framework/docs/pi-acceptance.json",
+  "herdrBotInitialState": "clean; reverse sync already completed by host"
+}

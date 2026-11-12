@@ -419,3 +419,13 @@ cargo build --manifest-path backend/Cargo.toml --example safe_shutdown_shell --b
 `HERDR_BOT_REPO` 必须指向本次配套后端 worktree；不要选择另一份旧 checkout。并行维护多个源码副本时，可设置绝对 `CARGO_TARGET_DIR` 后构建，dock 同样从该目录读取 debug fixtures，避免使用别的 worktree 产物。
 
 此 dock 只启动安全壳、隔离数据和记录型 Herdr CLI，实际运行 node 工具、公共 Session/HTTP、后端路由、身份关联与报告落盘；通过公开详情确认报告仍可读取、待办保留且 node 仍 running。通知失败来自真实后端调用被明确拒绝的外部 CLI。它不验证真实 Herdr 启动模型、真实模型选择材料/报告质量、manager 完整链路、跨阶段取消或 A/B→C 汇合；这些不得从该 dock 的成功推断。诊断失败受控响应只证明呈现分支，不证明真实 stderr 故障注入。
+
+### Rust 两能力跨仓组合
+
+从参与 herdr-bot worktree 根运行其 `python scripts/accept-rust-script-bots.py --herdr-bot-worktree "$HERDR_BOT_WT" --toolkit-worktree "$TOOLKIT_WT" --backend "$PRODUCTION_BACKEND" --static-dir "$HERDR_BOT_WT/backend/static" --native-entry "$TOOLKIT_WT/scripts/rust-script-acceptance.ts" --isolation-config "$ISOLATION_JSON" --evidence-dir "$NEW_EVIDENCE_DIR"`。所有路径绝对，证据目录全新。该入口记录两仓源码／锁文件、当前页面／二进制／安装身份、逐命令退出码、原始失败和清理结果；不增加全局 gate，不改票序／first-merge 调度。
+
+`ISOLATION_JSON` 显式指定 `externalMode:"controlled-protocol-only"` 和 `bun`（1.4.4）、`node`、`piCli`、`piNode`、`ompBaselineRecordRoot`、`chrome` 的安装绝对路径；不含或发现凭据。参与 worktree 的 frozen-lock 依赖及精确 OMP dock 安装须先准备。专项原生 enabling 命令为 `bun test tests/harness-dock/manager-script-protocol.test.ts`（两宿主正常 auto 入口／嵌套同载、run／collect／read、true／false、部分效果、显式 complete／fail／retry 和旧报告拒绝）。该用例 HTTP 结果受控，不代表后端门禁或真实模型理解。
+
+组合业务由本仓 `scripts/rust-script-acceptance.ts` 使用参与 Herdr worktree 的既有生产进程／文件夹具和本仓 `dualRoleDock`（显式真实 endpoint）执行：交付八节点 Map 的 Rust 创建、真实三路命名文件消费、Rust 合并保存、完整 Bot／目标与 revision／baseline／saved／handoff 读回，再由原生 read 消费输出、原生 manager 显式 complete。另在真实保存后制造 handoff 碰撞，实际 fail／confirmed retry，读回原 baseline 的 revision 冲突、新旧 execution／报告／输出。外部编写者和 provider 明确受控；不伪造 Rust 写入、报告或脚本 Chat，不新增接收工具，不宣称真实模型遵从。每例先保留完整文件／原生历史／HTTP／错误，再确认宿主、后端及 fixture 退出并清理临时活目录。
+
+toolkit 完成检查从本仓根分别运行 `bun run typecheck`、`bun run test`、`bun run check:integrations`；配对 `HERDR_BOT_BINARY` 指本次 Herdr worktree 的 `safe_shutdown_shell.exe`，`HERDR_BOT_METADATA` 指其元数据，`HERDR_BOT_REPO`／独立绝对 `CARGO_TARGET_DIR` 与该构建相符。真实业务专项则使用生产后端，绝不用生产后端跑关机回归。每仓结果独立，一仓失败不能称跨仓通过。本票运行证据只放在 `.scratch/rust-script-bots/evidence/`（沿用已有窄路径 ignore 约定），避免运行中新增原生 JSON／截图使 Pi 源码指纹变化；不排除任何产品源码或弱化冻结源码检查。H1/P34、H2/P35 最终由用户在明确授权的真实宿主／manager 会话操作或指导，保留真实通知、collect、工具和无脚本 Chat／Tab 观察；缺授权保持 unverified，受控协议成功不是人工签收。完整步骤在参与 Herdr 仓 `docs/usage.md` 的 Rust script cross repository acceptance 中。
