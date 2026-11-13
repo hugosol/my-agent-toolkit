@@ -1,0 +1,4 @@
+{"type":"title","v":1,"title":"","updatedAt":"2026-11-12T18:59:57.717Z","pad":"                                                                                                                                                                              "}
+{"type":"session","version":3,"id":"01a1d121-8695-72e0-b9eb-162a548283c5","timestamp":"2026-11-12T18:59:57.717Z","cwd":"C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-chief-report-jlyLQM\\work"}
+{"type":"thinking_level_change","id":"50d1b65e","parentId":null,"timestamp":"2026-11-12T18:59:57.721Z","thinkingLevel":null,"configured":null}
+{"type":"service_tier_change","id":"b4300c8e","parentId":"50d1b65e","timestamp":"2026-11-12T18:59:57.722Z","serviceTier":null}

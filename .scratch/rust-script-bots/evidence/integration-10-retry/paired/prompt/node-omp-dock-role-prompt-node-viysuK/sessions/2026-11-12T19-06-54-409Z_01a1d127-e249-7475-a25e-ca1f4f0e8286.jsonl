@@ -1,0 +1,4 @@
+{"type":"title","v":1,"title":"","updatedAt":"2026-11-12T19:06:54.409Z","pad":"                                                                                                                                                                              "}
+{"type":"session","version":3,"id":"01a1d127-e249-7475-a25e-ca1f4f0e8286","timestamp":"2026-11-12T19:06:54.409Z","cwd":"C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-node-viysuK\\work"}
+{"type":"thinking_level_change","id":"0e04af32","parentId":null,"timestamp":"2026-11-12T19:06:54.413Z","thinkingLevel":null,"configured":null}
+{"type":"service_tier_change","id":"ccc8c7a6","parentId":"0e04af32","timestamp":"2026-11-12T19:06:54.414Z","serviceTier":null}

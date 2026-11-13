@@ -1,0 +1,4 @@
+{"type":"title","v":1,"title":"","updatedAt":"2026-11-12T19:00:48.091Z","pad":"                                                                                                                                                                              "}
+{"type":"session","version":3,"id":"01a1d122-4b5b-75de-bf6a-b75db8cad988","timestamp":"2026-11-12T19:00:48.091Z","cwd":"C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-chief-report-NniWky\\work"}
+{"type":"thinking_level_change","id":"3004acf3","parentId":null,"timestamp":"2026-11-12T19:00:48.096Z","thinkingLevel":null,"configured":null}
+{"type":"service_tier_change","id":"445faa60","parentId":"3004acf3","timestamp":"2026-11-12T19:00:48.096Z","serviceTier":null}

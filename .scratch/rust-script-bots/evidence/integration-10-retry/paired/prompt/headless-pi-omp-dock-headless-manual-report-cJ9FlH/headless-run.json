@@ -1,0 +1,35 @@
+{
+  "host": "pi",
+  "cli": {
+    "command": [
+      "D:/Users/hugos/AppData/Local/nvm/v22.19.0/node.exe",
+      "D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js"
+    ],
+    "path": "D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js",
+    "source": "node script"
+  },
+  "argv": [
+    "D:/Users/hugos/AppData/Local/nvm/v22.19.0/node.exe",
+    "D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js",
+    "--mode",
+    "json",
+    "--print",
+    "--no-extensions",
+    "--no-mcp",
+    "-e",
+    "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-headless-manual-report-cJ9FlH\\deployment\\entrypoints\\pi-auto\\chief-chat.ts",
+    "--model",
+    "workflow-headless/controlled-protocol",
+    "--session-dir",
+    "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-headless-manual-report-cJ9FlH\\sessions",
+    "Call report once, do not retry."
+  ],
+  "cwd": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-headless-manual-report-cJ9FlH\\work",
+  "agentDir": "C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-headless-manual-report-cJ9FlH\\agent-state",
+  "pid": 66972,
+  "exitCode": 0,
+  "exited": true,
+  "cliSha256": "e79626f2dd6f94aa45d30f3fa63cd84319a6eefcd150b353cfaf274366926774",
+  "parentBun": "1.4.4",
+  "scope": "Actual installed no-UI host; controlled provider/peer only"
+}
