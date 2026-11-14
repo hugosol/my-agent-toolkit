@@ -286,16 +286,16 @@ _Avoid_: semantic core, generated extension
 
 ## Verification
 
-**Pi acceptance scope（Pi 验收范围）**:
-The explicitly bounded set of Pi behavior checks whose complete successful execution establishes one scoped acceptance result. Passing a subset does not establish acceptance of the whole scope or another scope.
-_Avoid_: all Pi compatibility, arbitrary test selection as complete acceptance
+**Harness acceptance scope（宿主验收范围）**:
+The explicitly bounded set of behavior checks for one harness whose complete successful execution establishes one scoped acceptance result. Passing a subset does not establish acceptance of the whole scope, another scope or another harness.
+_Avoid_: all compatibility, arbitrary test selection as complete acceptance
 
-**Highest accepted Pi version（最高已验收通过 Pi 版本）**:
-The highest Pi version with a complete successful result for one acceptance scope, qualified by the source, checks and environment that result exercised. It is historical scoped evidence, not the latest upstream release, proof for later source changes or a global support declaration.
-_Avoid_: latest Pi version, most recently tested version, universally supported version
+**Highest accepted harness version（最高已验收通过宿主版本）**:
+The highest version of one harness with a complete successful result for one acceptance scope, qualified by the source, checks and environment that result exercised. It is historical scoped evidence, not the latest upstream release, proof for later source changes or a global support declaration.
+_Avoid_: latest version, most recently tested version, universally supported version
 
 **Harness dock（对接坞，short `dock`）**:
-Repository-owned test infrastructure that verifies a harness. It materialises an isolated exact install of one harness version, drives it as a child process in RPC mode under an explicit-only extension set, and reads back that run's session JSONL, captured outbound requests and stderr. It is not itself a harness.
+Repository-owned test infrastructure that verifies the locally selected installed harness through isolated sessions and an explicit extension set. Its observations establish behavior of that actual harness, not a modified replacement or a support declaration.
 _Avoid_: test runtime, test harness, fixture
 
 **Declared requirement（声明要求）**:

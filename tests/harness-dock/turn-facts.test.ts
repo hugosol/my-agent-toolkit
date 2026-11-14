@@ -1,3 +1,4 @@
+import { type InstalledOmp, resolveInstalledOmp } from "./installed-omp";
 /**
  * The Turn axis in a running harness (S5; contract P57; ticket 05).
  *
@@ -23,7 +24,6 @@
 import { beforeAll, describe, expect, test } from "bun:test";
 import * as path from "node:path";
 import { writeAgentSettings } from "./agent-config";
-import { type IsolatedHarness, ensureIsolatedHarness, readBaselineRecord } from "./baseline";
 import { type CapturedRequest, type CaptureStep, type CaptureServer, startCaptureServer } from "./capture-server";
 import { DOCK_CAPTURE_BASE_URL_ENV, DOCK_MODEL_SELECTOR } from "./fixtures/extension-root/provider";
 import { TURN_FACTS_ID, TURN_FACTS_PRICE } from "./fixtures/turn-facts/entrypoint";
@@ -31,7 +31,6 @@ import { NATIVE_TURN_OBSERVER_ID } from "./fixtures/turn-facts/native-observer";
 import { type RunRoot, createRunRoot } from "./run-root";
 import { ControlledSession } from "./session";
 
-const record = readBaselineRecord();
 const PROVIDER_FIXTURE = path.join(import.meta.dir, "fixtures", "extension-root", "provider.ts");
 const TURN_FACTS_FIXTURE = path.join(import.meta.dir, "fixtures", "turn-facts", "entrypoint.ts");
 const NATIVE_OBSERVER_FIXTURE = path.join(import.meta.dir, "fixtures", "turn-facts", "native-observer.ts");
@@ -75,10 +74,10 @@ const GRANDCHILD_NAME = "dock-grandchild";
 const TOOL_CALL_TEXT = "dock-tool-ran";
 const TOOL_PROMPT = "dock run: use one tool and finish";
 
-let harness: IsolatedHarness;
+let harness: InstalledOmp;
 
 beforeAll(async () => {
-	harness = await ensureIsolatedHarness(record);
+	harness = await resolveInstalledOmp();
 });
 
 /** One observation line of a run, from whichever evidence source wrote it. */
@@ -126,18 +125,28 @@ function observedLines(session: ControlledSession): ObservedLine[] {
 	return lines;
 }
 
-/** The mark one request carries in its own session: the opening user message that session was started with. */
-function openingOf(request: CapturedRequest): string {
+/** The messages one captured request carries, independent of host-added system context. */
+function messagesOf(request: CapturedRequest): readonly unknown[] {
 	const body = request.json;
-	if (body === null || typeof body !== "object" || !("messages" in body) || !Array.isArray(body.messages)) return "";
-	return body.messages.length < 2 ? "" : JSON.stringify(body.messages[1]);
+	if (body === null || typeof body !== "object" || !("messages" in body) || !Array.isArray(body.messages)) return [];
+	return body.messages;
 }
 
-/** How many messages one request carried: a session's own first request carries only its opening. */
-function messageCountOf(request: CapturedRequest): number {
-	const body = request.json;
-	if (body === null || typeof body !== "object" || !("messages" in body) || !Array.isArray(body.messages)) return 0;
-	return body.messages.length;
+/** The role one message carries, when it really names one. */
+function roleOf(message: unknown): string | undefined {
+	if (message === null || typeof message !== "object" || !("role" in message)) return undefined;
+	return typeof message.role === "string" ? message.role : undefined;
+}
+
+/** The mark one request carries in its own session: the opening user message that session was started with. */
+function openingOf(request: CapturedRequest): string {
+	const opening = messagesOf(request).find(message => roleOf(message) === "user");
+	return opening === undefined ? "" : JSON.stringify(opening);
+}
+
+/** Whether one request is the first its own session issued: no assistant message has answered yet. */
+function isOpeningRequest(request: CapturedRequest): boolean {
+	return messagesOf(request).every(message => roleOf(message) !== "assistant");
 }
 
 /** A scripted delegation: the host's own task tool, in the batch shape an RPC host runs. */
@@ -153,23 +162,18 @@ function delegationStep(name: string, assignment: string): CaptureStep {
 	};
 }
 
-/** A scripted subagent result: the host's own yield tool, which ends the subagent's session. */
-function yieldStep(data: string): CaptureStep {
-	return { toolCall: { name: "yield", arguments: JSON.stringify({ data }) } };
-}
-
 /**
  * The scripted model of the delegating run: it reads which session's request this is from that
  * session's own opening message, not from the order requests arrive in, and answers that session.
- * The main session delegates to a child, the child delegates to a grandchild, each subagent yields
- * its result, and the main session answers in prose.
+ * The main session delegates to a child, the child delegates to a grandchild, each subagent returns
+ * final text, and the main session answers in prose.
  */
 function delegatingStep(request: CapturedRequest): CaptureStep | undefined {
 	const opening = openingOf(request);
-	const firstRequest = messageCountOf(request) === 2;
-	if (opening.includes(GRANDCHILD_ASSIGNMENT)) return yieldStep("grandchild result");
+	const firstRequest = isOpeningRequest(request);
+	if (opening.includes(GRANDCHILD_ASSIGNMENT)) return { replyText: "grandchild result" };
 	if (opening.includes(CHILD_ASSIGNMENT)) {
-		return firstRequest ? delegationStep(GRANDCHILD_NAME, GRANDCHILD_ASSIGNMENT) : yieldStep("child result");
+		return firstRequest ? delegationStep(GRANDCHILD_NAME, GRANDCHILD_ASSIGNMENT) : { replyText: "child result" };
 	}
 	if (opening.includes(DELEGATE_PROMPT) && firstRequest) return delegationStep(CHILD_NAME, CHILD_ASSIGNMENT);
 	return {};
@@ -177,7 +181,7 @@ function delegatingStep(request: CapturedRequest): CaptureStep | undefined {
 
 /** The scripted model of the tool run: the first request asks for one tool, the follow-up answers in prose. */
 function toolStep(request: CapturedRequest): CaptureStep | undefined {
-	if (messageCountOf(request) !== 2) return {};
+	if (!isOpeningRequest(request)) return {};
 	return { toolCall: { name: "bash", arguments: JSON.stringify({ command: `echo ${TOOL_CALL_TEXT}` }) } };
 }
 
@@ -411,7 +415,7 @@ describe("a real session's request delivers Turn facts to both scopes (P57)", ()
 			// a Turn.
 			const requests = run.capture.requests();
 			expect(requests).toHaveLength(2);
-			expect(messageCountOf(requests[1] as CapturedRequest)).toBeGreaterThan(messageCountOf(requests[0] as CapturedRequest));
+			expect(messagesOf(requests[1] as CapturedRequest).some(message => roleOf(message) === "tool")).toBe(true);
 			expect(requests[1]?.raw).toContain(TOOL_CALL_TEXT);
 
 			const starts = observedLines(run.session).filter(line => line.scope === "session" && line.kind === "turn_start");

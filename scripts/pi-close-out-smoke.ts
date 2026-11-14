@@ -34,7 +34,7 @@
  * which drive real `updateFile` coordination over a real lock and a real document. POSIX and other pi
  * versions are not exercised here either.
  */
-import { beginPiAcceptance } from "./support/pi-acceptance";
+import { beginHarnessAcceptance } from "./support/harness-acceptance";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
@@ -524,7 +524,7 @@ async function main(): Promise<void> {
 	const keep = process.argv.includes("--keep");
 	const explicit = process.argv.includes("--pi") ? process.argv[process.argv.indexOf("--pi") + 1] : undefined;
 	const cli = resolvePiCli(explicit);
-	const acceptance = await beginPiAcceptance("close-out", cli);
+	const acceptance = await beginHarnessAcceptance("pi", "close-out", cli);
 	const version = acceptance.version;
 	try {
 		console.log(`pi ${version} (${cli.path})`);

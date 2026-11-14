@@ -1,46 +1,15 @@
-/**
- * `/budget holiday` and `/budget clear` on the real patched host (P30, P31, P32, P34, P35, P36; S5).
- *
- * This is the isolated real-host observation of the period switch: the dock materialises the
- * recorded baseline install, loads this repository's own model-cost entrypoint through the harness's
- * real loader, and drives a real session whose built-in `deepseek` provider — the provider the
- * command's own entry runs — is redirected, through the isolated agent state and before any
- * extension loads, at the dock's local capture endpoint. So the run answers three questions a
- * controlled double cannot:
- *
- * - the command really reaches the host's own command chain, and the entry the operator is in is
- *   really the one whose provider and idle facts the extension reads;
- * - the host's command chain really waits for the effect: the archive and the new activity are on
- *   disk at the instant the prompt returns, with no wait of this file's own in between;
- * - the boundary balance read really leaves the process, beside the CLI's own startup prefetch,
- *   through the framework's public HTTP module and the host's resolved address.
- *
- * It also shows the one condition that is real rather than scripted: the host saves a session's
- * consumption in the background of its own Round's end, so the operator's very next command can meet
- * that save still publishing. The entry says so and switches nothing, and the operator's own retry —
- * the loop below, which waits on the answer rather than on a duration — is what makes the switch
- * happen. No case here asserts *when* that first refusal lands: it is the host's real timing.
- *
- * The balance the endpoint answers is its own scripted document rather than any account's reading,
- * and the credential is the isolated run's own fixture key. What the switch's own boundary read
- * produces is therefore what the archive's `end_bal` and the new period's `start_bal` must carry, and
- * what a real DeepSeek account would answer remains the operator's own check (see this ticket's
- * evidence note for the sanitized observation method and its skip reason). No case here reaches a
- * real network: every model and balance answer comes from the loopback endpoint inside the run's own
- * temporary root, and nothing touches the production OMP environment, its configuration or its
- * sessions.
- */
+import { type InstalledOmp, resolveInstalledOmp } from "./installed-omp";
+/** Real locally installed OMP coverage, with isolated agent state and controlled provider requests. */
 import { beforeAll, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { writeProviderOverride } from "./agent-config";
-import { type IsolatedHarness, REPO_ROOT, ensureIsolatedHarness, readBaselineRecord } from "./baseline";
+import { REPO_ROOT } from "./baseline";
 import { type CaptureServer, startCaptureServer } from "./capture-server";
 import { DOCK_CAPTURE_BASE_URL_ENV } from "./fixtures/extension-root/provider";
 import { type RunRoot, createRunRoot } from "./run-root";
 import { ControlledSession } from "./session";
 
-const record = readBaselineRecord();
 /** The extension's own OMP entrypoint, as the harness's loader discovers it. */
 const MODEL_COST_ENTRYPOINT = path.join(REPO_ROOT, "entrypoints", "omp", "model-cost.ts");
 /** The document the extension keeps in its storage root, and its archives' directory. */
@@ -58,10 +27,10 @@ const BOUNDARY_TOTAL = "12.50";
 /** The period the run starts on, as the isolated storage root's own baseline document states it. */
 const START_PERIOD = "period-dock-switch";
 
-let harness: IsolatedHarness;
+let harness: InstalledOmp;
 
 beforeAll(async () => {
-	harness = await ensureIsolatedHarness(record);
+	harness = await resolveInstalledOmp();
 });
 
 /** One operator notice a run emitted, as the harness itself framed it. */

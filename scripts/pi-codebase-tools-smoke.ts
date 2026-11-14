@@ -98,7 +98,7 @@
  * script never imports the shared prompt module (whose Markdown imports a real Node jiti run
  * cannot resolve, and whose wiring the pi adapter under test owns).
  */
-import { beginPiAcceptance, type PiAcceptanceRun } from "./support/pi-acceptance";
+import { beginHarnessAcceptance, type HarnessAcceptanceRun } from "./support/harness-acceptance";
 import { existsSync, readdirSync, readFileSync, realpathSync } from "node:fs";
 import * as path from "node:path";
 import type { CaptureStep, CapturedRequest } from "../tests/harness-dock/capture-server";
@@ -1787,11 +1787,11 @@ const entrypoint = options.mode === "auto" ? AUTOMATIC_ENTRYPOINT : MANUAL_ENTRY
 
 let tested = "<unresolved>";
 let failure: unknown;
-let acceptance: PiAcceptanceRun | undefined;
+let acceptance: HarnessAcceptanceRun | undefined;
 
 try {
 	const cli = resolvePiCli(options.pi);
-	acceptance = await beginPiAcceptance(`codebase-tools-${options.mode}`, cli);
+	acceptance = await beginHarnessAcceptance("pi", `codebase-tools-${options.mode}`, cli);
 	if (!existsSync(entrypoint)) {
 		throw new Error(`the pi assembly entrypoint does not exist: ${entrypoint}`);
 	}

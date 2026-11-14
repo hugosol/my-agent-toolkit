@@ -469,8 +469,8 @@ depends on and where its configuration lives.
 **There is no supported-version option, and no version is compared at all.** Harness version support is an
 evidence claim recorded in [`harness-support.md`](harness-support.md), not an extension's, an assembly's or
 the framework's runtime declaration: an assembly describes only what its extension builds, needs and selects,
-normal startup performs no compatibility check, and the version a run exercises is selected by the dock from the
-support record (or from `OMP_TEST_VERSION` for a candidate). An assembly states only the options its extension
+normal startup performs no compatibility check, and the dock exercises the locally selected installed
+harness (`OMP_CLI` for OMP, otherwise local resolution), without installing or patching it. An assembly states only the options its extension
 needs: an extension with no implementation and no configuration states nothing beyond its mode's startup policy
 ([`extensions/codebase-tools/harnesses/omp.ts`](../../extensions/codebase-tools/harnesses/omp.ts)), and both of
 that extension's modes share one assembly module

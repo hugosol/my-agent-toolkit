@@ -1,60 +1,22 @@
-/**
- * The DeepSeek balance in a running harness: the CLI's startup prefetch, the query lifetime and what
- * a credential may reach (P37, P38, P40, P53; S5).
- *
- * This is the isolated real-host smoke of the balance query's wiring: the dock materialises the
- * recorded baseline install, loads this repository's own model-cost entrypoint through the harness's
- * real loader, and drives a real session in an isolated home whose storage root the extension's own
- * shipped `config.yaml` names. The session's built-in `deepseek` provider is redirected — through the
- * isolated agent state, before any extension loads — at the dock's capture endpoint, so the balance
- * query an extension makes for itself really leaves the process through the framework's public HTTP
- * module and really reaches the endpoint: what this file observes is a real direct connection, the
- * host's own resolved address with its `/v1` removed, and the credential the host resolves for that
- * provider.
- *
- * What these runs establish about this ticket's behavior, beside the reading itself:
- *
- * - the prefetch is what asks first, and the first model request waits for it: with the endpoint
- *   holding its answer, the exchange's own model request has not reached the endpoint when the
- *   balance query already has, and the answer is what releases it. The arrival order the endpoint
- *   recorded is the evidence, not a duration.
- * - a query that is never answered does not hold the work: a balance endpoint that answers nothing
- *   makes the first exchange wait only for the query's own 5000ms business budget, and the exchange
- *   after it completes while the following query is still out — a query which that later exchange
- *   joins rather than duplicating. The session then exits with that query still out.
- * - the credential goes where it belongs and nowhere else: the account's own balance request carries
- *   it, and the run's stderr, session log, serialized model requests, widget and storage files do not.
- *
- * The reading is the endpoint's own scripted document, never a real account's balance, and the
- * credential is the isolated run's own fixture key — the sentinel case below uses a synthetic literal
- * precisely so that its absence everywhere else is meaningful. That is the whole point of the smoke:
- * it proves the wiring and the request the wiring builds, and it says nothing about what a real
- * DeepSeek account would answer — that remains the operator's own check (see the ticket's evidence
- * note for the sanitized observation method and its skip reason).
- *
- * The permanent, controlled-time cases for the success TTL, the in-flight merge and the failure
- * semantics live in `tests/model-cost/provider-balance.test.ts` (S2), and the prefetch's own
- * scheduling cases in `tests/model-cost/runtime-initialization.test.ts` (S2); what this file adds is
- * that the same behavior holds for real requests of the real provider in a real harness.
- */
+import { type InstalledOmp, resolveInstalledOmp } from "./installed-omp";
+/** Real locally installed OMP coverage, with isolated agent state and controlled provider requests. */
 import { beforeAll, describe, expect, test } from "bun:test";
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { MODEL_COST_WIDGET_KEY } from "../../extensions/model-cost/harnesses/omp/widget";
 import { writeProviderOverride } from "./agent-config";
-import { type IsolatedHarness, REPO_ROOT, ensureIsolatedHarness, readBaselineRecord } from "./baseline";
+import { REPO_ROOT } from "./baseline";
 import {
-	type CaptureServer,
-	type CapturedBalanceCall,
-	type CapturedRequest,
-	startCaptureServer,
+    type CaptureServer,
+    type CapturedBalanceCall,
+    type CapturedRequest,
+    startCaptureServer,
 } from "./capture-server";
 import { DOCK_CAPTURE_BASE_URL_ENV } from "./fixtures/extension-root/provider";
 import { type RunRoot, createRunRoot } from "./run-root";
 import { ControlledSession, type PromptOutcome, type RpcFrame } from "./session";
 import { settled, turn } from "../support/pending-query";
 
-const record = readBaselineRecord();
 /** The extension's own OMP entrypoint, as the harness's loader discovers it. */
 const MODEL_COST_ENTRYPOINT = path.join(REPO_ROOT, "entrypoints", "omp", "model-cost.ts");
 /** The document the extension keeps in its storage root. */
@@ -69,10 +31,10 @@ const DOCK_CREDENTIAL = "dock-key";
 /** A synthetic credential, this file's own literal: nothing real, and never a secret. */
 const SENTINEL = "SYNTHETIC-SENTINEL-5b31-DO-NOT-LEAK";
 
-let harness: IsolatedHarness;
+let harness: InstalledOmp;
 
 beforeAll(async () => {
-	harness = await ensureIsolatedHarness(record);
+	harness = await resolveInstalledOmp();
 });
 
 /** One run's isolated home and the storage root the shipped configuration names inside it. */

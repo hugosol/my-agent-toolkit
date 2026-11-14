@@ -1,31 +1,14 @@
-/**
- * model-cost's storage root in a running harness (P47, P51; S5).
- *
- * The dock materialises the recorded baseline install and loads this repository's own model-cost
- * entrypoint through the harness's real loader, in a session whose user home is an isolated
- * temporary directory — and the extension's own shipped `config.yaml`, which names
- * `~/cost-archive`, is what the storage root is resolved from. So what these cases observe is the
- * production path end to end: the framework read and validated the extension's configuration, the
- * factory resolved the storage root against the harness's user home, the one-time initialization
- * read the document at that root, and an unusable baseline was reported on the operator channel
- * while the file it could not read was left exactly as it was.
- *
- * The session is driven over RPC, which is also the whole point of the first prompt: the
- * framework's own contract is that the first model request waits for the extension's initialization
- * to settle, so a completed request is the evidence that the initialization — and its read — really
- * ran before anything else. The provider is the dock's own fixture, so no request leaves the
- * machine.
- */
+import { type InstalledOmp, resolveInstalledOmp } from "./installed-omp";
+/** Real locally installed OMP coverage, with isolated agent state and controlled provider requests. */
 import { afterEach, beforeAll, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
-import { type IsolatedHarness, REPO_ROOT, ensureIsolatedHarness, readBaselineRecord } from "./baseline";
+import { REPO_ROOT } from "./baseline";
 import { type CaptureServer, startCaptureServer } from "./capture-server";
 import { DOCK_CAPTURE_BASE_URL_ENV, DOCK_MODEL_SELECTOR } from "./fixtures/extension-root/provider";
 import { type RunRoot, createRunRoot } from "./run-root";
 import { ControlledSession } from "./session";
 
-const record = readBaselineRecord();
 const PROVIDER_FIXTURE = path.join(import.meta.dir, "fixtures", "extension-root", "provider.ts");
 /** The extension's own OMP entrypoint, as the harness's loader discovers it. */
 const MODEL_COST_ENTRYPOINT = path.join(REPO_ROOT, "entrypoints", "omp", "model-cost.ts");
@@ -33,7 +16,7 @@ const MODEL_COST_ENTRYPOINT = path.join(REPO_ROOT, "entrypoints", "omp", "model-
 /** The document the extension keeps in its storage root. */
 const CONSUMPTION_FILE = "consumption.json";
 
-let harness: IsolatedHarness;
+let harness: InstalledOmp;
 const roots: RunRoot[] = [];
 
 afterEach(() => {
@@ -47,7 +30,7 @@ function freshRunRoot(label: string): RunRoot {
 }
 
 beforeAll(async () => {
-	harness = await ensureIsolatedHarness(record);
+	harness = await resolveInstalledOmp();
 });
 
 /** One run's isolated home, and the storage root the shipped configuration names inside it. */

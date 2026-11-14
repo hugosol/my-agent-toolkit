@@ -32,7 +32,7 @@
  * cancelled or failed activity's own settlement ends the Round — is what the assertions above and the
  * S1/S2/S3 partitions cover. A real interactive terminal is a separate human acceptance path.
  */
-import { beginPiAcceptance } from "./support/pi-acceptance";
+import { beginHarnessAcceptance } from "./support/harness-acceptance";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
@@ -655,7 +655,7 @@ async function main(): Promise<void> {
 	const keep = process.argv.includes("--keep");
 	const explicit = process.argv.includes("--pi") ? process.argv[process.argv.indexOf("--pi") + 1] : undefined;
 	const cli = resolvePiCli(explicit);
-	const acceptance = await beginPiAcceptance("terminal-round", cli);
+	const acceptance = await beginHarnessAcceptance("pi", "terminal-round", cli);
 	const version = acceptance.version;
 	try {
 		console.log(`pi ${version} (${cli.path})`);

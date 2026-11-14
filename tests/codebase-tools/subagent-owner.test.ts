@@ -17,7 +17,8 @@ import { beforeAll, describe, expect, test } from "bun:test";
 import { writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { INIT_PROMPT, REMINDER_PROMPT } from "../../extensions/codebase-tools/shared-logic/prompts";
-import { type IsolatedHarness, REPO_ROOT, ensureIsolatedHarness, readBaselineRecord } from "../harness-dock/baseline";
+import { REPO_ROOT } from "../harness-dock/baseline";
+import { type InstalledOmp, resolveInstalledOmp } from "../harness-dock/installed-omp";
 import { type CaptureServer, type CaptureStep, type CapturedRequest, startCaptureServer } from "../harness-dock/capture-server";
 import { DOCK_CAPTURE_BASE_URL_ENV, DOCK_MODEL_SELECTOR } from "../harness-dock/fixtures/extension-root/provider";
 import { type RunRoot, createRunRoot } from "../harness-dock/run-root";
@@ -48,10 +49,10 @@ const CHILD_OFF_ASSIGNMENT = "child assigned while the owner was off";
 const CHILD_ON_ASSIGNMENT = "child assigned while the owner was on";
 const GRANDCHILD_ASSIGNMENT = "grandchild assigned by the child";
 
-let harness: IsolatedHarness;
+let harness: InstalledOmp;
 
 beforeAll(async () => {
-	harness = await ensureIsolatedHarness(readBaselineRecord());
+	harness = await resolveInstalledOmp();
 }, 300_000);
 
 /** One delegation the scripted model performs: the marker it reads, the spawn it answers. */
@@ -72,12 +73,23 @@ interface Delegation {
  */
 function delegatingResponder(delegations: readonly Delegation[]): (request: CapturedRequest) => CaptureStep | undefined {
 	const delegated = new Set<string>();
+	const observed = new Set<string>();
 	return request => {
 		const texts = userMessageTexts(request);
 		const hit = delegations.find(
 			delegation => !delegated.has(delegation.marker) && texts.some(text => text.includes(delegation.marker)),
 		);
-		if (hit === undefined) return undefined;
+		if (hit === undefined) {
+			// A plain final reply now completes a native task immediately. Explicitly read one
+			// owned file so the child's second request exercises same-run prompt preservation, rather than
+			// relying on the old host's missing-yield continuation to manufacture that request.
+			const child = delegations.find(delegation =>
+				!observed.has(delegation.assignment) && texts.some(text => text.includes(delegation.assignment)),
+			);
+			if (!child) return undefined;
+			observed.add(child.assignment);
+			return { toolCall: { name: "read", arguments: JSON.stringify({ path: "owner-followup.txt" }) } };
+		}
 		delegated.add(hit.marker);
 		return {
 			toolCall: {
@@ -99,6 +111,7 @@ function createRun(label: string, respond: (request: CapturedRequest) => Capture
 	// repository are untouched; the harness reads it for this process only.
 	const overlay = path.join(runRoot.path, "overlay.yml");
 	writeFileSync(overlay, BLOCKING_SPAWN_OVERLAY, "utf8");
+	writeFileSync(path.join(runRoot.workDir, "owner-followup.txt"), "The child has read its own follow-up material.\n");
 	return { runRoot, capture: startCaptureServer({ dir: runRoot.captureDir, respond }) };
 }
 
@@ -232,10 +245,11 @@ describe("a real built-in subagent follows the owner's current enabled (B9, C3, 
 			expect(contributed(childOff.entries, REMINDER_IDENTITY)).toHaveLength(0);
 			expect(customEntries(childOff.entries, STATE_ENTRY_TYPE)).toEqual([]);
 
-			// The subagent spawned under the enabled owner follows that value live: it
-			// initialised its own branch once and then repeated, with no State of its own.
+			// The enabled child initializes its own branch once, without owning State.
+			// Its read-tool continuation is another request in the same run, not another
+			// run-initiation where the every-enabled-run reminder belongs.
 			expect(contributed(childOn.entries, INIT_IDENTITY)).toHaveLength(1);
-			expect(contributed(childOn.entries, REMINDER_IDENTITY).length).toBeGreaterThan(0);
+			expect(contributed(childOn.entries, REMINDER_IDENTITY)).toHaveLength(0);
 			expect(customEntries(childOn.entries, STATE_ENTRY_TYPE)).toEqual([]);
 
 			// The outbound requests tell the same story turn by turn: the off subagent
@@ -244,14 +258,15 @@ describe("a real built-in subagent follows the owner's current enabled (B9, C3, 
 			expect(offRequests.length).toBeGreaterThan(0);
 			for (const request of offRequests) expect(injectedMessages(request)).toBe(0);
 
-			// …while the on subagent's first run carried exactly one contribution and its
-			// next run carried one more: its own branch's progress, one slot per run.
+			// …while both requests in the enabled child's single run carry its one persisted
+			// init. The second request observes the actual read result, not a tool error or
+			// the retired host's automatic missing-yield continuation.
 			const onRequests = requestsCarrying(run, CHILD_ON_ASSIGNMENT);
-			expect(onRequests.length).toBeGreaterThan(1);
-			expect(injectedMessages(onRequests[0] as CapturedRequest)).toBe(1);
-			expect(injectedMessages(onRequests[1] as CapturedRequest)).toBe(
-				injectedMessages(onRequests[0] as CapturedRequest) + 1,
-			);
+			expect(onRequests).toHaveLength(2);
+			for (const request of onRequests) expect(injectedMessages(request)).toBe(1);
+			expect((bodyOf(onRequests[1] as CapturedRequest).messages ?? []).some(message =>
+				message.role === "tool" && messageText(message.content).includes("The child has read its own follow-up material."),
+			)).toBe(true);
 
 			// The delivery facts the main path records hold for a subagent's own request too:
 			// the prompt lands after that session's own user message, at the tail of the

@@ -1,61 +1,20 @@
-/**
- * The shared path's consumers in one real assembly (P50; S1, S2).
- *
- * The migration rebuilt the framework's shared path — the one marker area, the owner-scoped State
- * store, the semantic round axis, the binding/initialization lifecycle — under three extensions
- * that already shipped against it. Each extension's own suite pins its own behavior; what no
- * single-consumer suite can show is whether *several* consumers sharing that path keep their own
- * behavior when they are bound together in one process, which is how this repository deploys them:
- * `entrypoints/omp` is the discovery root the OMP host loads, and the framework binds model-cost,
- * codebase-tools and connect-bot from it.
- *
- * So these runs load that deployed discovery root verbatim — a copy of the repository's own
- * `framework/`, `extensions/` and `entrypoints/omp` source, with only the run's own connect-bot
- * `config.yaml` in place of the shipped one — into the isolated patched host, and observe the
- * shared path from the consumers' side:
- *
- * - **the one marker area holds each consumer's own line**: the area is one process-wide native
- *   widget, it renders every bound extension's active line — the deployed pair appears in the order
- *   their extension ids give — and the third consumer's command (model-cost's `/budget`, which
- *   declares no marker) neither adds a line nor clears the one that is there;
- * - **one consumer's State is not another's**: turning codebase-tools' activation off leaves
- *   connect-bot's own line standing, and `off` on connect-bot leaves codebase-tools' line standing
- *   — the two extensions declare the same field name (`enabled`) for their own `state`, so a store
- *   keyed by anything but the extension would show here;
- * - **a refused activation of one consumer changes nothing of the others**: connect-bot's arm is
- *   refused by the panel (a scripted protocol answer, which is that extension's own outcome), the
- *   operator is told in that extension's own words, no line appears — and the session, and the
- *   consumer beside it, go on serving turns, with the same consumer arming once the panel answers as
- *   a register; every deployed consumer bound here (model-cost included) answers its own command;
- * - **the one round axis ends a cancelled exchange for its consumers**: an exchange the run holds
- *   open is aborted, connect-bot is told the round ended (its own state report leaves for the
- *   panel), and codebase-tools' activation survives the cancellation, so the next turn is served
- *   with both lines still on the area;
- * - **a terminal failure is the exchange's, not the consumers'**: with the session's own automatic
- *   retry turned off, a provider that refuses every attempt ends the exchange as `error`, the armed
- *   consumer is told that round ended too, and both activations and the next turn are unaffected.
- *
- * The panel here is a scripted local endpoint answering the register receipt connect-bot's own wire
- * contract states: this run is about the framework's shared path, not about herdr-bot's panel, whose
- * real path the connect-bot suite drives against the real panel binary. The provider is the dock's
- * own capture endpoint, so every exchange is a real model request this run answers itself.
- */
+import { type InstalledOmp, resolveInstalledOmp } from "./installed-omp";
+/** Real locally installed OMP coverage, with isolated agent state and controlled provider requests. */
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import type { Server } from "bun";
 import { cpSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
-import { type IsolatedHarness, REPO_ROOT, ensureIsolatedHarness, readBaselineRecord } from "./baseline";
+import { REPO_ROOT } from "./baseline";
 import { type CaptureServer, startCaptureServer } from "./capture-server";
 import { DOCK_CAPTURE_BASE_URL_ENV, DOCK_MODEL_SELECTOR } from "./fixtures/extension-root/provider";
 import { type RunRoot, createRunRoot } from "./run-root";
 import { ControlledSession, type RpcFrame } from "./session";
 
-const record = readBaselineRecord();
 
-let harness: IsolatedHarness;
+let harness: InstalledOmp;
 
 beforeAll(async () => {
-	harness = await ensureIsolatedHarness(record);
+	harness = await resolveInstalledOmp();
 }, 300_000);
 
 /**

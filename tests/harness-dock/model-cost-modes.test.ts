@@ -1,35 +1,17 @@
-/**
- * The consumption modes, their widget and the reference channel on the real patched host (P7, P8, P9,
- * P10, P25; S5).
- *
- * These runs are the extension's real OMP entrypoint loaded into the isolated patched host, driven
- * over RPC, with the extension's own native widget read off the host's `setWidget` frames. What they
- * establish is the half a unit test cannot: that the modes' display behavior is really wired into the
- * host, that a `hidden` model creates no usage widget while the model still executes, that the fixed
- * display budget is displayed without touching what the session sends to the provider, and that the
- * allowance channel's own price really reaches a request — the host's model catalog, mapped by the
- * adapter into the price the framework snapshots at the request's start, so the reference amount and
- * the fee-structure ratio are produced by a production run rather than by an injected catalog.
- *
- * Every model is reached through the dock's own capture endpoint, so no run needs a credential and
- * nothing leaves the machine; the request the host really sent is the run's own outbound evidence. The
- * allowance model's price is the run's own `models.yml` fixture — explicit amounts per million tokens —
- * so the reference amount below is hand-computed from numbers this file states, not from a real
- * provider's price.
- */
+import { type InstalledOmp, resolveInstalledOmp } from "./installed-omp";
+/** Real locally installed OMP coverage, with isolated agent state and controlled provider requests. */
 import { beforeAll, describe, expect, test } from "bun:test";
 import { existsSync, cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { MODEL_COST_WIDGET_KEY } from "../../extensions/model-cost/harnesses/omp/widget";
 import { writeAgentSettings } from "./agent-config";
-import { type IsolatedHarness, REPO_ROOT, ensureIsolatedHarness, readBaselineRecord } from "./baseline";
+import { REPO_ROOT } from "./baseline";
 import { type CaptureServer, startCaptureServer } from "./capture-server";
 import { DOCK_CAPTURE_BASE_URL_ENV, DOCK_MODEL_SELECTOR } from "./fixtures/extension-root/provider";
 import { type RunRoot, createRunRoot } from "./run-root";
 import { ControlledSession, type RpcFrame } from "./session";
-import { ensureViewedSessionHarness } from "./viewed-session-harness";
 
-const record = readBaselineRecord();
+
 /** The dock's own provider fixture: an unknown provider name, whose model this extension does not list. */
 const PROVIDER_FIXTURE = path.join(import.meta.dir, "fixtures", "extension-root", "provider.ts");
 
@@ -485,10 +467,10 @@ describe("saved-session publication polling", () => {
 	});
 });
 
-let patched: IsolatedHarness;
+let patched: InstalledOmp;
 
 beforeAll(async () => {
-	patched = await ensureViewedSessionHarness(record);
+	patched = await resolveInstalledOmp();
 }, 600_000);
 
 describe("a hidden model draws no usage widget and still runs (P8, P9)", () => {

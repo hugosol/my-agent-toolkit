@@ -1,52 +1,24 @@
-/**
- * The real host's one marker area renders the session on screen's own effective State (P27; S5).
- *
- * These runs load two marker fixtures through the frozen patched host's own loader — the artifact
- * ticket 01 materialised, whose public Viewed session outlet is the only source the framework's
- * projection has — arm both in the Owner's session, and read the marker-area widget the host was
- * actually told to render. What that establishes is the half a controlled double cannot: that on the
- * real host, with the real adapter, the real agent registry and the real per-session outlet facts, the
- * displayed session's own effective State drives the one area — the Owner's session carries both
- * lines, and its spawned session renders the following line *alone*, its sibling reading a declared
- * default rather than a copy of every line the Owner's session shows.
- *
- * What this run does **not** establish: the displayed *subagent's* rendering — an RPC host reports each
- * session's own facts rather than a separate view, and a subagent's own session has no UI, so the seat
- * that renders the following line alone stays the framework seam's own case and the interactive focus
- * switch is the human check (the ticket's H1 material).
- *
- * One failure this run does catch is the spawned session's own binding: the loader evaluates an
- * extension's graph per session's runner, so that binding registers the same extension ids in the one
- * process-wide area with its own State store. A registration that answers for a seat it never served
- * used to empty the area — the run rendered `undefined` at the Owner's own deliveries right after the
- * delegation — and every rendering this test reads after arming must therefore be a session's own
- * area instead.
- *
- * Every model request goes to the dock's own capture endpoint, so no run needs a credential and
- * nothing leaves the machine. Nothing here is a formal installation: the run's own agent state,
- * session directory and working directory all sit inside its temporary run root.
- */
+import { type InstalledOmp, resolveInstalledOmp } from "./installed-omp";
+/** Real locally installed OMP coverage, with isolated agent state and controlled provider requests. */
 import { beforeAll, describe, expect, test } from "bun:test";
 import * as path from "node:path";
 import { writeAgentSettings, writeProviderOverride } from "./agent-config";
-import { type IsolatedHarness, readBaselineRecord } from "./baseline";
 import { type CaptureServer, type CaptureStep, type CapturedRequest, startCaptureServer } from "./capture-server";
 import { DOCK_CAPTURE_BASE_URL_ENV } from "./fixtures/extension-root/provider";
 import {
-	FOLLOW_MARKER_COMMAND,
-	FOLLOW_MARKER_ID,
-	FOLLOW_MARKER_TEXT,
+    FOLLOW_MARKER_COMMAND,
+    FOLLOW_MARKER_ID,
+    FOLLOW_MARKER_TEXT,
 } from "./fixtures/viewed-marker-follow/entrypoint";
 import {
-	NONE_MARKER_COMMAND,
-	NONE_MARKER_ID,
-	NONE_MARKER_TEXT,
+    NONE_MARKER_COMMAND,
+    NONE_MARKER_ID,
+    NONE_MARKER_TEXT,
 } from "./fixtures/viewed-marker-none/entrypoint";
 import { type RunRoot, createRunRoot } from "./run-root";
 import { ControlledSession, type RpcFrame } from "./session";
-import { ensureViewedSessionHarness } from "./viewed-session-harness";
 
-const record = readBaselineRecord();
+
 
 /** The framework's one marker-area widget, as the OMP adapter owns it. */
 const MARKER_AREA_KEY = "semantic-extensions";
@@ -74,10 +46,10 @@ const CAPTURE_USAGE = { input: 10, output: 7, cacheRead: 3 };
 /** The Owner's rendering: both lines, in extension-id order. */
 const OWNER_RENDER = [FOLLOW_MARKER_TEXT, NONE_MARKER_TEXT];
 
-let harness: IsolatedHarness;
+let harness: InstalledOmp;
 
 beforeAll(async () => {
-	harness = await ensureViewedSessionHarness(record);
+	harness = await resolveInstalledOmp();
 });
 
 /** One run's resources, disposed by the caller. */
@@ -98,11 +70,6 @@ function delegationStep(): CaptureStep {
 			}),
 		},
 	};
-}
-
-/** A scripted subagent result: the host's own yield tool, which ends the subagent's session. */
-function yieldStep(data: string): CaptureStep {
-	return { toolCall: { name: "yield", arguments: JSON.stringify({ data }) } };
 }
 
 /** The messages one captured request carried, when its body really is the object this suite reads. */
@@ -130,13 +97,13 @@ function isOpeningRequest(request: CapturedRequest): boolean {
 }
 
 /**
- * The scripted model: the spawned session's own opening request ends its run by yielding, and the
+ * The scripted model: the spawned session's own opening request ends its run with final text, and the
  * Owner's *opening* request delegates once. Every later request of the Owner's run answers in prose,
  * so one prompt produces exactly one spawned session. Which session a request belongs to is read from
  * that request's own messages rather than from the order requests arrive in.
  */
 function respond(request: CapturedRequest): CaptureStep | undefined {
-	if (openingOf(request).includes(CHILD_ASSIGNMENT)) return yieldStep("dock viewed-marker child result");
+	if (openingOf(request).includes(CHILD_ASSIGNMENT)) return { replyText: "dock viewed-marker child result" };
 	return isOpeningRequest(request) ? delegationStep() : {};
 }
 
@@ -207,7 +174,7 @@ function markerRenders(session: ControlledSession, from = 0): Array<readonly str
 		.map(frame => markerLines(frame.widgetLines));
 }
 
-describe("the frozen host renders the displayed session's own marker area (S5, P27)", () => {
+describe("the installed host renders the session's own marker area (S5, P27)", () => {
 	test("a subagent's own run renders its effective projection, not every line the Owner's session shows", async () => {
 		const run = await startRun("viewed-marker-subagent");
 		try {

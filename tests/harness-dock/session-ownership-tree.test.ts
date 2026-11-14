@@ -1,31 +1,10 @@
-/**
- * Session ownership and the parent tree in a running harness (P12, P13, P24; S5).
- *
- * This is the isolated real-host observation of attribution end to end: the dock materialises the
- * recorded baseline install, loads this repository's own model-cost entrypoint and the round
- * observation fixture through the harness's real loader, and drives real RPC sessions whose model
- * requests go to the dock's local capture endpoint. Nothing here is a double — the delegation, the
- * spawned sessions, the responses and the usage the endpoint reports are the host's own.
- *
- * Three facts are observed. The first is the real agent relation: the main session delegates to a
- * child through the host's own task tool, and the child delegates to a grandchild, so the host
- * really spawns three actual sessions whose own direct parents the framework reports. The second is
- * where their consumption goes: the document the extension saves holds one record per actual session,
- * each with exactly the requests that session issued — the main session's own request count excludes
- * both subagents' work even though every one of them resolves to the main session's owner line — and
- * the record's parent is the same direct parent the framework reported. The third is what switching
- * the displayed session does: the host shows another session, that session's request is its own, and
- * switching back to the first session continues *its* record rather than moving or merging anything.
- *
- * The subagents are the host's own, spawned through its own task tool, but they run on the same local
- * fixture model as the session that spawned them, so this suite says nothing about a real provider:
- * the usage it asserts is hand-derived from the wire numbers the capture endpoint sent.
- */
+import { type InstalledOmp, resolveInstalledOmp } from "./installed-omp";
+/** Real locally installed OMP coverage, with isolated agent state and controlled provider requests. */
 import { beforeAll, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import * as path from "node:path";
 import { writeAgentSettings, writeProviderOverride } from "./agent-config";
-import { type IsolatedHarness, REPO_ROOT, ensureIsolatedHarness, readBaselineRecord } from "./baseline";
+import { REPO_ROOT } from "./baseline";
 import { type CapturedRequest, type CaptureStep, type CaptureServer, startCaptureServer } from "./capture-server";
 import { DOCK_CAPTURE_BASE_URL_ENV } from "./fixtures/extension-root/provider";
 import { ROUND_FACTS_ID } from "./fixtures/round-facts/entrypoint";
@@ -35,7 +14,6 @@ import { type RunRoot, createRunRoot } from "./run-root";
 import { ControlledSession, type RpcFrame } from "./session";
 import { listSessionFiles } from "./session-log";
 
-const record = readBaselineRecord();
 /** The extension's own OMP entrypoint, as the harness's loader discovers it. */
 const MODEL_COST_ENTRYPOINT = path.join(REPO_ROOT, "entrypoints", "omp", "model-cost.ts");
 /** The dock's own provider fixture, so the model-cost entrypoint runs beside the round fixture. */
@@ -97,10 +75,10 @@ const SPAWN_AGENT = "task";
 const OTHER_PROMPT = "dock run: an exchange in the session the view moved to";
 const RETURN_PROMPT = "dock run: one more exchange after switching back";
 
-let harness: IsolatedHarness;
+let harness: InstalledOmp;
 
 beforeAll(async () => {
-	harness = await ensureIsolatedHarness(record);
+	harness = await resolveInstalledOmp();
 });
 
 /** One run's isolated home and the storage root the extension's shipped configuration names inside it. */
@@ -148,11 +126,6 @@ function delegationStep(name: string, assignment: string): CaptureStep {
 	};
 }
 
-/** A scripted subagent result: the host's own yield tool, which ends the subagent's session. */
-function yieldStep(data: string): CaptureStep {
-	return { toolCall: { name: "yield", arguments: JSON.stringify({ data }) } };
-}
-
 /** The messages one captured request carried, when its body really is the object this suite reads. */
 function messagesOf(request: CapturedRequest): readonly unknown[] {
 	const body = request.json;
@@ -189,21 +162,21 @@ function isOpeningRequest(request: CapturedRequest): boolean {
  * The scripted model of a delegating run: it reads which session's request this is from that
  * session's own opening message rather than from the order requests arrive in, and answers that
  * session. The main session delegates to a child, the child delegates to a grandchild, each subagent
- * yields its result, and every other request answers in prose.
+ * returns final text, and every other request answers in prose.
  */
 function delegatingStep(request: CapturedRequest): CaptureStep | undefined {
 	const opening = openingOf(request);
 	const openingRequest = isOpeningRequest(request);
-	if (opening.includes(GRANDCHILD_ASSIGNMENT)) return yieldStep("grandchild result");
+	if (opening.includes(GRANDCHILD_ASSIGNMENT)) return { replyText: "grandchild result" };
 	if (opening.includes(CHILD_ASSIGNMENT)) {
-		return openingRequest ? delegationStep(GRANDCHILD_NAME, GRANDCHILD_ASSIGNMENT) : yieldStep("child result");
+		return openingRequest ? delegationStep(GRANDCHILD_NAME, GRANDCHILD_ASSIGNMENT) : { replyText: "child result" };
 	}
 	if (opening.includes(DELEGATE_PROMPT) && openingRequest) return delegationStep(CHILD_NAME, CHILD_ASSIGNMENT);
 	return {};
 }
 
 /**
- * One run: the recorded 18.5.0 install's own loader, the project's model-cost entrypoint and the round
+ * One run: the installed host's own loader, the project's model-cost entrypoint and the round
  * fixture, driven through a real RPC session over the local capture endpoint.
  *
  * Blocking delegation is the host setting this needs: an RPC host otherwise runs each spawn as a
@@ -216,7 +189,7 @@ async function startRun(label: string, extra: readonly string[] = []): Promise<D
 	const home = isolateHome(runRoot);
 	// Expose the fixed effort scripted by delegationStep. The task agent otherwise uses
 	// automatic effort judging, whose auxiliary requests are outside session Turns and
-	// cannot be answered by this endpoint's delegation/yield conversation protocol.
+	// cannot be answered by this endpoint's delegation/final-text conversation protocol.
 	writeAgentSettings(runRoot.agentDir, { "async.enabled": false, "task.enableEffort": true });
 	const capture = startCaptureServer({
 		dir: runRoot.captureDir,

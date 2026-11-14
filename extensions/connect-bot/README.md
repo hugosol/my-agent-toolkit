@@ -285,8 +285,7 @@ by reading the formal configuration. Launch the automatic entrypoint with that i
 start the recording before the process starts:
 
 ```bash
-PI_CODING_AGENT_DIR="$PWD/$ACCEPT_ROOT/agent-state" bun \
-  .cache/omp-baseline/18.5.0/node_modules/@oh-my-pi/pi-coding-agent/src/cli.ts \
+PI_CODING_AGENT_DIR="$PWD/$ACCEPT_ROOT/agent-state" "${OMP_CLI:-omp}" \
   --no-extensions -e "$PWD/$ACCEPT_ROOT/deployment/entrypoints/omp-auto/connect-bot.ts" \
   --session-dir "$PWD/$ACCEPT_ROOT/sessions" --cwd "$PWD/$ACCEPT_ROOT/work" \
   --model <provider>/<model>

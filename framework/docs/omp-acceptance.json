@@ -1,0 +1,310 @@
+{
+  "schemaVersion": 1,
+  "scopes": {
+    "dock": {
+      "schemaVersion": 1,
+      "harness": "omp",
+      "scope": "dock",
+      "startedAt": "2026-11-14T07:03:39.370Z",
+      "cli": {
+        "path": "D:\\nvm4w\\nodejs\\node_modules\\@oh-my-pi\\pi-coding-agent\\dist\\cli.js",
+        "command": [
+          "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe",
+          "D:\\nvm4w\\nodejs\\node_modules\\@oh-my-pi\\pi-coding-agent\\dist\\cli.js"
+        ],
+        "source": "locally selected installed OMP"
+      },
+      "source": {
+        "repoRoot": "E:\\Developer\\myhub\\my-agent-toolkit",
+        "head": "412151a730a1e0bab866c4621cef722220c988c9",
+        "status": [
+          " M README.md",
+          " M docs/adr/0002-semantic-extension-framework.md",
+          " M docs/agents/testing.md",
+          " M extensions/codebase-tools/README.md",
+          " M extensions/connect-bot/README.md",
+          " M extensions/model-cost/README.md",
+          " M framework/GLOSSARY.md",
+          " M framework/README.md",
+          " M framework/docs/framework-capabilities.md",
+          " M framework/docs/harness-baseline.json",
+          " M framework/docs/harness-support.md",
+          " D host-patches/omp-18.5.0-codex-response-boundary/README.md",
+          " D host-patches/omp-18.5.0-codex-response-boundary/patch.diff",
+          " D host-patches/omp-18.5.0-codex-response-boundary/record.json",
+          " D host-patches/omp-18.5.0-viewed-session-codex-response/README.md",
+          " D host-patches/omp-18.5.0-viewed-session-codex-response/record.json",
+          " D host-patches/omp-18.5.0-viewed-session/README.md",
+          " D host-patches/omp-18.5.0-viewed-session/patch.diff",
+          " D host-patches/omp-18.5.0-viewed-session/record.json",
+          " M package.json",
+          " M scripts/capture-codex-outbound.ts",
+          " M scripts/pi-background-round-smoke.ts",
+          " M scripts/pi-close-out-smoke.ts",
+          " M scripts/pi-codebase-tools-smoke.ts",
+          " M scripts/pi-model-cost-smoke.ts",
+          " M scripts/pi-provider-account-read.ts",
+          " M scripts/pi-session-accounting.ts",
+          " M scripts/pi-subagent-smoke.ts",
+          " M scripts/pi-terminal-round-smoke.ts",
+          " M scripts/pi-tui-acceptance.ts",
+          " M scripts/rust-script-acceptance.ts",
+          " D scripts/support/pi-acceptance.ts",
+          " D scripts/verify-omp-candidate.ts",
+          " M tests/codebase-tools/command-toggle.test.ts",
+          " M tests/codebase-tools/init-injection.test.ts",
+          " M tests/codebase-tools/marker-lifecycle.test.ts",
+          " M tests/codebase-tools/outbound-role.test.ts",
+          " M tests/codebase-tools/reminder-injection.test.ts",
+          " M tests/codebase-tools/session-boundaries.test.ts",
+          " M tests/codebase-tools/startup-modes-dock.test.ts",
+          " M tests/codebase-tools/startup-recovery-dock.test.ts",
+          " M tests/codebase-tools/subagent-owner.test.ts",
+          " M tests/connect-bot/harness-exit-budget.test.ts",
+          " M tests/framework/deployment.test.ts",
+          " M tests/harness-dock/activity-facts.test.ts",
+          " M tests/harness-dock/baseline.test.ts",
+          " M tests/harness-dock/baseline.ts",
+          " M tests/harness-dock/binding-lifecycle.test.ts",
+          " D tests/harness-dock/codex-response-artifact.test.ts",
+          " D tests/harness-dock/codex-response-harness.ts",
+          " D tests/harness-dock/combined-host-artifact.test.ts",
+          " D tests/harness-dock/combined-host-harness.ts",
+          " M tests/harness-dock/connect-bot-lifecycle.test.ts",
+          " M tests/harness-dock/connect-bot-startup.test.ts",
+          " M tests/harness-dock/consumer-regression.test.ts",
+          " M tests/harness-dock/detail-tree.test.ts",
+          " M tests/harness-dock/efficiency-effects.test.ts",
+          " M tests/harness-dock/fixtures/binding-lifecycle/startup-runner.ts",
+          " D tests/harness-dock/fixtures/viewed-session/probe.ts",
+          " D tests/harness-dock/host-patch-artifact.ts",
+          " M tests/harness-dock/index.ts",
+          " M tests/harness-dock/model-cost-accounting.test.ts",
+          " M tests/harness-dock/model-cost-balance.test.ts",
+          " M tests/harness-dock/model-cost-codex-quota.test.ts",
+          " M tests/harness-dock/model-cost-headless.test.ts",
+          " M tests/harness-dock/model-cost-modes.test.ts",
+          " M tests/harness-dock/model-cost-persistence.test.ts",
+          " M tests/harness-dock/model-cost-runtime-gap.test.ts",
+          " M tests/harness-dock/model-cost-session-span.test.ts",
+          " M tests/harness-dock/model-cost-store.test.ts",
+          " M tests/harness-dock/period-switch.test.ts",
+          " M tests/harness-dock/round-facts.test.ts",
+          " M tests/harness-dock/session-driver.test.ts",
+          " M tests/harness-dock/session-ownership-tree.test.ts",
+          " M tests/harness-dock/session-recovery.test.ts",
+          " M tests/harness-dock/session.ts",
+          " M tests/harness-dock/startup-modes-loading.test.ts",
+          " M tests/harness-dock/turn-facts.test.ts",
+          " M tests/harness-dock/viewed-marker.test.ts",
+          " D tests/harness-dock/viewed-session-harness.ts",
+          " D tests/harness-dock/viewed-session-host.test.ts",
+          " M tests/harness-dock/viewed-session-total.test.ts",
+          " D tests/harness-dock/viewed-session.test.ts",
+          " M tests/pi-suite/pi-acceptance.test.ts",
+          " M tests/workflow-chat/pi-native.test.ts",
+          " M tests/workflow-chat/support/chief-dock.ts",
+          " M tests/workflow-chat/support/manager-dock.ts",
+          " M tests/workflow-chat/support/node-dock.ts",
+          " M tests/workflow-chat/support/prompt-dock.ts",
+          "?? .scratch/omp-local-acceptance/evidence/environment.json",
+          "?? scripts/omp-dock-tests.ts",
+          "?? scripts/support/harness-acceptance.ts",
+          "?? tests/harness-dock/installed-omp.test.ts",
+          "?? tests/harness-dock/installed-omp.ts"
+        ],
+        "diffSha256": "16d1fc02d38dca6d14dec14f3fc2dac1d33aa6ca733c058c2d8c91a789d8bf26",
+        "untrackedFiles": [
+          {
+            "path": ".scratch/omp-local-acceptance/evidence/environment.json",
+            "sha256": "87082290cd9ec4e162cca4ce5818aa9372d3f18ec884a52d1177133403793f98"
+          },
+          {
+            "path": "scripts/omp-dock-tests.ts",
+            "sha256": "38d08dac938319f37f96c47560c29472bbb001071b027b7f9b3c756c8ba63e78"
+          },
+          {
+            "path": "scripts/support/harness-acceptance.ts",
+            "sha256": "f5fa1a6627be2a023ee8fcb7418eb9c75f15b67c9b51eb3657fdf27ce4b09acf"
+          },
+          {
+            "path": "tests/harness-dock/installed-omp.test.ts",
+            "sha256": "b52e93004b0422f39c2b7c5126674be08cc6c731142f086b5e7ee7e12a654b8a"
+          },
+          {
+            "path": "tests/harness-dock/installed-omp.ts",
+            "sha256": "8d168db47cc2e617c39af006ed4b5edd5a07d8dcd03b8f79efa9eb114e782020"
+          }
+        ],
+        "sha256": "d3bdffb7e51ca668066981622f44d5b006bd4eb0273f9890622464c296930bf1"
+      },
+      "lockfiles": [
+        {
+          "path": "bun.lock",
+          "bytes": 11550,
+          "sha256": "28ce4c0d7b7d1d45a44e335a6647b0959c333875af42ca87ba63c87bcf4c2168"
+        }
+      ],
+      "runtime": {
+        "driver": {
+          "executable": "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe",
+          "node": "26.3.0",
+          "bun": "1.4.4"
+        },
+        "cli": {
+          "execPath": "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe",
+          "node": "26.3.0",
+          "bun": "1.4.4"
+        },
+        "artifact": {
+          "path": "D:\\nvm4w\\nodejs\\node_modules\\@oh-my-pi\\pi-coding-agent\\dist\\cli.js",
+          "bytes": 19021514,
+          "sha256": "dc99fbfed5ee3275efee2e3f441549f8863ff9da5a8d4f0740754033180597c9"
+        },
+        "platform": "win32",
+        "arch": "x64"
+      },
+      "reportedVersion": "omp/18.20.0",
+      "version": "18.20.0",
+      "status": "passed",
+      "complete": true,
+      "checks": [
+        "test tests/harness-dock --parallel=4"
+      ],
+      "detail": "Suite exit 0. JUnit confirms nonempty, unskipped execution of every expected file.",
+      "finishedAt": "2026-11-14T07:07:56.939Z",
+      "finishedSource": {
+        "repoRoot": "E:\\Developer\\myhub\\my-agent-toolkit",
+        "head": "412151a730a1e0bab866c4621cef722220c988c9",
+        "status": [
+          " M README.md",
+          " M docs/adr/0002-semantic-extension-framework.md",
+          " M docs/agents/testing.md",
+          " M extensions/codebase-tools/README.md",
+          " M extensions/connect-bot/README.md",
+          " M extensions/model-cost/README.md",
+          " M framework/GLOSSARY.md",
+          " M framework/README.md",
+          " M framework/docs/framework-capabilities.md",
+          " M framework/docs/harness-baseline.json",
+          " M framework/docs/harness-support.md",
+          " D host-patches/omp-18.5.0-codex-response-boundary/README.md",
+          " D host-patches/omp-18.5.0-codex-response-boundary/patch.diff",
+          " D host-patches/omp-18.5.0-codex-response-boundary/record.json",
+          " D host-patches/omp-18.5.0-viewed-session-codex-response/README.md",
+          " D host-patches/omp-18.5.0-viewed-session-codex-response/record.json",
+          " D host-patches/omp-18.5.0-viewed-session/README.md",
+          " D host-patches/omp-18.5.0-viewed-session/patch.diff",
+          " D host-patches/omp-18.5.0-viewed-session/record.json",
+          " M package.json",
+          " M scripts/capture-codex-outbound.ts",
+          " M scripts/pi-background-round-smoke.ts",
+          " M scripts/pi-close-out-smoke.ts",
+          " M scripts/pi-codebase-tools-smoke.ts",
+          " M scripts/pi-model-cost-smoke.ts",
+          " M scripts/pi-provider-account-read.ts",
+          " M scripts/pi-session-accounting.ts",
+          " M scripts/pi-subagent-smoke.ts",
+          " M scripts/pi-terminal-round-smoke.ts",
+          " M scripts/pi-tui-acceptance.ts",
+          " M scripts/rust-script-acceptance.ts",
+          " D scripts/support/pi-acceptance.ts",
+          " D scripts/verify-omp-candidate.ts",
+          " M tests/codebase-tools/command-toggle.test.ts",
+          " M tests/codebase-tools/init-injection.test.ts",
+          " M tests/codebase-tools/marker-lifecycle.test.ts",
+          " M tests/codebase-tools/outbound-role.test.ts",
+          " M tests/codebase-tools/reminder-injection.test.ts",
+          " M tests/codebase-tools/session-boundaries.test.ts",
+          " M tests/codebase-tools/startup-modes-dock.test.ts",
+          " M tests/codebase-tools/startup-recovery-dock.test.ts",
+          " M tests/codebase-tools/subagent-owner.test.ts",
+          " M tests/connect-bot/harness-exit-budget.test.ts",
+          " M tests/framework/deployment.test.ts",
+          " M tests/harness-dock/activity-facts.test.ts",
+          " M tests/harness-dock/baseline.test.ts",
+          " M tests/harness-dock/baseline.ts",
+          " M tests/harness-dock/binding-lifecycle.test.ts",
+          " D tests/harness-dock/codex-response-artifact.test.ts",
+          " D tests/harness-dock/codex-response-harness.ts",
+          " D tests/harness-dock/combined-host-artifact.test.ts",
+          " D tests/harness-dock/combined-host-harness.ts",
+          " M tests/harness-dock/connect-bot-lifecycle.test.ts",
+          " M tests/harness-dock/connect-bot-startup.test.ts",
+          " M tests/harness-dock/consumer-regression.test.ts",
+          " M tests/harness-dock/detail-tree.test.ts",
+          " M tests/harness-dock/efficiency-effects.test.ts",
+          " M tests/harness-dock/fixtures/binding-lifecycle/startup-runner.ts",
+          " D tests/harness-dock/fixtures/viewed-session/probe.ts",
+          " D tests/harness-dock/host-patch-artifact.ts",
+          " M tests/harness-dock/index.ts",
+          " M tests/harness-dock/model-cost-accounting.test.ts",
+          " M tests/harness-dock/model-cost-balance.test.ts",
+          " M tests/harness-dock/model-cost-codex-quota.test.ts",
+          " M tests/harness-dock/model-cost-headless.test.ts",
+          " M tests/harness-dock/model-cost-modes.test.ts",
+          " M tests/harness-dock/model-cost-persistence.test.ts",
+          " M tests/harness-dock/model-cost-runtime-gap.test.ts",
+          " M tests/harness-dock/model-cost-session-span.test.ts",
+          " M tests/harness-dock/model-cost-store.test.ts",
+          " M tests/harness-dock/period-switch.test.ts",
+          " M tests/harness-dock/round-facts.test.ts",
+          " M tests/harness-dock/session-driver.test.ts",
+          " M tests/harness-dock/session-ownership-tree.test.ts",
+          " M tests/harness-dock/session-recovery.test.ts",
+          " M tests/harness-dock/session.ts",
+          " M tests/harness-dock/startup-modes-loading.test.ts",
+          " M tests/harness-dock/turn-facts.test.ts",
+          " M tests/harness-dock/viewed-marker.test.ts",
+          " D tests/harness-dock/viewed-session-harness.ts",
+          " D tests/harness-dock/viewed-session-host.test.ts",
+          " M tests/harness-dock/viewed-session-total.test.ts",
+          " D tests/harness-dock/viewed-session.test.ts",
+          " M tests/pi-suite/pi-acceptance.test.ts",
+          " M tests/workflow-chat/pi-native.test.ts",
+          " M tests/workflow-chat/support/chief-dock.ts",
+          " M tests/workflow-chat/support/manager-dock.ts",
+          " M tests/workflow-chat/support/node-dock.ts",
+          " M tests/workflow-chat/support/prompt-dock.ts",
+          "?? .scratch/omp-local-acceptance/evidence/environment.json",
+          "?? scripts/omp-dock-tests.ts",
+          "?? scripts/support/harness-acceptance.ts",
+          "?? tests/harness-dock/installed-omp.test.ts",
+          "?? tests/harness-dock/installed-omp.ts"
+        ],
+        "diffSha256": "16d1fc02d38dca6d14dec14f3fc2dac1d33aa6ca733c058c2d8c91a789d8bf26",
+        "untrackedFiles": [
+          {
+            "path": ".scratch/omp-local-acceptance/evidence/environment.json",
+            "sha256": "87082290cd9ec4e162cca4ce5818aa9372d3f18ec884a52d1177133403793f98"
+          },
+          {
+            "path": "scripts/omp-dock-tests.ts",
+            "sha256": "38d08dac938319f37f96c47560c29472bbb001071b027b7f9b3c756c8ba63e78"
+          },
+          {
+            "path": "scripts/support/harness-acceptance.ts",
+            "sha256": "f5fa1a6627be2a023ee8fcb7418eb9c75f15b67c9b51eb3657fdf27ce4b09acf"
+          },
+          {
+            "path": "tests/harness-dock/installed-omp.test.ts",
+            "sha256": "b52e93004b0422f39c2b7c5126674be08cc6c731142f086b5e7ee7e12a654b8a"
+          },
+          {
+            "path": "tests/harness-dock/installed-omp.ts",
+            "sha256": "8d168db47cc2e617c39af006ed4b5edd5a07d8dcd03b8f79efa9eb114e782020"
+          }
+        ],
+        "sha256": "d3bdffb7e51ca668066981622f44d5b006bd4eb0273f9890622464c296930bf1"
+      },
+      "finishedLockfiles": [
+        {
+          "path": "bun.lock",
+          "bytes": 11550,
+          "sha256": "28ce4c0d7b7d1d45a44e335a6647b0959c333875af42ca87ba63c87bcf4c2168"
+        }
+      ],
+      "acceptedAt": "2026-11-14T07:07:56.939Z"
+    }
+  }
+}

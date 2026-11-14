@@ -1,47 +1,16 @@
-/**
- * The main session's Session span on the real host, as a real submission establishes it (P1, P2; S1,
- * S2, S3).
- *
- * This is the isolated real-host smoke of the half a controlled double cannot answer: the dock
- * materialises the recorded baseline install, loads this repository's own model-cost entrypoint
- * through the harness's real loader, and drives a real RPC session — so the submission the extension
- * is told about is the harness's own `input` fact for a prompt this client really sent, and the span's
- * end is the real response's own settle, as that Turn's own delivery states it. Nothing here models a
- * harness: that fact has no other source, and a harness that published none would leave the session
- * with no start at all.
- *
- * What is read back is both halves of the observable path: the document the extension itself wrote
- * into its shipped storage root (a record's own span, among the root's real files), and the widget the
- * host was told to draw (the `setWidget` frames the CLI renders). The instants are the machine's own,
- * so the cases assert the relations those instants really have — the start is the submission rather
- * than the session's creation, and a second submission moves the end and not the start — instead of
- * hard-coded values.
- *
- * A batch case launches two real same-process background subagents with separate completion times;
- * each result must advance the actual widget before the next main-session response ends.
- *
- * One case submits a skill rather than prose: the run writes its own `SKILL.md` into its isolated
- * agent state, the user invokes it as `/skill:<name>`, and the harness's request is read back for the
- * skill's own body. That makes the skill half of `P2` an observation about a submission the harness
- * really resolved as a user-invoked skill, not an inference from the shape of a prompt.
- *
- * Every request is reached through the dock's own capture endpoint, so the run needs no credential
- * and nothing leaves the machine; its agent state, session directory, working directory and storage
- * root all sit inside its temporary run root, and nothing here touches the production OMP
- * environment.
- */
+import { type InstalledOmp, resolveInstalledOmp } from "./installed-omp";
+/** Real locally installed OMP coverage, with isolated agent state and controlled provider requests. */
 import { beforeAll, describe, expect, test } from "bun:test";
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { MODEL_COST_WIDGET_KEY } from "../../extensions/model-cost/harnesses/omp/widget";
 import { writeProviderOverride } from "./agent-config";
-import { type IsolatedHarness, REPO_ROOT, ensureIsolatedHarness, readBaselineRecord } from "./baseline";
+import { REPO_ROOT } from "./baseline";
 import { type CaptureServer, type CaptureServerOptions, startCaptureServer } from "./capture-server";
 import { DOCK_CAPTURE_BASE_URL_ENV } from "./fixtures/extension-root/provider";
 import { type RunRoot, createRunRoot } from "./run-root";
 import { ControlledSession } from "./session";
 
-const record = readBaselineRecord();
 /** The extension's own OMP entrypoint, as the harness's loader discovers it. */
 const MODEL_COST_ENTRYPOINT = path.join(REPO_ROOT, "entrypoints", "omp", "model-cost.ts");
 /** The provider and model the run uses: one the extension's own data prices in CNY. */
@@ -72,10 +41,10 @@ const PRE_SUBMISSION_PAUSE_MS = 1_500;
 /** The slack the start's bound allows for the two processes' clocks and the client's own dispatch. */
 const SUBMISSION_SLACK_MS = 500;
 
-let harness: IsolatedHarness;
+let harness: InstalledOmp;
 
 beforeAll(async () => {
-	harness = await ensureIsolatedHarness(record);
+	harness = await resolveInstalledOmp();
 }, 900_000);
 
 /** One session's own time fact as the document holds it, in epoch milliseconds. */
@@ -285,7 +254,7 @@ describe("a real submission establishes and advances the main session's span (P1
 			const messages = (request.json as { messages?: { role?: string; content?: unknown }[] } | undefined)?.messages ?? [];
 			const prompt = JSON.stringify(messages.filter(message => message.role === "user").pop()?.content ?? "");
 			if (prompt.includes("span-child-one-assignment") || prompt.includes("span-child-two-assignment")) return {
-				toolCall: { name: "yield", arguments: JSON.stringify({ data: "span child result" }) },
+				replyText: "span child result",
 				answerDelayMs: prompt.includes("span-child-two-assignment") ? 12_000 : 5_000,
 			};
 			if (!launched) {
@@ -444,10 +413,11 @@ describe("a real submission establishes and advances the main session's span (P1
 			// The submission really was that skill: the request the harness sent its provider carries the
 			// skill file's own body, so what the extension was told about is a user-invoked skill that ran
 			// and not a slash-shaped prompt. A harness that resolved no such skill would send the raw text
-			// and carry no marker at all. It is also this run's only request, which is what makes the saved
-			// start the skill submission's own: no other submission and no other Round exists here.
-			expect(run.capture.requests()).toHaveLength(1);
-			expect(run.capture.requests()[0]?.raw.includes(SKILL_BODY)).toBe(true);
+			// and carry no marker at all. The harness may separately compress skill descriptions in the
+			// background; those requests contain the description, not this invoked skill's body.
+			// Exactly one foreground request carries this submission, with no other user Round.
+			const skillRequests = run.capture.requests().filter(request => request.raw.includes(SKILL_BODY));
+			expect(skillRequests).toHaveLength(1);
 
 			// The host published its own submission fact for it — the same fact an ordinary prompt gets —
 			// and the extension recorded no failure of its own clock while doing so.

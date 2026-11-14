@@ -39,7 +39,7 @@
  * foreground delegation does not reach this script's later checks — see the evidence record for the
  * stale-context fault this run reproduces, which is the reason.
  */
-import { beginPiAcceptance } from "./support/pi-acceptance";
+import { beginHarnessAcceptance } from "./support/harness-acceptance";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
@@ -872,7 +872,7 @@ async function main(): Promise<void> {
 	const keep = process.argv.includes("--keep");
 	const explicit = process.argv.includes("--pi") ? process.argv[process.argv.indexOf("--pi") + 1] : undefined;
 	const cli = resolvePiCli(explicit);
-	const acceptance = await beginPiAcceptance("subagent", cli);
+	const acceptance = await beginHarnessAcceptance("pi", "subagent", cli);
 	const version = acceptance.version;
 	try {
 		console.log(`pi ${version} (${cli.path})`);

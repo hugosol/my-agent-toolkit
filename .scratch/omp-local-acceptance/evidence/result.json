@@ -1,0 +1,18 @@
+{
+  "status": "completed",
+  "ompVersion": "18.20.0",
+  "publishedScope": "dock",
+  "publishedRecord": "framework/docs/omp-acceptance.json",
+  "verification": {
+    "typecheck": "passed; authoring 93 files, 8 declarations, 0 diagnostics",
+    "sharedAcceptancePolicy": { "passed": 17, "failed": 0 },
+    "installedResolver": { "passed": 4, "failed": 0 },
+    "realSessionDriver": { "passed": 3, "failed": 0 },
+    "unknownEffortPresentation": { "passed": 16, "failed": 0 },
+    "finalDock": { "passed": 229, "failed": 0, "files": 58 },
+    "externalConsumers": "Initial 68 passed / 1 failed across 14 files; corrected subagent-owner scenario subsequently passed both tests. Other external-consumer source unchanged.",
+    "fullRepositorySuite": "not run"
+  },
+  "originalFailuresRetained": true,
+  "hostModifiedOrInstalled": false
+}

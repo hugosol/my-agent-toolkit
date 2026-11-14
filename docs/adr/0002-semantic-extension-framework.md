@@ -16,6 +16,14 @@ Keep the semantic core separate from reusable behaviors, feature templates, and 
 
 This chooses direct source debugging and atomic framework/extension changes in one repository over independent package releases and standalone installability. The tested repository revision and dependency lockfile identify the deployed source combination. An actual installed harness loader must be exercised with an entrypoint importing extension and framework TypeScript from outside its discovery directory before claiming the organization works; the first release exercises the OMP loader, with the pi loader deferred. Direct source imports do not imply automatic hot reload or working source breakpoints; reload/cache behavior and debugger mapping require their own verification.
 
+## Installed-harness acceptance revision (2026-11-14)
+
+The maintainer retired repository-owned OMP host patches and fixed-version test installation. Pi and OMP verification now follow the locally selected existing executable, without installation, upgrade or source patching. Session state remains isolated. This supersedes the patched Viewed-session artifact prerequisite and frozen-host test execution described below, not the semantic requirements on viewed facts, State ownership or accounting.
+
+Keep independent extension behavior checks on the actual installed harness; remove tests of retired patch bytes, private patch classes and old-version absence controls. Missing required native behavior is an observable compatibility failure, never a reason to manufacture a replacement host or silently skip the check. The trade-off is exposing local-version regressions immediately instead of maintaining a reproducible but unrepresentative modified host.
+
+Pi and OMP share scoped acceptance policy: strict SemVer floors, complete-success publication and attributable source/environment evidence. Historical support declarations remain historical; automated scope success does not change formal support or extension startup. Commands and record ownership live in [harness support](../../framework/docs/harness-support.md#version-verification).
+
 ## pi adapter scope revision (2026-10-15)
 
 The maintainer approved adding only the pi extension-layer mechanisms consumed by codebase-tools,

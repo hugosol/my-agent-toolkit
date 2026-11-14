@@ -1,3 +1,4 @@
+import { type InstalledOmp, resolveInstalledOmp } from "./installed-omp";
 /**
  * connect-bot's startup modes on the real OMP harness (S2; P2, P3, P4, P15, P16, P17, P18,
  * P19, P22, P24, P26, P33).
@@ -15,22 +16,21 @@
  */
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import type { Server } from "bun";
-import { appendFileSync, cpSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { appendFileSync, cpSync, mkdirSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
-import { type IsolatedHarness, REPO_ROOT, ensureIsolatedHarness, readBaselineRecord } from "./baseline";
+import { REPO_ROOT } from "./baseline";
 import { type CaptureServer, startCaptureServer } from "./capture-server";
 import { DOCK_CAPTURE_BASE_URL_ENV, DOCK_MODEL_SELECTOR } from "./fixtures/extension-root/provider";
 import { type RunRoot, createRunRoot } from "./run-root";
 import { ControlledSession, type RpcFrame } from "./session";
 import { customEntries, readSessionLog } from "./session-log";
-import { isUpsertData, type HerdrBotPanel, startHerdrBot } from "../connect-bot/support/herdr-bot";
+import { type HerdrBotPanel, startHerdrBot } from "../connect-bot/support/herdr-bot";
 
-const record = readBaselineRecord();
 
-let harness: IsolatedHarness;
+let harness: InstalledOmp;
 
 beforeAll(async () => {
-	harness = await ensureIsolatedHarness(record);
+	harness = await resolveInstalledOmp();
 }, 300_000);
 
 /** The provider fixture, loaded beside the entrypoint: no credentials, no network. */

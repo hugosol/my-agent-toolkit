@@ -1,6 +1,7 @@
 import { cpSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { REPO_ROOT, ensureIsolatedHarness } from "../../harness-dock/baseline";
+import { REPO_ROOT } from "../../harness-dock/baseline";
+import { resolveInstalledOmp } from "../../harness-dock/installed-omp";
 import { type CaptureServer, startCaptureServer } from "../../harness-dock/capture-server";
 import { DOCK_CAPTURE_BASE_URL_ENV, DOCK_MODEL_SELECTOR } from "../../harness-dock/fixtures/extension-root/provider";
 import { PiSession, resolvePiCli, writePiModels } from "../../harness-dock/pi-session";
@@ -44,7 +45,7 @@ export async function chiefDock(host: "omp" | "pi", endpoint: string): Promise<C
 		const env = { HOME: home, USERPROFILE: home, APPDATA: home, LOCALAPPDATA: home,
 			XDG_CONFIG_HOME: home, XDG_DATA_HOME: home, XDG_STATE_HOME: home, XDG_CACHE_HOME: home };
 		if (host === "omp") {
-			session = await ControlledSession.start({ harness: await ensureIsolatedHarness(), runRoot: root,
+			session = await ControlledSession.start({ harness: await resolveInstalledOmp(), runRoot: root,
 				extensions: [join(REPO_ROOT, "tests/harness-dock/fixtures/extension-root/provider.ts"), join(deployment, "entrypoints/omp-auto/chief-chat.ts")],
 				model: DOCK_MODEL_SELECTOR, env: { ...env, [DOCK_CAPTURE_BASE_URL_ENV]: capture.baseUrl } });
 		} else {

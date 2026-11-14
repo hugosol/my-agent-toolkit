@@ -1,25 +1,31 @@
 import { createHash, randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
-import type { PiCli } from "../../tests/harness-dock/pi-session";
+export type Harness = "pi" | "omp";
+export interface HarnessCli {
+ readonly path: string;
+ readonly command: readonly string[];
+ readonly source: string;
+}
 
-export interface PiAcceptanceOptions {
+export interface HarnessAcceptanceOptions {
 	readonly repoRoot?: string;
 	readonly recordPath?: string;
 	readonly evidenceDir?: string;
 	readonly lockTimeoutMs?: number;
 }
 
-export interface PiAcceptanceResult {
+export interface HarnessAcceptanceResult {
 	readonly status: "passed" | "failed" | "blocked";
 	readonly checks: readonly string[];
 	readonly complete: boolean;
 	readonly detail?: string;
 }
 
-export interface PiAcceptanceRun {
+export interface HarnessAcceptanceRun {
+	readonly cli: HarnessCli;
 	readonly version: string;
-	finish(result: PiAcceptanceResult): Promise<void>;
+	finish(result: HarnessAcceptanceResult): Promise<void>;
 }
 
 type JsonRecord = Record<string, unknown>;
@@ -40,12 +46,12 @@ const SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[
 
 function parseVersion(version: string): RegExpExecArray {
 	const parsed = SEMVER.exec(version);
-	if (!parsed || parsed[0] !== version) throw new Error(`Invalid Pi version ${JSON.stringify(version)}: expected strict SemVer (for example 1.2.3 or 1.2.3-rc.1).`);
+	if (!parsed || parsed[0] !== version) throw new Error(`Invalid harness version ${JSON.stringify(version)}: expected strict SemVer (for example 1.2.3 or 1.2.3-rc.1).`);
 	return parsed;
 }
 
 /** Build metadata identifies the exercised artifact but does not affect SemVer precedence. */
-export function comparePiVersions(left: string, right: string): number {
+export function compareHarnessVersions(left: string, right: string): number {
 	const a = parseVersion(left);
 	const b = parseVersion(right);
 	for (let index = 1; index <= 3; index++) {
@@ -84,7 +90,7 @@ async function metadataProcess(argv: readonly string[], cwd: string): Promise<{ 
 	const timeout = Promise.withResolvers<never>();
 	const timer = setTimeout(() => {
 		child.kill("SIGKILL");
-		timeout.reject(new Error(`Pi acceptance metadata command timed out after 4000ms: ${argv.join(" ")}`));
+		timeout.reject(new Error(`Harness acceptance metadata command timed out after 4000ms: ${argv.join(" ")}`));
 	}, 4_000);
 	try {
 		return await Promise.race([
@@ -107,7 +113,11 @@ function sha256(value: string | Uint8Array): string {
 }
 
 async function sourceState(repoRoot: string, recordPath: string, evidenceDir: string): Promise<JsonRecord> {
-	const exclusions = [recordPath, `${recordPath}.*`, evidenceDir].flatMap((file) => {
+	// Both harnesses publish independently; neither record is behavior source.
+	const records = [recordPath, ...["pi", "omp"].map(name => path.join(repoRoot, `framework/docs/${name}-acceptance.json`))];
+	const artifacts = [...records.flatMap(file => [file, `${file}.*`]), evidenceDir,
+		...["pi", "omp"].map(name => path.join(repoRoot, `.scratch/${name}-version-acceptance/evidence`))];
+	const exclusions = artifacts.flatMap((file) => {
 		const relative = path.relative(repoRoot, file).replace(/\\/g, "/");
 		return relative.startsWith("../") || path.isAbsolute(relative) ? [] : [`:(exclude)${relative}`];
 	});
@@ -135,10 +145,10 @@ async function lockfiles(repoRoot: string): Promise<JsonRecord[]> {
 	return result;
 }
 
-async function runtime(cli: PiCli, repoRoot: string): Promise<JsonRecord> {
+async function runtime(cli: HarnessCli, repoRoot: string): Promise<JsonRecord> {
 	const artifact = await readFile(cli.path);
 	let cliRuntime: unknown;
-	let interpreter = cli.command.length >= 2 && /\.(?:c|m)?js$/i.test(cli.command[1]!) ? cli.command[0] : undefined;
+	let interpreter = cli.command.length >= 2 && /\.(?:[cm]?[jt]s|[jt]sx)$/i.test(cli.command[1]!) ? cli.command[0] : undefined;
 	if (!interpreter && cli.command.length === 1) {
 		const firstLine = artifact.subarray(0, 512).toString("utf8").split("\n", 1)[0]!.trim();
 		const shebang = /^#!\s*(\S+)(?:\s+(.*))?$/.exec(firstLine);
@@ -166,9 +176,9 @@ async function readRecord(recordPath: string): Promise<AcceptanceRecord> {
 		if ((error as NodeJS.ErrnoException).code === "ENOENT") return { schemaVersion: 1, scopes: {} };
 		throw error;
 	}
-	if (!parsed || parsed.schemaVersion !== 1 || !parsed.scopes || typeof parsed.scopes !== "object" || Array.isArray(parsed.scopes)) throw new Error(`Invalid Pi acceptance record: ${recordPath}`);
+	if (!parsed || parsed.schemaVersion !== 1 || !parsed.scopes || typeof parsed.scopes !== "object" || Array.isArray(parsed.scopes)) throw new Error(`Invalid harness acceptance record: ${recordPath}`);
 	for (const [scope, entry] of Object.entries(parsed.scopes)) {
-		if (!entry || typeof entry.version !== "string" || entry.scope !== scope) throw new Error(`Invalid Pi acceptance scope: ${scope}`);
+		if (!entry || typeof entry.version !== "string" || entry.scope !== scope) throw new Error(`Invalid harness acceptance scope: ${scope}`);
 		parseVersion(entry.version);
 	}
 	return parsed;
@@ -195,7 +205,7 @@ async function withRecordLock<T>(recordPath: string, timeoutMs: number, action: 
 			break;
 		} catch (error) {
 			if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
-			if (Date.now() >= deadline) throw new Error(`Timed out waiting for Pi acceptance record lock: ${lock}`);
+			if (Date.now() >= deadline) throw new Error(`Timed out waiting for harness acceptance record lock: ${lock}`);
 			await Bun.sleep(Math.min(25, Math.max(1, deadline - Date.now())));
 		}
 	}
@@ -206,28 +216,34 @@ async function withRecordLock<T>(recordPath: string, timeoutMs: number, action: 
 	}
 }
 
-export async function beginPiAcceptance(scope: string, cli: PiCli, options: PiAcceptanceOptions = {}): Promise<PiAcceptanceRun> {
+export async function beginHarnessAcceptance(harness: Harness, scope: string, selection: HarnessCli | (() => Promise<HarnessCli>), options: HarnessAcceptanceOptions = {}): Promise<HarnessAcceptanceRun> {
 	const repoRoot = path.resolve(options.repoRoot ?? path.join(import.meta.dir, "../.."));
-	const recordPath = path.resolve(options.recordPath ?? path.join(repoRoot, "framework/docs/pi-acceptance.json"));
-	const evidenceDir = path.resolve(options.evidenceDir ?? path.join(repoRoot, ".scratch/pi-version-acceptance/evidence"));
+	const recordPath = path.resolve(options.recordPath ?? path.join(repoRoot, `framework/docs/${harness}-acceptance.json`));
+	const evidenceDir = path.resolve(options.evidenceDir ?? path.join(repoRoot, `.scratch/${harness}-version-acceptance/evidence`));
 	const timeoutMs = options.lockTimeoutMs ?? 5_000;
-	if (!scope.trim()) throw new Error("Pi acceptance scope must not be empty.");
-	if (!Number.isFinite(timeoutMs) || timeoutMs < 0) throw new Error("Pi acceptance lock timeout must be finite and nonnegative.");
+	if (!scope.trim()) throw new Error("Harness acceptance scope must not be empty.");
+	if (!Number.isFinite(timeoutMs) || timeoutMs < 0) throw new Error("Harness acceptance lock timeout must be finite and nonnegative.");
 	const startedAt = new Date().toISOString();
 	const evidencePath = path.join(evidenceDir, `${startedAt.replace(/[:.]/g, "-")}-${randomUUID()}.json`);
-	const evidence: JsonRecord = { schemaVersion: 1, scope, startedAt, cli: { ...cli, command: [...cli.command] } };
+	const evidence: JsonRecord = { schemaVersion: 1, harness, scope, startedAt };
+	let cli: HarnessCli;
 	let version: string;
 	try {
+		cli = typeof selection === "function" ? await selection() : selection;
+		evidence.cli = { ...cli, command: [...cli.command] };
 		[evidence.source, evidence.lockfiles, evidence.runtime] = await Promise.all([sourceState(repoRoot, recordPath, evidenceDir), lockfiles(repoRoot), runtime(cli, repoRoot)]);
-		rejectLegacyPiVersionArgument();
+		if (harness === "pi") rejectLegacyPiVersionArgument();
 		const { stdout, stderr, code } = await metadataProcess([...cli.command, "--version"], repoRoot);
-		version = stdout.trim() || stderr.trim();
+		const reportedVersion = stdout.trim() || stderr.trim();
+		evidence.reportedVersion = reportedVersion;
+		// OMP's installed CLI prints omp/<semver>; Pi's output remains unchanged.
+		version = harness === "omp" && reportedVersion.startsWith("omp/") ? reportedVersion.slice(4) : reportedVersion;
 		evidence.version = version;
-		if (code !== 0) throw new Error(`Could not read Pi version from ${cli.path}: exit ${code}, output ${version || "<empty>"}`);
+		if (code !== 0) throw new Error(`Could not read ${harness} version from ${cli.path}: exit ${code}, output ${version || "<empty>"}`);
 		parseVersion(version);
 		const scopes = (await readRecord(recordPath)).scopes;
 		const previous = Object.prototype.hasOwnProperty.call(scopes, scope) ? scopes[scope] : undefined;
-		if (previous && comparePiVersions(version, previous.version) < 0) throw new Error(`Pi ${version} at ${cli.path} is below the highest passed version ${previous.version} for scope ${scope}. Select a qualifying local CLI with --pi, PI_CLI, or PATH.`);
+		if (previous && compareHarnessVersions(version, previous.version) < 0) throw new Error(`${harness} ${version} at ${cli.path} is below the highest passed version ${previous.version} for scope ${scope}. Select a qualifying local CLI with ${harness === "pi" ? "--pi, PI_CLI" : "OMP_CLI"}, or PATH.`);
 		await atomicJson(evidencePath, { ...evidence, status: "running" });
 	} catch (error) {
 		await atomicJson(evidencePath, { ...evidence, status: "blocked", complete: false, checks: [], finishedAt: new Date().toISOString(), detail: String(error) });
@@ -235,6 +251,7 @@ export async function beginPiAcceptance(scope: string, cli: PiCli, options: PiAc
 	}
 	let finished: Promise<void> | undefined;
 	return {
+		cli,
 		version,
 		finish(result) {
 			if (finished) return finished;
@@ -247,11 +264,13 @@ export async function beginPiAcceptance(scope: string, cli: PiCli, options: PiAc
 					completed.finishedLockfiles = await lockfiles(repoRoot);
 					await atomicJson(evidencePath, completed);
 					if (result.status !== "passed" || !result.complete) return;
-					if (finishedSource.sha256 !== (evidence.source as JsonRecord).sha256) throw new Error("Source changed during Pi acceptance; rerun the complete scope on a stable source tree before promotion.");
+					if (finishedSource.sha256 !== (evidence.source as JsonRecord).sha256) throw new Error("Source changed during harness acceptance; rerun the complete scope on a stable source tree before promotion.");
 					await withRecordLock(recordPath, timeoutMs, async () => {
+						const publicationSource = await sourceState(repoRoot, recordPath, evidenceDir);
+						if (publicationSource.sha256 !== (evidence.source as JsonRecord).sha256) throw new Error("Source changed while awaiting harness acceptance publication; rerun the complete scope on a stable source tree.");
 						const record = await readRecord(recordPath);
 						const previous = Object.prototype.hasOwnProperty.call(record.scopes, scope) ? record.scopes[scope] : undefined;
-						if (previous && comparePiVersions(version, previous.version) < 0) throw new Error(`Pi ${version} at ${cli.path} cannot replace concurrently accepted ${previous.version} for scope ${scope}.`);
+						if (previous && compareHarnessVersions(version, previous.version) < 0) throw new Error(`${harness} ${version} at ${cli.path} cannot replace concurrently accepted ${previous.version} for scope ${scope}.`);
 						const entry: AcceptanceEntry = { ...completed, version, scope, checks: [...result.checks], acceptedAt: finishedAt };
 						Object.defineProperty(record.scopes, scope, { value: entry, enumerable: true, configurable: true, writable: true });
 						await atomicJson(recordPath, record);

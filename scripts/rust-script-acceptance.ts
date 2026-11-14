@@ -12,7 +12,7 @@ import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 import { dualRoleDock } from '../tests/workflow-chat/support/dual-role-dock';
 import { providerMessages } from '../tests/workflow-chat/support/prompt-dock';
-import { ensureIsolatedHarness } from '../tests/harness-dock/baseline';
+import { resolveInstalledOmp } from '../tests/harness-dock/installed-omp';
 
 function object(value: unknown): Record<string, unknown> {
   assert(value !== null && typeof value === 'object' && !Array.isArray(value), 'Expected actual object');
@@ -47,10 +47,10 @@ const { scriptFileGate } = await import(pathToFileURL(join(source, 'frontend/bro
 type Backend = { baseURL: string; cwd: string; configPath: string; storageFile: string;
   setHerdrBehavior(value: unknown): void; herdrCalls(): Record<string, unknown>[]; herdrTabs(): unknown[];
   diagnostics(): string; cleanup(): Promise<void> };
-const nativeIdentity = await ensureIsolatedHarness();
+const nativeIdentity = await resolveInstalledOmp();
 save(join(destination, 'native-installation.json'), {
   omp: nativeIdentity, piCli: isolation.piCli, piNode: isolation.piNode, bun: Bun.version,
-  entryHashes: Object.fromEntries([nativeIdentity.cliPath, text(isolation.piCli), text(isolation.piNode), process.execPath].map(file => [file, createHash('sha256').update(readFileSync(file)).digest('hex')])),
+  entryHashes: Object.fromEntries([nativeIdentity.path, text(isolation.piCli), text(isolation.piNode), process.execPath].map(file => [file, createHash('sha256').update(readFileSync(file)).digest('hex')])),
 });
 
 async function scenario(host: 'omp' | 'pi', partial: boolean): Promise<void> {

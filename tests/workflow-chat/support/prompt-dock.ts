@@ -1,6 +1,7 @@
 import { cpSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { REPO_ROOT, ensureIsolatedHarness } from "../../harness-dock/baseline";
+import { REPO_ROOT } from "../../harness-dock/baseline";
+import { resolveInstalledOmp } from "../../harness-dock/installed-omp";
 import { type CaptureServer, type CapturedRequest, startCaptureServer } from "../../harness-dock/capture-server";
 import { DOCK_CAPTURE_BASE_URL_ENV, DOCK_MODEL_SELECTOR } from "../../harness-dock/fixtures/extension-root/provider";
 import { type RunRoot, createRunRoot } from "../../harness-dock/run-root";
@@ -73,7 +74,7 @@ export async function promptDock(role: "manager" | "node" | "chief" | "dual" | "
 	} });
 	let session: ControlledSession | undefined;
 	try {
-		const startup = { harness: await ensureIsolatedHarness(), runRoot: root, extensions,
+		const startup = { harness: await resolveInstalledOmp(), runRoot: root, extensions,
 			extraArgs: options.headless ? ["--no-ui"] : [],
 			model: DOCK_MODEL_SELECTOR, env: { [DOCK_CAPTURE_BASE_URL_ENV]: capture.baseUrl, WORKFLOW_DOCK_ROLE: role,
 				...(options.isolatedHome ? { HOME: root.path, USERPROFILE: root.path, APPDATA: root.path, LOCALAPPDATA: root.path,

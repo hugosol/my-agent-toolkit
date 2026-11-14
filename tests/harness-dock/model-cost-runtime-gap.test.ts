@@ -1,44 +1,16 @@
-/**
- * A subagent runtime the real host measured, and what one process's death with an activity open does
- * to it (S3; contract P26; ticket 16).
- *
- * This is the isolated real-host observation of the time figure on the host this repository runs a
- * real delegation on: the dock materialises the recorded baseline install, loads this repository's own
- * model-cost entrypoint through the harness's real loader, and drives a real RPC session whose model
- * requests go to the dock's local capture endpoint. The delegation is the harness's own task tool
- * against a blocking child session, so the child's own Round — and therefore the interval its runtime
- * is made of — is the host's real activity rather than a timeline a case placed.
- *
- * Three facts are observed, and none of them is a duration this file states:
- *
- * - **A measured subtotal.** The child's own record carries a positive number of milliseconds, which
- *   is the interval between the two edges of its own Round, and it carries no mark of a gap: every
- *   interval of that activity was observed.
- * - **A missing end adds nothing.** A second delegation begins, and the process dies while its child's
- *   activity is still waiting on a request the endpoint holds: no end of that activity is ever
- *   observed, so the document is byte for byte the one the first delegation left — the offline stretch
- *   is not filled in, and no record appears for the crashed child.
- * - **The next process continues.** A fresh process over the same isolated home reads the document back
- *   without a fault, commits the third delegation's child with its own figure, and leaves the first
- *   child's record exactly as the first process wrote it.
- *
- * What this file does not claim: an independent gap mark (an interval the observer could not state) is
- * not producible on a real host, so the mark's rules are the controlled-time cases' business
- * (`tests/model-cost/pi-runtime-gaps.test.ts`); and the pi host's own subagent records are blocked by
- * the faults recorded in the migration's evidence, not by this ticket.
- */
+import { type InstalledOmp, resolveInstalledOmp } from "./installed-omp";
+/** Real locally installed OMP coverage, with isolated agent state and controlled provider requests. */
 import { beforeAll, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { writeAgentSettings, writeProviderOverride } from "./agent-config";
-import { type IsolatedHarness, REPO_ROOT, ensureIsolatedHarness, readBaselineRecord } from "./baseline";
+import { REPO_ROOT } from "./baseline";
 import { type CaptureServer, type CaptureStep, type CapturedRequest, startCaptureServer } from "./capture-server";
 import { DOCK_CAPTURE_BASE_URL_ENV } from "./fixtures/extension-root/provider";
 import { type RunRoot, createRunRoot } from "./run-root";
 import { ControlledSession, type RpcFrame } from "./session";
 
-const record = readBaselineRecord();
 /** The extension's own OMP entrypoint, as the harness's loader discovers it. */
 const MODEL_COST_ENTRYPOINT = path.join(REPO_ROOT, "entrypoints", "omp", "model-cost.ts");
 /** The document the extension keeps in its storage root, inside the isolated home. */
@@ -61,10 +33,10 @@ const THIRD_PROMPT = "dock runtime gap: one delegation after the process was rep
 /** How long the third process waits for the crashed child's record before concluding it never came. */
 const SETTLE_DEADLINE_MS = 15_000;
 
-let harness: IsolatedHarness;
+let harness: InstalledOmp;
 
 beforeAll(async () => {
-	harness = await ensureIsolatedHarness(record);
+	harness = await resolveInstalledOmp();
 }, 900_000);
 
 /** One isolated user home, and the storage root the extension's own shipped configuration names in it. */
@@ -150,9 +122,9 @@ function delegationStep(name: string, assignment: string): CaptureStep {
 	};
 }
 
-/** A scripted subagent result: the host's own yield tool, which ends the subagent's session. */
-function yieldStep(data: string): CaptureStep {
-	return { toolCall: { name: "yield", arguments: JSON.stringify({ data }) } };
+/** Ordinary final text completes a native unstructured task. */
+function completionStep(data: string): CaptureStep {
+	return { replyText: data };
 }
 
 /** The object payload of one RPC answer, when the frame really carries one. */
@@ -297,8 +269,8 @@ describe("a process that died with an activity open leaves the measured subtotal
 		 */
 		const respond = (request: CapturedRequest): CaptureStep | undefined => {
 			const prompt = promptOf(request);
-			if (prompt.includes(FIRST_ASSIGNMENT)) return yieldStep("first child result");
-			if (prompt.includes(THIRD_ASSIGNMENT)) return yieldStep("third child result");
+			if (prompt.includes(FIRST_ASSIGNMENT)) return completionStep("first child result");
+			if (prompt.includes(THIRD_ASSIGNMENT)) return completionStep("third child result");
 			if (prompt.includes(SECOND_ASSIGNMENT)) {
 				secondChildRequested = true;
 				// This child's own activity stays open: its answer is held far past this case's end, so the

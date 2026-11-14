@@ -37,7 +37,7 @@
  * adds no deadline of its own — is what the S1 partition covers. Foreground delegation, nested
  * delegation and cancellation remain unverified here for the reasons ticket 05's record states.
  */
-import { beginPiAcceptance } from "./support/pi-acceptance";
+import { beginHarnessAcceptance } from "./support/harness-acceptance";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
@@ -647,7 +647,7 @@ async function main(): Promise<void> {
 	const keep = process.argv.includes("--keep");
 	const explicit = process.argv.includes("--pi") ? process.argv[process.argv.indexOf("--pi") + 1] : undefined;
 	const cli = resolvePiCli(explicit);
-	const acceptance = await beginPiAcceptance("background-round", cli);
+	const acceptance = await beginHarnessAcceptance("pi", "background-round", cli);
 	const version = acceptance.version;
 	try {
 		console.log(`pi ${version} (${cli.path})`);

@@ -13,7 +13,7 @@ let disposalFailure: unknown;
 try {
 	try {
 		session = await ControlledSession.start({
-			harness: { cliPath: path.join(import.meta.dir, "startup-child.ts") },
+			harness: { path: process.execPath, argvPrefix: [path.join(import.meta.dir, "startup-child.ts")] },
 			runRoot: root,
 			extensions: [],
 			model: "fixture/model",

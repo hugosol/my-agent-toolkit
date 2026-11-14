@@ -3,19 +3,15 @@
  * correspondence it claims: the revision anchor, the artifact that runs acceptance,
  * and the dependency lockfiles of this repository and of the behavior oracle.
  */
-import { beforeAll, describe, expect, test } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import {
-	type IsolatedHarness,
 	checkoutCarries,
-	ensureIsolatedHarness,
 	readBaselineRecord,
 	readCheckoutCommit,
 	readRevisionFile,
 	resolveRecordPath,
-	selectHarnessVersion,
-	verifyArtifactByteIdentity,
 	verifyLockfile,
 } from "./baseline";
 
@@ -24,18 +20,6 @@ const manifest: { packageManager: string } = JSON.parse(readFileSync(new URL("..
 const testRuntime = manifest.packageManager;
 const REFRESH_HINT =
 	"refresh framework/docs/harness-baseline.json (sourceCombination/oracle lockfile sha256) after a deliberate dependency change";
-
-// These tests check the fixed record itself, so they only apply while the dock runs the
-// recorded version. With `OMP_TEST_VERSION` set, the install is deliberately a candidate and
-// the run belongs to the upgrade script's own result record, not to the baseline record.
-const selection = selectHarnessVersion(record);
-const describeFixedRecord = selection.source === "recorded-baseline" ? describe : describe.skip;
-
-let harness: IsolatedHarness;
-
-beforeAll(async () => {
-	harness = await ensureIsolatedHarness(record);
-}, 300_000);
 
 test("baseline dependency paths support a relocated record root without changing absolute paths", () => {
 	const worktree = path.resolve("isolated-worktree");
@@ -46,12 +30,7 @@ test("baseline dependency paths support a relocated record root without changing
 	expect(resolveRecordPath(absolute, worktree, { OMP_BASELINE_RECORD_ROOT: original })).toBe(absolute);
 });
 
-describeFixedRecord("baseline record", () => {
-	test("the isolated install provides exactly the recorded supported version", () => {
-		expect(harness.version).toBe(record.harness.supportedVersion);
-		expect(harness.version).toBe(record.harness.revisionAnchor.version);
-		expect(harness.cliPath.startsWith(harness.prefix)).toBe(true);
-	});
+describe("baseline record", () => {
 
 	test("the recorded revision anchor is reachable in the checkout and names the recorded version", () => {
 		const anchorPath = resolveRecordPath(record.harness.revisionAnchor.path);
@@ -76,27 +55,6 @@ describeFixedRecord("baseline record", () => {
 		});
 	});
 
-	test("the run artifact stays byte-identical to the recorded revision for the recorded contract files", () => {
-		const recorded = record.harness.acceptanceArtifact.byteIdentity.files;
-		const comparisons = verifyArtifactByteIdentity(record);
-
-		expect(comparisons.map(comparison => comparison.path)).toEqual(recorded.map(file => file.path));
-		const drifted = comparisons
-			.filter(comparison => !comparison.identical)
-			.map(
-				comparison =>
-					`${comparison.path}: anchor ${comparison.anchorSha256 ?? "<missing>"} vs artifact ${comparison.artifactSha256 ?? "<missing>"}`,
-			);
-		expect(drifted).toEqual([]);
-		// The anchor half is the recorded revision's own bytes: a checkout whose working tree has moved
-		// on cannot make this comparison pass by accident, and the frozen hashes stay the record's.
-		expect(comparisons.map(comparison => [comparison.path, comparison.anchorSha256])).toEqual(
-			recorded.map(file => [file.path, file.sha256]),
-		);
-		expect(comparisons.map(comparison => [comparison.path, comparison.artifactSha256])).toEqual(
-			recorded.map(file => [file.path, file.sha256]),
-		);
-	});
 
 	test("records the lockfiles of this repository and of the behavior oracle", () => {
 		const own = verifyLockfile(record.sourceCombination.lockfile);
@@ -131,7 +89,5 @@ describeFixedRecord("baseline record", () => {
 		expect(record.environment.nativesBuilt).toBe(false);
 		expect(record.environment.checkoutRunsFullSession).toBe(false);
 		expect(record.environment.conditions.length).toBeGreaterThan(0);
-		// "no natives build" holds because the isolated install ships prebuilt binaries.
-		expect(harness.prebuiltNatives.binaries.length).toBeGreaterThan(0);
 	});
 });

@@ -121,7 +121,7 @@
  * arithmetic, exactly as the OMP dock's accounting suite states them; nothing here is computed by
  * calling the extension's own pricing code.
  */
-import { beginPiAcceptance, type PiAcceptanceRun } from "./support/pi-acceptance";
+import { beginHarnessAcceptance, type HarnessAcceptanceRun } from "./support/harness-acceptance";
 import {
 	type Dirent,
 	existsSync,
@@ -2732,11 +2732,11 @@ if (options.help) {
 
 let tested = "<unresolved>";
 let failure: unknown;
-let acceptance: PiAcceptanceRun | undefined;
+let acceptance: HarnessAcceptanceRun | undefined;
 
 try {
 	const cli = resolvePiCli(options.pi);
-	acceptance = await beginPiAcceptance("model-cost", cli);
+	acceptance = await beginHarnessAcceptance("pi", "model-cost", cli);
 	if (!existsSync(ENTRYPOINT)) throw new Error(`the pi assembly entrypoint does not exist: ${ENTRYPOINT}`);
 	const version = acceptance.version;
 	tested = version;

@@ -2,11 +2,12 @@ import { afterEach, beforeEach, expect, test } from "bun:test";
 import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { beginPiAcceptance, comparePiVersions, rejectLegacyPiVersionArgument, type PiAcceptanceOptions } from "../../scripts/support/pi-acceptance";
+import { beginHarnessAcceptance, compareHarnessVersions, rejectLegacyPiVersionArgument, type HarnessAcceptanceOptions } from "../../scripts/support/harness-acceptance";
 import type { PiCli } from "../harness-dock/pi-session";
+import { hasCompleteOmpReport, isCompleteOmpRun, runOmpTests } from "../../scripts/omp-dock-tests";
 
 let root: string;
-let options: PiAcceptanceOptions;
+let options: HarnessAcceptanceOptions;
 
 async function git(...args: string[]): Promise<void> {
 	const result = Bun.spawn(["git", ...args], { cwd: root, stdout: "pipe", stderr: "pipe" });
@@ -27,6 +28,7 @@ async function record(): Promise<{ scopes: Record<string, { version: string; che
 
 interface ExecutionEvidence {
 	status: string;
+	complete: boolean;
 	version: string;
 	checks: string[];
 	publicationError?: string;
@@ -60,11 +62,11 @@ afterEach(async () => {
 
 test("strict SemVer precedence handles prereleases and ignores build metadata", () => {
 	const ordered = ["1.0.0-alpha", "1.0.0-alpha.1", "1.0.0-alpha.beta", "1.0.0-beta", "1.0.0-beta.2", "1.0.0-beta.11", "1.0.0-rc.1", "1.0.0", "1.0.1", "2.0.0"];
-	for (let i = 1; i < ordered.length; i++) expect(comparePiVersions(ordered[i - 1]!, ordered[i]!)).toBe(-1);
-	expect(comparePiVersions("1.2.3+first", "1.2.3+second")).toBe(0);
-	expect(comparePiVersions("9007199254740993.0.0", "9007199254740992.0.0")).toBe(1);
+	for (let i = 1; i < ordered.length; i++) expect(compareHarnessVersions(ordered[i - 1]!, ordered[i]!)).toBe(-1);
+	expect(compareHarnessVersions("1.2.3+first", "1.2.3+second")).toBe(0);
+	expect(compareHarnessVersions("9007199254740993.0.0", "9007199254740992.0.0")).toBe(1);
 	for (const invalid of ["v1.0.0", "1.0", "01.0.0", "1.01.0", "1.0.0-01", "1.0.0-alpha.01", "1.0.0-", "1.0.0+", "1.0.0 extra", "1.0.0\n"]) {
-		expect(() => comparePiVersions(invalid, "1.0.0")).toThrow("strict SemVer");
+		expect(() => compareHarnessVersions(invalid, "1.0.0")).toThrow("strict SemVer");
 	}
 });
 
@@ -75,35 +77,35 @@ test("legacy expected-version flag is rejected with local selection guidance", (
 });
 
 test("only complete passes promote, equal versions refresh, and downgrades are scope-local", async () => {
-	const initial = await beginPiAcceptance("smoke", await cli("2.0.0-rc.1"), options);
+	const initial = await beginHarnessAcceptance("pi", "smoke", await cli("2.0.0-rc.1"), options);
 	await initial.finish({ status: "passed", complete: true, checks: ["first"] });
 	for (const result of [
 		{ status: "failed", complete: true },
 		{ status: "blocked", complete: false },
 		{ status: "passed", complete: false },
 	] as const) {
-		const run = await beginPiAcceptance("smoke", await cli("3.0.0"), options);
+		const run = await beginHarnessAcceptance("pi", "smoke", await cli("3.0.0"), options);
 		await run.finish({ ...result, checks: ["incomplete"] });
 		expect((await record()).scopes.smoke!.version).toBe("2.0.0-rc.1");
 	}
-	await expect(beginPiAcceptance("smoke", await cli("2.0.0-beta"), options)).rejects.toThrow("highest passed");
-	const equal = await beginPiAcceptance("smoke", await cli("2.0.0-rc.1+rebuilt"), options);
+	await expect(beginHarnessAcceptance("pi", "smoke", await cli("2.0.0-beta"), options)).rejects.toThrow("highest passed");
+	const equal = await beginHarnessAcceptance("pi", "smoke", await cli("2.0.0-rc.1+rebuilt"), options);
 	await equal.finish({ status: "passed", complete: true, checks: ["refreshed"] });
 	expect((await record()).scopes.smoke!.checks).toEqual(["refreshed"]);
 	expect((await record()).scopes.smoke!.version).toBe("2.0.0-rc.1+rebuilt");
-	const other = await beginPiAcceptance("other", await cli("1.0.0"), options);
+	const other = await beginHarnessAcceptance("pi", "other", await cli("1.0.0"), options);
 	await other.finish({ status: "passed", complete: true, checks: ["independent"] });
 	expect((await record()).scopes.other!.version).toBe("1.0.0");
-	const stable = await beginPiAcceptance("smoke", await cli("2.0.0"), options);
+	const stable = await beginHarnessAcceptance("pi", "smoke", await cli("2.0.0"), options);
 	await stable.finish({ status: "passed", complete: true, checks: ["stable"] });
 	expect((await record()).scopes.smoke!.version).toBe("2.0.0");
 	expect((await evidence()).filter((entry) => entry.status === "blocked").length).toBe(2);
 });
 
 test("concurrent scope publications merge and stale runs cannot lower a scope", async () => {
-	const low = await beginPiAcceptance("shared", await cli("1.0.0"), options);
-	const high = await beginPiAcceptance("shared", await cli("2.0.0"), options);
-	const other = await beginPiAcceptance("other", await cli("3.0.0"), options);
+	const low = await beginHarnessAcceptance("pi", "shared", await cli("1.0.0"), options);
+	const high = await beginHarnessAcceptance("pi", "shared", await cli("2.0.0"), options);
+	const other = await beginHarnessAcceptance("pi", "other", await cli("3.0.0"), options);
 	await Promise.all([
 		high.finish({ status: "passed", complete: true, checks: ["high"] }),
 		other.finish({ status: "passed", complete: true, checks: ["other"] }),
@@ -116,7 +118,7 @@ test("concurrent scope publications merge and stale runs cannot lower a scope", 
 });
 
 test("lock contention times out with evidence and leaves the success record untouched", async () => {
-	const run = await beginPiAcceptance("locked", await cli("1.0.0"), { ...options, lockTimeoutMs: 20 });
+	const run = await beginHarnessAcceptance("pi", "locked", await cli("1.0.0"), { ...options, lockTimeoutMs: 20 });
 	await mkdir(`${options.recordPath!}.lock`);
 	await expect(run.finish({ status: "passed", complete: true, checks: ["pass"] })).rejects.toThrow("Timed out");
 	await expect(readFile(options.recordPath!)).rejects.toThrow();
@@ -124,7 +126,7 @@ test("lock contention times out with evidence and leaves the success record unto
 });
 
 test("invalid CLI versions block and retain execution provenance without a success record", async () => {
-	await expect(beginPiAcceptance("invalid", await cli("v1.0.0"), options)).rejects.toThrow("strict SemVer");
+	await expect(beginHarnessAcceptance("pi", "invalid", await cli("v1.0.0"), options)).rejects.toThrow("strict SemVer");
 	await expect(readFile(options.recordPath!)).rejects.toThrow();
 	const [blocked] = await evidence();
 	expect(blocked!.status).toBe("blocked");
@@ -139,7 +141,7 @@ test("a hung version command is killed and recorded as blocked", async () => {
 	// would race the real Git/runtime processes rather than observe the platform boundary.
 	const hanging = await cli("1.0.0");
 	await writeFile(hanging.path, "setInterval(() => {}, 1000);\n");
-	await expect(beginPiAcceptance("hung", hanging, options)).rejects.toThrow("timed out after 4000ms");
+	await expect(beginHarnessAcceptance("pi", "hung", hanging, options)).rejects.toThrow("timed out after 4000ms");
 	await expect(readFile(options.recordPath!)).rejects.toThrow();
 	const [saved] = await evidence();
 	expect(saved!.status).toBe("blocked");
@@ -148,16 +150,110 @@ test("a hung version command is killed and recorded as blocked", async () => {
 
 test("acceptance artifacts are excluded even when not gitignored", async () => {
 	const visibleOptions = { ...options, recordPath: path.join(root, "acceptance.json"), evidenceDir: path.join(root, "evidence") };
-	const first = await beginPiAcceptance("one", await cli("1.0.0"), visibleOptions);
-	const second = await beginPiAcceptance("two", await cli("1.0.0"), visibleOptions);
+	const first = await beginHarnessAcceptance("pi", "one", await cli("1.0.0"), visibleOptions);
+	const second = await beginHarnessAcceptance("pi", "two", await cli("1.0.0"), visibleOptions);
 	await first.finish({ status: "passed", complete: true, checks: ["one"] });
 	await second.finish({ status: "passed", complete: true, checks: ["two"] });
 	const saved = JSON.parse(await readFile(visibleOptions.recordPath, "utf8"));
 	expect(Object.keys(saved.scopes).sort()).toEqual(["one", "two"]);
 });
 
+test("Pi and OMP publications do not invalidate each other's source evidence", async () => {
+	await mkdir(path.join(root, "framework/docs"), { recursive: true });
+	for (const host of ["pi", "omp"] as const) {
+		await writeFile(path.join(root, `framework/docs/${host}-acceptance.json`), '{"schemaVersion":1,"scopes":{}}\n');
+	}
+	await git("add", ".");
+	await git("-c", "user.name=Acceptance Test", "-c", "user.email=acceptance@example.invalid", "commit", "-m", "empty acceptance records");
+	const pi = await beginHarnessAcceptance("pi", "shared", await cli("1.0.0"), { ...options, recordPath: undefined });
+	const omp = await beginHarnessAcceptance("omp", "shared", await cli("18.6.0"), { ...options, recordPath: undefined });
+	await pi.finish({ status: "passed", complete: true, checks: ["pi observed"] });
+	await omp.finish({ status: "passed", complete: true, checks: ["omp observed"] });
+	for (const [host, version] of [["pi", "1.0.0"], ["omp", "18.6.0"]]) {
+		const saved = JSON.parse(await readFile(path.join(root, `framework/docs/${host}-acceptance.json`), "utf8"));
+		expect(saved.scopes.shared.version).toBe(version);
+	}
+});
+
+test("host selection failures are retained without a success record", async () => {
+	await expect(beginHarnessAcceptance("omp", "dock", async () => { throw new Error("No selected local OMP"); }, options)).rejects.toThrow("No selected local OMP");
+	await expect(readFile(options.recordPath!)).rejects.toThrow();
+	const [saved] = await evidence();
+	expect(saved!.status).toBe("blocked");
+});
+
+test("OMP label normalization does not loosen Pi or strict SemVer policy", async () => {
+	const omp = await beginHarnessAcceptance("omp", "label", await cli("omp/18.20.0-rc.1+local"), options);
+	expect(omp.version).toBe("18.20.0-rc.1+local");
+	await omp.finish({ status: "passed", complete: true, checks: ["version normalization"] });
+	await expect(beginHarnessAcceptance("pi", "label", await cli("omp/18.20.0"), options)).rejects.toThrow("strict SemVer");
+	await expect(beginHarnessAcceptance("omp", "label", await cli("omp/v18.20.0"), options)).rejects.toThrow("strict SemVer");
+});
+
+test("OMP runner only certifies canonical unfiltered scheduling", () => {
+	expect(isCompleteOmpRun([], {})).toBe(true);
+	expect(isCompleteOmpRun(["--parallel=4"], {})).toBe(true);
+	for (const args of [["--test-name-pattern", ".*"], ["--only"], ["--todo"], ["--bail"], ["tests/harness-dock/one.test.ts"], ["--parallel=4", "--test-name-pattern=one"]]) {
+		expect(isCompleteOmpRun(args, {})).toBe(false);
+	}
+	expect(isCompleteOmpRun([], { CHIEF_MAP_UNAVAILABLE_HOST: "omp" })).toBe(false);
+});
+
+test("JUnit promotion requires executed cases and every expected file", () => {
+	const file = "tests/harness-dock/one.test.ts";
+	const report = `<testsuites tests="1" failures="0" skipped="0"><testsuite name="${file}" tests="1"><testcase name="executed" /></testsuite></testsuites>`;
+	expect(hasCompleteOmpReport(report, [file], root)).toBe(true);
+	expect(hasCompleteOmpReport(report, [file, "tests/harness-dock/missing.test.ts"], root)).toBe(false);
+	expect(hasCompleteOmpReport(report.replace('skipped="0"', 'skipped="1"'), [file], root)).toBe(false);
+	expect(hasCompleteOmpReport(report.replace('<testcase name="executed" />', '<testcase name="unfinished"><skipped /></testcase>'), [file], root)).toBe(false);
+	expect(hasCompleteOmpReport(report.replace('tests="1"', 'tests="2"'), [file], root)).toBe(false);
+	expect(hasCompleteOmpReport('<testsuites tests="0"></testsuites>', [file], root)).toBe(false);
+	expect(hasCompleteOmpReport(report.slice(0, -5), [file], root)).toBe(false);
+});
+
+test("TypeScript host argv records its actual Bun interpreter", async () => {
+	const script = path.join(root, "ignored", "omp-cli.ts");
+	await mkdir(path.dirname(script), { recursive: true });
+	await writeFile(script, 'const version: string = "omp/18.20.0"; console.log(version);\n');
+	const run = await beginHarnessAcceptance("omp", "typescript-cli", { path: script, command: [process.execPath, script], source: "test-owned TypeScript CLI" }, options);
+	await run.finish({ status: "passed", complete: true, checks: ["interpreter provenance"] });
+	expect((await evidence())[0]!.runtime.cli.execPath).toBe(process.execPath);
+});
+
+test("OMP runner records actual Bun suite failures and refuses filtered promotion", async () => {
+	const directory = path.join(root, "tests/harness-dock");
+	await mkdir(directory, { recursive: true });
+	const fixture = path.join(directory, "runner.test.ts");
+	await writeFile(fixture, 'import { test, expect } from "bun:test"; test("observed runner case", () => expect(1).toBe(1));\n');
+	const selected = await cli("omp/18.6.0");
+	expect(await runOmpTests([], { ...options, cli: selected })).toBe(0);
+	expect((await record()).scopes.dock!.version).toBe("18.6.0");
+	expect(await runOmpTests([], { ...options, all: true, cli: await cli("18.5.0") })).toBe(0);
+	expect((await record()).scopes["full-repository"]!.version).toBe("18.5.0");
+	expect(await runOmpTests(["--test-name-pattern", "observed"], { ...options, cli: await cli("19.0.0") })).toBe(0);
+	expect((await record()).scopes.dock!.version).toBe("18.6.0");
+	for (const [version, body] of [
+		["19.1.0", 'import { test } from "bun:test"; test("executed", () => {}); test.skip("not executed", () => {});'],
+		["19.2.0", 'import { test } from "bun:test"; test("executed", () => {}); test.todo("unfinished");'],
+		["19.3.0", "export {};"],
+	]) {
+		await writeFile(fixture, body!);
+		const code = await runOmpTests([], { ...options, cli: await cli(version!) });
+		if (version !== "19.3.0") expect(code).toBe(0);
+		expect((await record()).scopes.dock!.version).toBe("18.6.0");
+		const result = (await evidence()).find(entry => entry.version === version)!;
+		expect(result.complete).toBe(false);
+		expect(result.status).toBe(code === 0 ? "passed" : "failed");
+	}
+	await writeFile(fixture, 'import { test, expect } from "bun:test"; test("observed runner failure", () => expect(1).toBe(2));\n');
+	expect(await runOmpTests([], { ...options, cli: await cli("20.0.0") })).not.toBe(0);
+	expect((await record()).scopes.dock!.version).toBe("18.6.0");
+	expect((await evidence()).find(entry => entry.version === "20.0.0")!.status).toBe("failed");
+	await expect(runOmpTests([], { ...options, cli: await cli("18.5.0") })).rejects.toThrow("highest passed");
+}, 20_000);
+
 test("source mutations during a run block promotion and retain execution evidence", async () => {
-	const run = await beginPiAcceptance("changing", await cli("1.0.0"), options);
+	const run = await beginHarnessAcceptance("pi", "changing", await cli("1.0.0"), options);
 	await writeFile(path.join(root, "source.ts"), "export const changed = true;\n");
 	await expect(run.finish({ status: "passed", complete: true, checks: ["observed"] })).rejects.toThrow("Source changed");
 	await expect(readFile(options.recordPath!)).rejects.toThrow();
@@ -167,12 +263,12 @@ test("source mutations during a run block promotion and retain execution evidenc
 });
 
 test("source evidence distinguishes tracked and untracked changes at the same HEAD", async () => {
-	const clean = await beginPiAcceptance("source", await cli("1.0.0"), options);
+	const clean = await beginHarnessAcceptance("pi", "source", await cli("1.0.0"), options);
 	await clean.finish({ status: "passed", complete: true, checks: ["clean"] });
 	const first = (await record()).scopes.source!;
 	await writeFile(path.join(root, "source.ts"), "export const value = 2;\n");
 	await writeFile(path.join(root, "new.ts"), "export const fresh = true;\n");
-	const dirty = await beginPiAcceptance("source", await cli("1.0.0"), options);
+	const dirty = await beginHarnessAcceptance("pi", "source", await cli("1.0.0"), options);
 	await dirty.finish({ status: "passed", complete: true, checks: ["dirty"] });
 	const next = (await record()).scopes.source!;
 	expect(next.source.sha256).not.toBe(first.source.sha256);

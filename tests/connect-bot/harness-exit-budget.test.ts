@@ -31,7 +31,8 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { cpSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
-import { type IsolatedHarness, REPO_ROOT, ensureIsolatedHarness, readBaselineRecord } from "../harness-dock/baseline";
+import { REPO_ROOT } from "../harness-dock/baseline";
+import { type InstalledOmp, resolveInstalledOmp } from "../harness-dock/installed-omp";
 import { type CaptureServer, startCaptureServer } from "../harness-dock/capture-server";
 import { DOCK_CAPTURE_BASE_URL_ENV, DOCK_MODEL_SELECTOR } from "../harness-dock/fixtures/extension-root/provider";
 import { type RunRoot, createRunRoot } from "../harness-dock/run-root";
@@ -46,10 +47,10 @@ const EXIT_BUDGET_MS = 15_000;
 /** The credential-free provider fixture; it keeps the session's model resolution off the network. */
 const PROVIDER_FIXTURE = path.join(REPO_ROOT, "tests", "harness-dock", "fixtures", "extension-root", "provider.ts");
 
-let harness: IsolatedHarness;
+let harness: InstalledOmp;
 
 beforeAll(async () => {
-	harness = await ensureIsolatedHarness(readBaselineRecord());
+	harness = await resolveInstalledOmp();
 }, 300_000);
 
 /** The root of the deployment copies this suite materialises, removed once the suite is done. */

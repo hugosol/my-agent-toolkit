@@ -6,8 +6,8 @@ extensions, deployed into the `oh-my-pi` (`omp`) and `pi` harnesses. The framewo
 Each adapter keeps `index.ts` as its public assembly entry and top-level `port.ts` as private
 binding assembly. Mappings follow their actual contract source: `native/` for harness mechanisms,
 Pi's `thirdParty/pi-subagents/` for that provider's protocols, and Pi's `mixture/` only for necessary
-cross-source interpretation. OMP uses its own native contracts, including the optional Viewed-session
-host-patch variant, without empty third-party or mixture groups. Complete protocols stay together;
+cross-source interpretation. OMP uses its own native contracts and the selected installation's available
+Viewed-session facts, without empty third-party or mixture groups. Complete protocols stay together;
 there are no generic `internal/` groups, forwarding compatibility paths or mandatory upstream mirrors.
 The [adapter navigation](framework/docs/framework-capabilities.md#adapter-implementation-navigation)
 locates capability mappings, source-owned types and loader support. Consumers use only the public
@@ -38,7 +38,7 @@ bun install --frozen-lockfile # once per checkout/worktree
 bun run typecheck
 bun run test:framework      # framework capabilities C1–C15 (the upgrade alarm)
 bun run test:codebase-tools # extension behavior (permanent)
-bun run test:dock        # the dock and the fixed baseline record, four isolated files at a time
+bun run test:dock        # local installed OMP acceptance, four isolated files at a time
 bun run test:dock:serial # the same dock serially, for diagnosing shared state or constrained machines
 ```
 
@@ -55,10 +55,11 @@ consistently for the participating worktrees. Treat shared package contents as r
 `bun install` again. Standalone temporary deployments must still explicitly provide their
 runtime dependencies; this setting does not make packages discoverable from arbitrary paths.
 
-The suites that drive a real session materialise the isolated exact install of the supported
-version into the gitignored `.cache/omp-baseline/18.5.0` on first run and reuse it afterwards.
-Every run uses a temporary agent state directory, so the default global install, the formal
-configuration and any running agent are untouched. `bun run test` runs the whole test tree.
+Real-session suites use the locally installed harness (`OMP_CLI` / `PI_CLI`, otherwise local
+resolution); they never install, upgrade or patch it. Session state and configuration remain
+isolated from normal usage. Complete OMP dock acceptance records its highest passed version
+and source/environment evidence in `framework/docs/omp-acceptance.json`; partial or failed
+runs do not promote that record. `bun run test` runs the whole test tree.
 
 ## Fixed Pi Suite integration
 
@@ -107,7 +108,7 @@ The table below locates supporting references and evidence; role-specific readin
 | [`framework/docs/extension-development-map.md`](framework/docs/extension-development-map.md) | Long-lived principles for extension layering and finding existing framework capabilities; a Chinese guide, not an API or implementation inventory. | You are adding or changing an extension and deciding where its responsibilities belong. |
 | [`framework/README.md`](framework/README.md) | The framework's layout and execution entry, with the framework suite and human acceptance index; version verification links to the central harness-support runbook. | You are working on framework code or upgrading the supported harness. |
 | [`framework/docs/harness-support.md`](framework/docs/harness-support.md) | **Authority** for harness version compatibility: the four-state support record (`verified-supported` / `verified-unlisted` / `unverified` / `unsupported`), its evidence and conditions, the provider-path role evidence, and the long-term upgrade standard and its triggers. | You need to know what is supported, what is not, and how a version becomes supported. |
-| [`framework/docs/harness-baseline.json`](framework/docs/harness-baseline.json) | Data record of the fixed baseline: the revision anchor, the artifact that actually runs, and the dependency lockfiles. Re-checked by `tests/harness-dock/baseline.test.ts`. | You need the machine-checkable correspondence behind the supported row; refresh it after a deliberate dependency or version change. |
+| [`framework/docs/harness-baseline.json`](framework/docs/harness-baseline.json) | Historical first-release baseline: revision anchor, acceptance artifact and dependency lockfiles. It does not select the current test executable. | You need the machine-checkable correspondence behind the supported row; refresh it after a deliberate dependency or version change. |
 | [`framework/docs/framework-capabilities.md`](framework/docs/framework-capabilities.md) | Index of the framework's public authoring surface: what every `defineExtension` / `ompAdapter` parameter means, each symbol cited to source. | You are writing or reading framework code and need to find an entry point. |
 | [`docs/adr/0002-semantic-extension-framework.md`](docs/adr/0002-semantic-extension-framework.md) | The architecture decision for the semantic extension framework. | You are changing the framework's shape or asking why it is built this way. |
 | [`framework/docs/semantic-extension-framework-backlog.md`](framework/docs/semantic-extension-framework-backlog.md) | Deferred work and open research gaps. | You are picking up work outside the first-release scope. |
@@ -115,10 +116,10 @@ The table below locates supporting references and evidence; role-specific readin
 | [`GLOSSARY-MAP.md`](GLOSSARY-MAP.md) | The multi-context domain vocabulary map: points at one `GLOSSARY.md` per context. | You are naming things in code, tests or docs. |
 | [`AGENTS.md`](AGENTS.md) | Repository working agreement for agents. | You are an agent starting work here. |
 | [`tests/framework/`](tests/framework) | The framework capability suite (C1–C15). The upgrade regression alarm. | You changed the framework, or you are verifying a candidate version. |
-| [`tests/codebase-tools/`](tests/codebase-tools) | The codeBaseTools extension behavior suite; runs permanently against the fixed supported version. | You changed the extension. |
+| [`tests/codebase-tools/`](tests/codebase-tools) | The codeBaseTools extension behavior suite; real-host scenarios use the selected local installation. | You changed the extension. |
 | [`tests/connect-bot/`](tests/connect-bot) | The connect-bot extension suite: registration lifecycle, session switch, failure budget and the panel interop. | You changed connect-bot. |
-| [`tests/harness-dock/`](tests/harness-dock) | The shared dock (isolated install, controlled session, capture) and its self-test. | You are writing a test that drives a real session. |
-| [`scripts/verify-omp-candidate.ts`](scripts/verify-omp-candidate.ts) | On-demand independent verification of one exact harness version: isolated exact install + framework suite + a scoped result record (version, revision anchor, source revision, lockfiles, environment, coverage). | You are verifying another harness version. |
+| [`tests/harness-dock/`](tests/harness-dock) | The shared dock (local installed harness, isolated controlled session, capture) and its self-test. | You are writing a test that drives a real session. |
+| [`scripts/omp-dock-tests.ts`](scripts/omp-dock-tests.ts) | Local installed OMP acceptance with shared Pi/OMP version floors, complete test-report checks and scoped source/environment evidence. | You are verifying the developer-selected installed harness. |
 | [`scripts/capture-codex-outbound.ts`](scripts/capture-codex-outbound.ts) | Prepared layer-2 capture of a real `openai-codex` round trip; needs a human-supplied credential. | You are recording the real-credential role evidence. |
 | [`scripts/pi-provider-account-read.ts`](scripts/pi-provider-account-read.ts) | The real account-side reading for the pi migration: runs the loaded extension on the real host against a real provider account and publishes a desensitized, timestamped reading beside what the host drew. Reads the machine's own credential, prints it only as a fingerprint, makes no model request, and reports a missing credential as a blocker. | You are recording or replaying the account-side acceptance evidence (P53). |
 

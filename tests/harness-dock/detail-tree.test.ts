@@ -1,36 +1,5 @@
-/**
- * The static detail tree and the immediate entry preference on the real patched host (P20, P23, P26,
- * P29; S5).
- *
- * This is the isolated real-host observation of the display this ticket adds: the dock materialises
- * the recorded baseline install with the frozen Viewed session patch, loads this repository's own
- * model-cost entrypoint through the harness's real loader, and drives a real RPC session whose model
- * requests go to the dock's local capture endpoint. The main session really delegates to a child
- * through the host's own task tool, the child really yields, and the widget the extension draws is
- * read off the host's own `setWidget` frames — so what this file asserts is the terminal content the
- * operator would see, not a double's rendering of it.
- *
- * The document the run writes is the accounting's own record of what each session issued, and the
- * figures below are hand-added from it: each row's own cache rate and each row's own amount are
- * derived from the wire numbers the capture endpoint reported, so a row that showed another session's
- * consumption, an inclusive figure, or a Round row in the detail form could not pass.
- *
- * The last case reads the host's own answers at a spawned session's start — its registry id, the
- * agent definition it runs, the model, the resolved thinking level and whether that session's branch
- * already carries a conversation — straight off the native extension API through the
- * `session-start-probe` fixture, and compares the drawn row and the saved record against them, both
- * while that session runs and after an independent process restores the document: the source of the
- * facts is the harness's, never this repository's rendering of them. The same case reads what the
- * framework's own delivery carried through the public factory (`startup-facts-probe`): the pair the
- * host answered for the session that really began, and nothing at all for the session the second
- * process entered with its conversation replayed, which is the difference the adapter's startup
- * requirement is built on.
- *
- * Every model is reached through the dock's own capture endpoint, so no run needs a credential and
- * nothing leaves the machine; the run's own agent state, session directory, working directory and
- * storage root all sit inside its temporary run root. Nothing here touches the production OMP
- * environment, its configuration or its sessions.
- */
+import { type InstalledOmp, resolveInstalledOmp } from "./installed-omp";
+/** Real locally installed OMP coverage, with isolated agent state and controlled provider requests. */
 import { beforeAll, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
@@ -38,16 +7,15 @@ import { MODEL_COST_WIDGET_KEY } from "../../extensions/model-cost/harnesses/omp
 import { DEEPSEEK_DISPLAY_BUDGET } from "../../extensions/model-cost/shared-logic/business/context/session-context";
 import { formatTokens } from "../../extensions/model-cost/shared-logic/presentation/display";
 import { writeAgentSettings, writeProviderOverride } from "./agent-config";
-import { type IsolatedHarness, REPO_ROOT, readBaselineRecord } from "./baseline";
+import { REPO_ROOT } from "./baseline";
 import { type CaptureServer, type CaptureStep, type CapturedRequest, startCaptureServer } from "./capture-server";
 import { DOCK_CAPTURE_BASE_URL_ENV } from "./fixtures/extension-root/provider";
 import { SESSION_START_PROBE_ID } from "./fixtures/session-start-probe/entrypoint";
 import { STARTUP_FACTS_ID } from "./fixtures/startup-facts-probe/entrypoint";
 import { type RunRoot, createRunRoot } from "./run-root";
 import { ControlledSession, type RpcFrame } from "./session";
-import { ensureViewedSessionHarness } from "./viewed-session-harness";
 
-const record = readBaselineRecord();
+
 /** The extension's own OMP entrypoint, as the harness's loader discovers it. */
 const MODEL_COST_ENTRYPOINT = path.join(REPO_ROOT, "entrypoints", "omp", "model-cost.ts");
 /** The dock's own provider fixture, which redirects the extension's provider to the capture endpoint. */
@@ -85,10 +53,10 @@ const SESSION_START_PROBE = path.join(import.meta.dir, "fixtures", "session-star
 /** The fixture that reports the framework's own start delivery through the public factory. */
 const STARTUP_FACTS_PROBE = path.join(import.meta.dir, "fixtures", "startup-facts-probe", "entrypoint.ts");
 
-let harness: IsolatedHarness;
+let harness: InstalledOmp;
 
 beforeAll(async () => {
-	harness = await ensureViewedSessionHarness(record);
+	harness = await resolveInstalledOmp();
 }, 600_000);
 
 /** One run's isolated home and the storage root the extension's shipped configuration names in it. */
@@ -166,13 +134,13 @@ function isOpeningRequest(request: CapturedRequest): boolean {
 /**
  * The scripted model of the delegating run: it reads which session's request this is from that
  * session's own opening message rather than from the order requests arrive in. The main session
- * delegates to one child; the child yields its result, which is what ends that session; every other
+ * delegates to one child; the child's final text ends that session; every other
  * request — the main session's continuation after its tool returned — answers in prose.
  */
 function delegatingStep(request: CapturedRequest): CaptureStep | undefined {
 	const opening = openingOf(request);
 	if (opening.includes(CHILD_ASSIGNMENT)) {
-		return { toolCall: { name: "yield", arguments: JSON.stringify({ data: "dock child result" }) } };
+		return { replyText: "dock child result" };
 	}
 	if (opening.includes(DELEGATE_PROMPT) && isOpeningRequest(request)) {
 		return {
