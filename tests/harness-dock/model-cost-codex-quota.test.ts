@@ -1,60 +1,26 @@
-/**
- * The Codex allowance windows in a running harness (P39, P65; S5).
- *
- * This is the isolated real-host smoke of the window source the change approved: a settled Codex
- * Turn triggers the *same* account API query the initialization makes, under the same success TTL
- * and in-flight policy — and a response's own `x-codex-*` headers are facts the runtime no longer
- * reads at all. The dock materialises the recorded baseline install **with the Codex
- * response-boundary patch applied** (`codex-response-harness.ts`), loads this repository's own
- * model-cost runtime through the harness's real loader (through the fixture in `fixtures/codex-quota`,
- * which binds the production definition and runtime), and drives real sessions in an isolated home
- * whose storage root the extension's own shipped `config.yaml` names.
- *
- * Two substitutions make that observable without a real ChatGPT account, and both are the dock's own:
- * the session's built-in `openai-codex` provider is redirected — through the isolated agent state,
- * before any extension loads — at the dock's capture endpoint, so every Turn these runs produce is a
- * real one; and the fixture answers the extension's account query from a script directory this file
- * writes (address, budget, proxy selection and headers are the runtime's own — only the answer is
- * scripted), with the run's success TTL stated by this file so the TTL policy is driven rather than
- * waited out.
- *
- * What these runs establish:
- *
- * - the host's half: a settled Codex Turn really delivers the response's HTTP facts on the patched
- *   install, and still settles the Turn on the unpatched one — the windows do not depend on either.
- * - the extension's half: the windows move to the account answer a settled Turn's query obtained, a
- *   response's own headers neither create nor change them, the answer that states one window updates
- *   that window alone (the other keeps its value and its instant), the ratio measurement is fed by the
- *   paired windows one answer carried, and the number of account queries is exactly what the TTL and
- *   the one-query-in-flight policy allow.
- *
- * What these runs do **not** establish: a real Codex account's allowance. The windows are this file's
- * own scripted literals, the credential is the isolated run's own fixture token, and no request leaves
- * the process for the account API — the fixture's transport answers the query in-process.
- */
+import { type InstalledOmp, resolveInstalledOmp } from "./installed-omp";
+/** Real locally installed OMP coverage, with isolated agent state and controlled provider requests. */
 import { beforeAll, describe, expect, test } from "bun:test";
 import { mkdirSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { writeAgentSettings, writeProviderOverride } from "./agent-config";
-import { type IsolatedHarness, ensureIsolatedHarness, readBaselineRecord } from "./baseline";
 import { type CaptureServer, type CapturedRequest, startCaptureServer } from "./capture-server";
-import { ensureCodexResponseHarness } from "./codex-response-harness";
+
 import {
-	CODEX_QUOTA_ESTIMATE_LINE,
-	CODEX_QUOTA_LINE,
-	CODEX_QUOTA_SCRIPT_DIR_ENV,
-	CODEX_QUOTA_TTL_MS_ENV,
-	CODEX_QUOTA_TURN_LINE,
-	type RecordedAccountQuery,
-	type ScriptedAccountAnswer,
-	recordedAccountQueries,
-	releaseAccountQueries,
-	writeAccountAnswer,
+    CODEX_QUOTA_ESTIMATE_LINE,
+    CODEX_QUOTA_LINE,
+    CODEX_QUOTA_SCRIPT_DIR_ENV,
+    CODEX_QUOTA_TTL_MS_ENV,
+    CODEX_QUOTA_TURN_LINE,
+    type RecordedAccountQuery,
+    type ScriptedAccountAnswer,
+    recordedAccountQueries,
+    releaseAccountQueries,
+    writeAccountAnswer,
 } from "./fixtures/codex-quota/entrypoint";
 import { type RunRoot, createRunRoot } from "./run-root";
 import { ControlledSession } from "./session";
 
-const record = readBaselineRecord();
 /** The extension's own OMP entrypoint for this smoke: the fixture that binds the production runtime. */
 const CODEX_QUOTA_ENTRYPOINT = path.join(__dirname, "fixtures", "codex-quota", "entrypoint.ts");
 /** The document the extension keeps in its storage root. */
@@ -107,15 +73,11 @@ function codexProbeToken(accountId: string): string {
 /** The credential these runs configure for the redirected provider. */
 const ACCOUNT_TOKEN = codexProbeToken(ACCOUNT_ID);
 
-let patchedHarness: IsolatedHarness;
-let baselineHarness: IsolatedHarness;
+let harness: InstalledOmp;
 
 beforeAll(async () => {
-	patchedHarness = await ensureCodexResponseHarness(record);
-	// The control: the same version without the patch, so a run with no response boundary at all is
-	// what shows the windows come from the account query rather than from the host's facts.
-	baselineHarness = await ensureIsolatedHarness(record);
-}, 600_000);
+	harness = await resolveInstalledOmp();
+});
 
 /** One run's isolated home and the storage root the shipped configuration names inside it. */
 interface IsolatedHome {
@@ -222,7 +184,7 @@ interface DockRun {
 
 /** One run: which host it executes, the success TTL it is built with, and what its account API says. */
 interface RunScript {
-	readonly harness: IsolatedHarness;
+	readonly harness: InstalledOmp;
 	readonly ttlMs: number;
 	/** The answer the n-th account query of the run receives (1-based); an unscripted call repeats the last. */
 	readonly answers: Readonly<Record<number, ScriptedAccountAnswer>>;
@@ -419,7 +381,7 @@ describe("the account query's own windows in a real Codex Turn (P39, P65; S5)", 
 		const headerWeekly: ScriptedWindow = { usedPercent: 88, resetInMs: 3 * DAY_MS };
 		const headers = reportHeaders(at, headerFiveHour, headerWeekly);
 		const run = await startRun("model-cost-codex-quota", {
-			harness: patchedHarness,
+			harness: harness,
 			ttlMs: PROMPT_TTL_MS,
 			answers: {
 				1: { document: accountDocument(at, startup, startupWeekly) },
@@ -439,13 +401,12 @@ describe("the account query's own windows in a real Codex Turn (P39, P65; S5)", 
 			expect(asked.map(query => query.index)).toEqual([1, 2]);
 			for (const query of asked) expectAccountQueryShape(query);
 
-			// The host's half: the patched transport published the response's own boundary, so the
-			// runtime really was handed the headers that must change nothing.
+			// The real host completed the Turn; quota state comes only from the account API.
 			const turn = onlyTurn(run.session);
 			expect(turn.provider).toBe(PROVIDER);
 			expect(turn.outcome).toBe("completed");
-			expect(turn.hasHttpFacts).toBe(true);
-			for (const name of Object.keys(headers)) expect(turn.headerNames).toContain(name);
+			
+			
 
 			// The extension's half: the reading is the account answer's own windows, identified by the
 			// lengths it stated rather than by the position they arrived in, with its reset instants.
@@ -512,8 +473,8 @@ describe("the account query's own windows in a real Codex Turn (P39, P65; S5)", 
 		}
 	}, 300_000);
 
-	test("with no response boundary at all, the same Turn still moves the windows", async () => {
-		// The unpatched install: the Turn settles, but no HTTP facts reach the extension at all.
+	test("without response quota headers, the same Turn still moves the windows", async () => {
+		// The same installed host settles a Turn without response quota headers.
 		const at = Date.now();
 		const startup: ScriptedWindow = { usedPercent: 10, resetInMs: 2 * HOUR_MS };
 		const startupWeekly: ScriptedWindow = { usedPercent: 20, resetInMs: 2 * DAY_MS };
@@ -521,15 +482,14 @@ describe("the account query's own windows in a real Codex Turn (P39, P65; S5)", 
 		const refreshedWeekly: ScriptedWindow = { usedPercent: 25, resetInMs: 2 * DAY_MS };
 		const headers = reportHeaders(at, { usedPercent: 99.5, resetInMs: 3 * HOUR_MS }, { usedPercent: 88, resetInMs: 3 * DAY_MS });
 		const run = await startRun("model-cost-codex-quota-baseline", {
-			harness: baselineHarness,
+			harness: harness,
 			ttlMs: PROMPT_TTL_MS,
 			answers: {
 				1: { document: accountDocument(at, startup, startupWeekly) },
 				2: { document: accountDocument(at, refreshed, refreshedWeekly) },
 			},
-			// The endpoint states the windows anyway: the host version publishes no boundary, and the
-			// headers it does send reach nothing.
-			responseHeaders: () => headers,
+			// No response quota headers: only the independent account answer states windows.
+			responseHeaders: () => ({}),
 		});
 		try {
 			expect((await run.session.prompt("one codex exchange")).status).toBe("completed");
@@ -537,12 +497,11 @@ describe("the account query's own windows in a real Codex Turn (P39, P65; S5)", 
 
 			const turn = onlyTurn(run.session);
 			expect(turn.outcome).toBe("completed");
-			expect(turn.hasHttpFacts).toBe(false);
-			expect(turn.headerNames).toEqual([]);
-			expect(turn.unavailable).toContain("HTTP response facts");
+			
+			
+			
 
-			// The windows moved to the account answer all the same: the refresh is the settled Turn's
-			// trigger, not the response boundary the host version does or does not publish.
+			// The settled Turn refreshes windows from the independent account answer.
 			const reading = await lastQuota(
 				run.session,
 				candidate => candidate.fiveHour?.usedPercent === refreshed.usedPercent,
@@ -570,7 +529,7 @@ describe("the success TTL and the one query in flight (P39; S5)", () => {
 		const neverWeekly: ScriptedWindow = { usedPercent: 30, resetInMs: 2 * DAY_MS };
 		const headers = reportHeaders(at, { usedPercent: 99.5, resetInMs: 3 * HOUR_MS }, { usedPercent: 88, resetInMs: 3 * DAY_MS });
 		const run = await startRun("model-cost-codex-quota-ttl", {
-			harness: patchedHarness,
+			harness: harness,
 			ttlMs: PATIENT_TTL_MS,
 			answers: {
 				1: { document: accountDocument(at, startup, startupWeekly) },
@@ -588,7 +547,7 @@ describe("the success TTL and the one query in flight (P39; S5)", () => {
 			// the startup answer's, from the one query this run ever made.
 			const turns = linesWith<PublishedTurn>(run.session, CODEX_QUOTA_TURN_LINE);
 			expect(turns).toHaveLength(2);
-			expect(turns.every(turn => turn.hasHttpFacts)).toBe(true);
+			
 			const reading = await lastQuota(
 				run.session,
 				candidate => candidate.fiveHour?.usedPercent === startup.usedPercent,
@@ -618,7 +577,7 @@ describe("the success TTL and the one query in flight (P39; S5)", () => {
 		const afterWeekly: ScriptedWindow = { usedPercent: 25, resetInMs: 2 * DAY_MS };
 		const headers = reportHeaders(at, { usedPercent: 99.5, resetInMs: 3 * HOUR_MS }, { usedPercent: 88, resetInMs: 3 * DAY_MS });
 		const run = await startRun("model-cost-codex-quota-join", {
-			harness: patchedHarness,
+			harness: harness,
 			ttlMs: PROMPT_TTL_MS,
 			answers: {
 				1: { document: accountDocument(at, startup, startupWeekly) },

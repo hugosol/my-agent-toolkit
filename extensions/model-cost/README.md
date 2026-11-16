@@ -159,32 +159,20 @@ A failure while reading or scheduling the next boundary is contained and diagnos
 
 ## Human acceptance
 
-Two rounds, both run **only** on an isolated install and state: never the default global install,
-never the formal configuration `~/.omp/agent/config.yml`, never a running agent.
+Both rounds use the locally selected installed OMP with isolated agent state, session, working and home directories. Never modify the installation, use formal configuration `~/.omp/agent/config.yml`, or reuse a running agent.
 
-### The artifact under test
+### The installation under test
 
-The frozen combined host artifact — the isolated exact `@oh-my-pi/pi-coding-agent@18.5.0` install
-(revision anchor `9348320cc4a30a7195d36a1f05a6c11bcb701a17`) with both of this migration's local host
-patches applied to one install: the public Viewed session outlet and the Codex response boundary.
-Its patch hashes, the pre/post sha256 of all nine files it touches and the isolated loading steps are
-in [`host-patches/omp-18.5.0-viewed-session-codex-response/`](../../host-patches/omp-18.5.0-viewed-session-codex-response/README.md);
-`tests/harness-dock/combined-host-harness.ts` materialises it into
-`.cache/omp-baseline/18.5.0-viewed-session-codex-response` and refuses a host whose bytes are not the
-frozen ones. It is a local artifact: not merged upstream, and it promotes no support version.
+Use `OMP_CLI` to name an existing executable, otherwise `omp` on PATH. The historical combined 18.5.0 patch artifact is retired. Required behavior must be supplied by the real installation; missing behavior is a compatibility failure, not a reason to patch the host.
 
 ```bash
 # <run> is a throwaway root (agent-state/, sessions/, work/, home/) and <repo> this repository
-PI_CODING_AGENT_DIR=<run>/agent-state HOME=<run>/home bun \
-  <repo>/.cache/omp-baseline/18.5.0-viewed-session-codex-response/node_modules/@oh-my-pi/pi-coding-agent/src/cli.ts \
+PI_CODING_AGENT_DIR=<run>/agent-state HOME=<run>/home "${OMP_CLI:-omp}" \
   --session-dir <run>/sessions --cwd <run>/work \
   --no-extensions -e <repo>/entrypoints/omp/model-cost.ts --model <provider>/<model>
 ```
 
-Give that isolated state its own credential for the model you intend to run — `PI_CODING_AGENT_DIR=<run>/agent-state
-bun <cli> login <provider>`, `--api-key`, or the provider's API-key environment variable. A real
-credential is read by the run only, is never printed into a request, a log, the conversation or this
-repository, and an unusable or missing one skips the round with a record rather than a substitute.
+Give that isolated state its own credential through the selected host's login or API-key mechanism. Never print credentials into requests, logs or this repository. Missing credentials block acceptance and do not establish a pass.
 
 ### H1 — the real interactive TUI
 

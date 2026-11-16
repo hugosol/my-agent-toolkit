@@ -13,8 +13,7 @@
  *   <wizard step, see output>                         # store the openai-codex credential
  *   bun scripts/capture-codex-outbound.ts --run       # one real turn; the request JSON is recorded
  *
- * Isolation: a pinned isolated `@oh-my-pi/pi-coding-agent@18.5.0` install (never the default
- * global install), a temporary agent state directory passed as `PI_CODING_AGENT_DIR`, an
+ * Isolation: the locally selected installed OMP CLI (never installed or patched by this script), a temporary agent state directory passed as `PI_CODING_AGENT_DIR`, an
  * explicit-only extension set (`--no-extensions -e entrypoints/omp`), the Codex transport
  * pinned to SSE (`providers.openaiWebsockets: "off"`), and `PI_REQ_DEBUG=1` so every request
  * body lands as `rr-session-N.json` in the capture directory. The default agent state,
@@ -25,8 +24,7 @@ import * as path from "node:path";
 import {
 	ControlledSession,
 	REPO_ROOT,
-	ensureIsolatedHarness,
-	readBaselineRecord,
+	resolveInstalledOmp,
 	writeAgentSettings,
 } from "../tests/harness-dock/index";
 
@@ -66,21 +64,22 @@ const options = parseOptions(process.argv.slice(2));
  * A login executed with an unset `PI_CODING_AGENT_DIR` writes the credential into the real
  * global agent state, which this flow must never touch; the printed steps therefore name the
  * variable explicitly and clear the resolution offsets the dock also clears. The login
- * uses the same isolated install the run does, so the credential is created by the version
+ * uses the same locally selected installation the run does, so the credential is created by the version
  * under test rather than by whatever `omp` is on PATH.
  */
-function wizardSteps(cliPath: string): string {
+function wizardSteps(command: string): string {
 	const env = `PI_CODING_AGENT_DIR=${options.agentDir}`;
 	return [
 		`1. clear the resolution offsets: OMP_PROFILE PI_PROFILE XDG_DATA_HOME XDG_CONFIG_HOME OMP_AUTH_BROKER_*`,
-		`2. ${env} bun "${cliPath}" login openai-codex`,
-		`   (alternative for a credential the auth-broker already holds: ${env} bun "${cliPath}" auth-broker import)`,
+		`2. ${env} ${command} login openai-codex`,
+		`   (alternative for a credential the auth-broker already holds: ${env} ${command} auth-broker import)`,
 		`   -> the credential lands in ${path.join(options.agentDir, "agent.db")} and never enters any prompt`,
 		`3. bun scripts/capture-codex-outbound.ts --run --agent-dir "${options.agentDir}" --captures "${options.captures}"`,
 	].join("\n");
 }
 
-const harness = await ensureIsolatedHarness(readBaselineRecord());
+const harness = await resolveInstalledOmp();
+const hostCommand = [harness.path, ...harness.argvPrefix].map(part => JSON.stringify(part)).join(" ");
 
 if (options.action === "prepare") {
 	mkdirSync(options.agentDir, { recursive: true });
@@ -90,8 +89,8 @@ if (options.action === "prepare") {
 	console.log(`[layer2] isolated agent state: ${options.agentDir}`);
 	console.log(`[layer2] capture directory:    ${options.captures}`);
 	console.log(`[layer2] wrote ${path.join(options.agentDir, "config.yml")} (providers.openaiWebsockets: "off")`);
-	console.log(`[layer2] isolated harness:     ${harness.cliPath}`);
-	console.log(`[layer2] wizard steps:\n${wizardSteps(harness.cliPath)}`);
+	console.log(`[layer2] isolated harness:     ${hostCommand}`);
+	console.log(`[layer2] wizard steps:\n${wizardSteps(hostCommand)}`);
 	process.exit(0);
 }
 
@@ -99,7 +98,7 @@ const credentialFile = path.join(options.agentDir, "agent.db");
 if (!existsSync(credentialFile)) {
 	console.error(`[layer2] no credential at ${credentialFile}.`);
 	console.error(`[layer2] run the wizard first (credentials are supplied by a human, never by this script):`);
-	console.error(wizardSteps(harness.cliPath));
+	console.error(wizardSteps(hostCommand));
 	console.error(
 		`[layer2] the credential must live in this isolated agent state: the run clears OMP_AUTH_BROKER_*/XDG_* offsets, so an externally held credential is outside this flow.`,
 	);

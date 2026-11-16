@@ -1,46 +1,15 @@
-/**
- * Request accounting in a running harness (P1, P2, P4, P5, P6; S5).
- *
- * This is the isolated real-host smoke of the accounting's wiring: the dock materialises the recorded
- * baseline install, loads this repository's own model-cost entrypoint through the harness's real
- * loader, and drives a real session in an isolated home whose storage root the extension's own
- * shipped `config.yaml` names. A run either registers the dock's own provider fixture (an unknown
- * provider name, so the model is one this extension's data does not list) or points a built-in
- * provider's models at the dock's capture endpoint through the isolated agent state (`models.yml`) —
- * in both cases the request the extension classifies is a real request over a real transport that
- * never leaves the machine.
- *
- * What is observed here is the mode decision and the usage rule as the real host makes them
- * observable: the operator feedback a skipped request produces. A request the extension accounts (an
- * official monetary id) is *checked for reliable usage*, so one the endpoint reported no usage for —
- * and one it reported an explicit all-zero usage for, which this host cannot tell apart from its own
- * default — produces exactly one skip notice; a model the extension's data does not list is not
- * accounted at all and produces nothing, whatever the endpoint reported. That contrast is what makes
- * the notice evidence of the real wiring rather than decoration.
- *
- * The reliable priced request also proves its own persisted usage and positive monetary contribution
- * after the host closes the session. Exact pricing rules and accumulation are covered separately in
- * `tests/model-cost/foundation/session/request-accounting.test.ts` with a self-made data set, and the
- * maintained data in the maintenance smoke (`scripts/model-cost-data-smoke.ts`).
- *
- * The Round *end* this host produces is observed in `tests/harness-dock/round-facts.test.ts`: a real
- * session's settle is an end candidate the framework confirms on the host's own next task, so a run
- * driven over RPC really does reach the round-end save. The gap this file's earlier revision
- * recorded — the adapter deciding the end at the native run end, where the session is not yet
- * settled, so no Round end was ever reached — is closed by that synthesis; see that suite and the
- * ticket's evidence note.
- */
+import { type InstalledOmp, resolveInstalledOmp } from "./installed-omp";
+/** Real locally installed OMP coverage, with isolated agent state and controlled provider requests. */
 import { beforeAll, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import * as path from "node:path";
 import { writeProviderOverride } from "./agent-config";
-import { type IsolatedHarness, REPO_ROOT, ensureIsolatedHarness, readBaselineRecord } from "./baseline";
+import { REPO_ROOT } from "./baseline";
 import { type CaptureServer, startCaptureServer } from "./capture-server";
 import { DOCK_CAPTURE_BASE_URL_ENV, DOCK_MODEL_SELECTOR } from "./fixtures/extension-root/provider";
 import { type RunRoot, createRunRoot } from "./run-root";
 import { ControlledSession } from "./session";
 
-const record = readBaselineRecord();
 /** The extension's own OMP entrypoint, as the harness's loader discovers it. */
 const MODEL_COST_ENTRYPOINT = path.join(REPO_ROOT, "entrypoints", "omp", "model-cost.ts");
 /** The dock's own provider fixture: an unknown provider name, whose model this extension does not list. */
@@ -52,10 +21,10 @@ const CONSUMPTION_FILE = "consumption.json";
 /** The usage the capture endpoint reports, as the wire numbers it sends. */
 const CAPTURE_USAGE = { input: 10, output: 7, cacheRead: 3 };
 
-let harness: IsolatedHarness;
+let harness: InstalledOmp;
 
 beforeAll(async () => {
-	harness = await ensureIsolatedHarness(record);
+	harness = await resolveInstalledOmp();
 });
 
 /** One run's isolated home and the storage root the shipped configuration names inside it. */

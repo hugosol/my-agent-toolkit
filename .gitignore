@@ -7,7 +7,9 @@ framework/.runtime/
 /.scratch/workflow-file-handoff/evidence/
 /.scratch/workflow-nesting/evidence/
 /.scratch/chief-bot/evidence/
+/.scratch/rust-script-bots/evidence/
 /.scratch/pi-version-acceptance/
 /.scratch/pi-suite/evidence/
+/.scratch/rust-script-bots/evidence/
 *.log
 .idea/

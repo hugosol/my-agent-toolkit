@@ -19,7 +19,8 @@
 import { beforeAll, describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import * as path from "node:path";
-import { type IsolatedHarness, REPO_ROOT, ensureIsolatedHarness, readBaselineRecord } from "../harness-dock/baseline";
+import { REPO_ROOT } from "../harness-dock/baseline";
+import { type InstalledOmp, resolveInstalledOmp } from "../harness-dock/installed-omp";
 import { writeAgentSettings, writeProviderOverride } from "../harness-dock/agent-config";
 import { type CapturedRequest, type CaptureServer, startCaptureServer } from "../harness-dock/capture-server";
 import { type RunRoot, createRunRoot } from "../harness-dock/run-root";
@@ -36,10 +37,10 @@ const COMMAND = "codebase-tools";
 /** The text of the user turn that triggers the injection, unique inside one request. */
 const TURN_TEXT = "codebase-tools role turn";
 
-let harness: IsolatedHarness;
+let harness: InstalledOmp;
 
 beforeAll(async () => {
-	harness = await ensureIsolatedHarness(readBaselineRecord());
+	harness = await resolveInstalledOmp();
 }, 300_000);
 
 /**

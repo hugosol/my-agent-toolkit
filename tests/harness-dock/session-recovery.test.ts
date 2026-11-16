@@ -1,40 +1,16 @@
-/**
- * Session recovery, navigation and a save that did not land, in a running harness (P16, P17, P18,
- * P19, P46; S5).
- *
- * This is the isolated real-host observation of what happens to consumption once a session has been
- * saved: the dock materialises the recorded baseline install, loads this repository's own model-cost
- * entrypoint through the harness's real loader, and drives real RPC sessions whose model requests go
- * to the dock's local capture endpoint. Nothing here is a double — the restarts, the harness's own
- * session navigation and its own fork are the host's, and the document every case reads is the file a
- * real save published.
- *
- * Four host facts are observed. A restart is a second process over the same isolated user home, which
- * is the only way the extension's storage root can be shared: the document it left is the baseline the
- * new process resumes from, so the session's totals and version continue rather than starting over. A
- * navigation back to an earlier position in the session's own tree stands up another session from the
- * entries up to that point, and coming back continues the first session's own record. A fork is the
- * harness's own copying of a transcript, which issues no request at all. And a save that does not land
- * — another writer published that session's record under the same version while this process ran — is
- * reported to the operator, leaves the document the other writer left, and is dropped rather than
- * carried into the next save, after which the real model keeps running.
- *
- * The amounts asserted are not real prices: the capture endpoint reports the wire numbers below and
- * each expected bucket is hand-derived from them, while an amount is only ever required to be a
- * number. This suite says nothing about a real provider.
- */
+import { type InstalledOmp, resolveInstalledOmp } from "./installed-omp";
+/** Real locally installed OMP coverage, with isolated agent state and controlled provider requests. */
 import { beforeAll, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { writeProviderOverride } from "./agent-config";
-import { type IsolatedHarness, REPO_ROOT, ensureIsolatedHarness, readBaselineRecord } from "./baseline";
+import { REPO_ROOT } from "./baseline";
 import { type CaptureServer, startCaptureServer } from "./capture-server";
 import { DOCK_CAPTURE_BASE_URL_ENV } from "./fixtures/extension-root/provider";
 import { type RunRoot, createRunRoot } from "./run-root";
 import { ControlledSession, type RpcFrame } from "./session";
 
-const record = readBaselineRecord();
 /** The extension's own OMP entrypoint, as the harness's loader discovers it. */
 const MODEL_COST_ENTRYPOINT = path.join(REPO_ROOT, "entrypoints", "omp", "model-cost.ts");
 /** The dock's own provider fixture, so the model-cost entrypoint runs beside an unknown provider. */
@@ -69,10 +45,10 @@ const RETURNED_PROMPT = "dock recovery: one more exchange after coming back";
 const FORKED_PROMPT = "dock recovery: one exchange in the forked session";
 const FAILED_PROMPT = "dock recovery: an exchange the refused save carried";
 
-let harness: IsolatedHarness;
+let harness: InstalledOmp;
 
 beforeAll(async () => {
-	harness = await ensureIsolatedHarness(record);
+	harness = await resolveInstalledOmp();
 });
 
 /**

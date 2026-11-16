@@ -66,7 +66,7 @@ import { homedir } from "node:os";
 import * as path from "node:path";
 import { request } from "../framework/interface/general/http";
 import { type PiCli, PiSession, resolvePiCli } from "../tests/harness-dock/pi-session";
-import { beginPiAcceptance, rejectLegacyPiVersionArgument } from "./support/pi-acceptance";
+import { beginHarnessAcceptance, rejectLegacyPiVersionArgument } from "./support/harness-acceptance";
 import { createRunRoot } from "../tests/harness-dock/run-root";
 import {
 	type AllowanceAgreement,
@@ -699,7 +699,7 @@ async function main(): Promise<void> {
 		prepare(options, cli);
 		return;
 	}
-	const acceptance = await beginPiAcceptance("provider-account", cli);
+	const acceptance = await beginHarnessAcceptance("pi", "provider-account", cli);
 	try {
 	const version = acceptance.version;
 	const catalogDirectory = catalogDirectoryOf(options);

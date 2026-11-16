@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "scope": "workflow-chat",
+  "startedAt": "2026-11-12T19:33:51.820Z",
+  "cli": {
+    "command": [
+      "D:/Users/hugos/AppData/Local/nvm/v22.19.0/node.exe",
+      "D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js"
+    ],
+    "path": "D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js",
+    "source": "node script"
+  },
+  "source": {
+    "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-4rOpvQ",
+    "head": "35a58d65df971886fb7f15f3e4cb5fc6e8b00849",
+    "status": [],
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "untrackedFiles": [],
+    "sha256": "c1f6b92dea58e73ec97b7735d0d953f49e0aa5e58facc813130301f1d6436877"
+  },
+  "lockfiles": [
+    {
+      "path": "bun.lock",
+      "bytes": 11550,
+      "sha256": "28ce4c0d7b7d1d45a44e335a6647b0959c333875af42ca87ba63c87bcf4c2168"
+    }
+  ],
+  "runtime": {
+    "driver": {
+      "executable": "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe",
+      "node": "26.3.0",
+      "bun": "1.4.4"
+    },
+    "cli": {
+      "execPath": "D:\\Users\\hugos\\AppData\\Local\\nvm\\v22.19.0\\node.exe",
+      "node": "22.19.0",
+      "bun": null
+    },
+    "artifact": {
+      "path": "D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js",
+      "bytes": 160,
+      "sha256": "e79626f2dd6f94aa45d30f3fa63cd84319a6eefcd150b353cfaf274366926774"
+    },
+    "platform": "win32",
+    "arch": "x64"
+  },
+  "version": "1.5.2",
+  "status": "passed",
+  "checks": [
+    "Pi manager: native tools, first Prompt identity, strict parameters and original results",
+    "Pi node: native tools, first Prompt identity, strict parameters and original results",
+    "Pi collect owns a complete-body budget independent of ordinary requests",
+    "Pi tool AbortSignal releases transport, switch preserves auto startup, and shutdown releases active collect"
+  ],
+  "complete": true,
+  "finishedAt": "2026-11-12T19:34:00.467Z",
+  "finishedSource": {
+    "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-4rOpvQ",
+    "head": "35a58d65df971886fb7f15f3e4cb5fc6e8b00849",
+    "status": [],
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "untrackedFiles": [],
+    "sha256": "c1f6b92dea58e73ec97b7735d0d953f49e0aa5e58facc813130301f1d6436877"
+  },
+  "finishedLockfiles": [
+    {
+      "path": "bun.lock",
+      "bytes": 11550,
+      "sha256": "28ce4c0d7b7d1d45a44e335a6647b0959c333875af42ca87ba63c87bcf4c2168"
+    }
+  ]
+}

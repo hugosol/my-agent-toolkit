@@ -1,0 +1,23 @@
+{
+  "status": "passed",
+  "ticket": "10-manager-script-protocol.md",
+  "repository": "toolkit",
+  "worktree": "C:/Users/hugos/AppData/Local/Temp/hyper-ticket-4rOpvQ",
+  "tested_source_commit": "35a58d6",
+  "changes": ["Aligned stale native chief-role guidance assertions with current wording without modifying prompts, permissions, test deadlines or semantic requirements; converged with ticket 11's patch.", "Added narrow scratch evidence ignore rule, matching ticket 11, to keep live protocol captures outside Pi source drift detection. No source fingerprint weakening.", "Preserved earlier failed runs, native histories, paired backend observations and final Pi acceptance records."],
+  "commands": [
+    {"command": "bun --version", "observed": "1.4.4"},
+    {"command": "bun install --frozen-lockfile", "exit_code": 0, "observed": "Checked 15 installs across 34 packages (no changes)"},
+    {"command": "bun run typecheck", "exit_code": 0, "observed": "Authoring expressions: 93 files, 8 declarations, 0 diagnostics"},
+    {"command": "bun run check:integrations", "exit_code": 0, "observed": "Structural integration analysis only; native semantics are not certified"},
+    {"command": "bun test tests/harness-dock/manager-script-protocol.test.ts tests/harness-dock/role-dual-load.test.ts tests/harness-dock/native-report-confirmation.test.ts tests/harness-dock/chief-role.test.ts", "exit_code": 0, "observed": "22 pass / 0 fail / 310 expectations; 4 files; 93.83s"},
+    {"command": "bun run test", "exit_code": 0, "observed": "1932 pass / 0 fail / 13297 expectations; 246 files; 354.65s"}
+  ],
+  "prior_failures": [
+    {"log": "full.log", "observed": "1881 pass / 51 fail: shell exports from earlier call were not inherited; missing sibling backend/baseline paths. Reported tool behavior issue; corrected by exporting all overrides within each test invocation."},
+    {"log": "full-paired.log", "observed": "1930 pass / 3 fail: two stale chief-role wording assertions and Pi source drift from four concurrently created untracked protocol evidence files. Original results preserved; actual fixes made before final run."}
+  ],
+  "safety": "No production backend; used ticket 11 original Pe756W worktree safe_shutdown_shell and independent cargo-target read-only. Both final commands exited successfully; native exits preserved in logs. Heavy window released immediately after command exit to ticket 11 integration helper.",
+  "scope_boundary": "This ticket provides manager protocol enabling evidence and regression only. Real-model H1/P34 and H2/P35 remain human-led acceptance owned by ticket 11; not claimed passed here.",
+  "integration": "No integration workspace changes, direct merge to dev, branch switch, new worktree, reset, retro or TDD restart. Initial worktree was clean with no outstanding merge conflicts. Final evidence-only commit follows tested source."
+}

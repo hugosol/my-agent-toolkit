@@ -1,29 +1,10 @@
-/**
- * A Round in a running harness (S5; contract P3, P14, P15; ticket 08).
- *
- * This is the isolated real-host observation of the round axis end to end: the dock materialises
- * the recorded baseline install, loads this repository's own model-cost entrypoint and one fixture
- * extension through the harness's real loader, and drives real RPC sessions whose model requests go
- * to the dock's local capture endpoint. Nothing here is a double: the runs, the tool execution, the
- * responses and the usage the endpoint reports are the host's own.
- *
- * Two facts are observed. The first is the round axis at the host: one prompt that asks for a tool
- * makes two model requests inside one run, and the framework dispatches exactly one Round for them —
- * one `round_start`, two Turns naming the same round identity, one `round_end` — while a second
- * prompt afterwards opens a *second* Round, because the first one was confirmed ended in between.
- * The native observer records the host's own settle and the context's idle facts, so the round end
- * can be placed after the settle that raised it rather than in it.
- *
- * The second is what that Round end does for consumption: the session's own record is saved once
- * per Round, and the request the tool continuation issued is accounted for exactly like the first —
- * the saved buckets are the two responses' usage summed, hand-derived from the wire numbers the
- * endpoint sent, so nothing here recomputes them from the extension.
- */
+import { type InstalledOmp, resolveInstalledOmp } from "./installed-omp";
+/** Real locally installed OMP coverage, with isolated agent state and controlled provider requests. */
 import { beforeAll, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import * as path from "node:path";
 import { writeProviderOverride } from "./agent-config";
-import { type IsolatedHarness, REPO_ROOT, ensureIsolatedHarness, readBaselineRecord } from "./baseline";
+import { REPO_ROOT } from "./baseline";
 import { type CaptureServer, type CaptureServerOptions, startCaptureServer } from "./capture-server";
 import { DOCK_CAPTURE_BASE_URL_ENV } from "./fixtures/extension-root/provider";
 import { ROUND_FACTS_ID } from "./fixtures/round-facts/entrypoint";
@@ -31,7 +12,6 @@ import { NATIVE_RUN_OBSERVER_ID } from "./fixtures/round-facts/native-run";
 import { type RunRoot, createRunRoot } from "./run-root";
 import { ControlledSession } from "./session";
 
-const record = readBaselineRecord();
 /** The extension's own OMP entrypoint, as the harness's loader discovers it. */
 const MODEL_COST_ENTRYPOINT = path.join(REPO_ROOT, "entrypoints", "omp", "model-cost.ts");
 /** The dock's own provider fixture, so the model-cost entrypoint runs beside the round fixtures. */
@@ -71,10 +51,10 @@ const TOOL_CALL_TEXT = "dock-round-tool-ran";
 const TOOL_PROMPT = "dock run: use one tool and finish";
 const SECOND_PROMPT = "dock run: one more exchange in this session";
 
-let harness: IsolatedHarness;
+let harness: InstalledOmp;
 
 beforeAll(async () => {
-	harness = await ensureIsolatedHarness(record);
+	harness = await resolveInstalledOmp();
 });
 
 /** One run's isolated home and the storage root the extension's shipped configuration names inside it. */

@@ -1,0 +1,983 @@
+$ bun test --parallel=4
+bun test v1.4.4 (38afee6c8) 4x PARALLEL
+
+tests\harness-dock\manager-resume-finish.test.ts:
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\manager-resume-finish.test.ts:9:22)
+(fail) P10/P11/P13 resume restores eligibility without dispatch, retry or termination [1.23ms]
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\manager-resume-finish.test.ts:28:22)
+(fail) P10/P11/P13 finish obeys all-node completion and retains terminal facts [0.67ms]
+
+tests\model-cost\harnesses\pi\pi-assembly-lifecycle.test.ts:
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+
+tests\model-cost\harnesses\pi\pi-disposal-round-close.test.ts:
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+
+tests\model-cost\harnesses\pi\pi-period-reset.test.ts:
+modelCost: this harness reports no idle fact (isIdle); the framework answers nothing rather than inventing one
+
+tests\model-cost\harnesses\pi\pi-terminal-rounds.test.ts:
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+modelCost: model-cost: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+
+tests\framework\pi-background-rounds.test.ts:
+piSurfaceProbe: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions 'pi-surface-probe' is not an importable file: ENOENT: no such file or directory, lstat 'C:\Users\hugos\AppData\Local\Temp\pi-background-rounds-absent-entry.ts'
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+
+tests\framework\pi-disposal-round-close.test.ts:
+piSurfaceProbe: this session reports no identity; the extension stays off for it
+
+tests\framework\pi-native-consumers.test.ts:
+codeBaseTools: codebase-tools: configuration error (config): the startup policy file "C:\Users\hugos\AppData\Local\Temp\pi-native-config-kb8RR3\config.yaml" declares "enabled" under "codebase-tools" as "true", but a startup policy requires a boolean
+codeBaseTools: codebase-tools: configuration error (config): the configuration file "C:\Users\hugos\AppData\Local\Temp\pi-native-config-emwCOt\config.yaml" is not valid YAML: Flow sequence in block collection must be sufficiently indented and end with a ] at line 3, column 1:
+
+  enabled: [
+
+^
+
+invalid config: pi-native-config-invalid: configuration error (config): the configuration file "C:\Users\hugos\AppData\Local\Temp\pi-native-config-jG2Kdh\config.yaml" declares "requestTimeoutMs" as a number, but the extension requires a whole number of milliseconds between 1 and 2147483647
+
+tests\framework\pi-session-facts.test.ts:
+piSurfaceProbe: this session reports no identity; the extension stays off for it
+piSurfaceProbe: this session reports no identity; the extension stays off for it
+piSurfaceProbe: this session reports no identity; the extension stays off for it
+
+tests\framework\pi-turn-mapping.test.ts:
+piSurfaceProbe: pi-surface-probe: a model request started while a Turn was still in flight; the earlier Turn is dropped
+
+tests\framework\process-mode-reuse.test.ts:
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+
+tests\framework\session-context-observation.test.ts:
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+piSurfaceProbe: pi-surface-probe: a model response settled with no Turn in flight for its session; no start is fabricated and it is dropped
+
+tests\harness-dock\manager-state-actions.test.ts:
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\manager-state-actions.test.ts:10:22)
+(fail) P10/P11/P13 explicit complete preserves first handoff and only unlocks satisfied dependencies [0.68ms]
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\manager-state-actions.test.ts:55:22)
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\manager-state-actions.test.ts:80:22)
+(fail) P10/P11/P13 pause leaves existing execution alive and rejects new dispatch [0.34ms]
+(fail) P10/P11/P13 fail preserves original execution and first reason without extra host actions [0.40ms]
+
+tests\framework\session.test.ts:
+codebase-tools: no owning main session resolved for this session; the extension stays off
+codebase-tools: no owning main session resolved for this session; the extension stays off
+codebase-tools: no owning main session resolved for this session; the extension stays off
+codebase-tools: no owning main session resolved for this session; the extension stays off
+codebase-tools: no owning main session resolved for this session; the extension stays off
+
+tests\framework\turn.test.ts:
+turn-probe: a model request started while a Turn was still in flight; the earlier Turn is dropped
+
+tests\harness-dock\baseline.test.ts:
+58 | 		// The anchor is a revision, not a checkout position: the checkout that holds it may have moved
+59 | 		// past it in commits of its own (the frozen baseline's later history removes material this
+60 | 		// migration moved out), so what a run relies on is that the recorded revision is still in that
+61 | 		// checkout's history and that its own bytes are the ones the record names. The record stays the
+62 | 		// authority; the observed tip is recorded per run in the migration run record (D-01).
+63 | 		expect(checkoutCarries(anchorPath, record.harness.revisionAnchor.commit)).toBe(true);
+                                                                                 ^
+error: expect(received).toBe(expected)
+
+Expected: true
+Received: false
+
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\baseline.test.ts:63:77)
+85 | 			.filter(comparison => !comparison.identical)
+86 | 			.map(
+87 | 				comparison =>
+88 | 					`${comparison.path}: anchor ${comparison.anchorSha256 ?? "<missing>"} vs artifact ${comparison.artifactSha256 ?? "<missing>"}`,
+89 | 			);
+90 | 		expect(drifted).toEqual([]);
+                       ^
+error: expect(received).toEqual(expected)
+
+- []
++ [
++   "extensibility/extensions/loader.ts: anchor <missing> vs artifact 6ce3fcecb30caca84738683af80677638a9b6aa51b285709f32f5fad56bcd2c2",
++   "extensibility/extensions/runner.ts: anchor <missing> vs artifact 2afd58d1e6668262cee01d1be868320c857aed208c3ced890f0c7930bc898ff2",
++   "extensibility/extensions/types.ts: anchor <missing> vs artifact 589240eaefcd6a0fa48b7492af89bc40cfbc25d235a0aa8e1a25fa6f20caf610",
++   "session/session-manager.ts: anchor <missing> vs artifact f4a19f7fdfcdc866437546d2b15ed57dfd3871fb5abb0675d9f07364b9167f6a",
++   "config/model-registry.ts: anchor <missing> vs artifact 1154820b4fe89fd8f7c7d6514de3b647e49aead5e89c2547a1721efd400a92d6",
++   "session/auth-storage.ts: anchor <missing> vs artifact 28d794996dfbb4dd06c0210ab4ef001a66d975aa860989cc8b89af31fe7c86ba",
++ ]
+
+- Expected  - 1
++ Received  + 8
+
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\baseline.test.ts:90:19)
+105 | 			.filter(comparison => !comparison.matches)
+106 | 			.map(
+107 | 				comparison =>
+108 | 					`${comparison.path}: recorded ${comparison.recordedSha256} but found ${comparison.actualSha256 ?? "<missing>"} — ${REFRESH_HINT}`,
+109 | 			);
+110 | 		expect(stale).toEqual([]);
+                      ^
+error: expect(received).toEqual(expected)
+
+- []
++ [
++   "bun.lock: recorded ddf372c50d0c1080b9c66b28e655b2bfe1c694e932ea4b2ae020c704be927225 but found <missing> — refresh framework/docs/harness-baseline.json (sourceCombination/oracle lockfile sha256) after a deliberate dependency change",
++ ]
+
+- Expected  - 1
++ Received  + 3
+
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\baseline.test.ts:110:17)
+111 | 	});
+112 | 
+113 | 	test("the oracle checkout carries the recorded revision", () => {
+114 | 		const checkoutPath = resolveRecordPath(record.oracle.path);
+115 | 		const checkout = readCheckoutCommit(checkoutPath);
+116 | 		expect(checkout.error).toBeNull();
+                               ^
+error: expect(received).toBeNull()
+
+Received: "checkout path does not exist: C:\\Users\\hugos\\AppData\\Local\\Temp\\my-omp-toolkit"
+
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\baseline.test.ts:116:26)
+(fail) baseline record > the recorded revision anchor is reachable in the checkout and names the recorded version [0.24ms]
+(fail) baseline record > the run artifact stays byte-identical to the recorded revision for the recorded contract files [1.23ms]
+(fail) baseline record > records the lockfiles of this repository and of the behavior oracle [0.34ms]
+(fail) baseline record > the oracle checkout carries the recorded revision [0.14ms]
+
+tests\workflow-chat\chief-report-recovery.test.ts:
+HTTP cancelled failure (Error)
+
+tests\workflow-chat\manager-collect-termination.test.ts:
+{"promise":"P21","condition":"budget","result":{"error":{"kind":"timeout","message":"The operation timed out."},"guidance":"请求未获得确定结果；后端可能已接受，不表示回滚或未生效。不要自动重试，请核实已保存事实。"}}
+{"promise":"P21","condition":"cancel","result":{"error":{"kind":"cancelled","message":"Interrupted by user"},"guidance":"请求未获得确定结果；后端可能已接受，不表示回滚或未生效。不要自动重试，请核实已保存事实。"}}
+{"promise":"P21","condition":"reset","result":{"error":{"kind":"transport","message":"socket hang up"},"guidance":"请求未获得确定结果；后端可能已接受，不表示回滚或未生效。不要自动重试，请核实已保存事实。"}}
+{"promise":"P21","condition":"broken-200","result":{"error":{"kind":"transport","message":"aborted"},"guidance":"请求未获得确定结果；后端可能已接受，不表示回滚或未生效。不要自动重试，请核实已保存事实。"}}
+{"promise":"P21","condition":"incomplete","result":{"error":{"kind":"transport","message":"aborted"},"guidance":"请求未获得确定结果；后端可能已接受，不表示回滚或未生效。不要自动重试，请核实已保存事实。"}}
+{"promise":"P21","condition":"invalid-json","result":{"error":{"kind":"parse","message":"后端响应不是完整合法 JSON。","body":"{\"reason\":\"timeout\",INVALID}"},"guidance":"无法确定动作结果；不表示回滚，不自动重试。"}}
+
+tests\harness-dock\chief-delegation.test.ts:
+{"host":"omp","kind":"task","dialog":{"type":"extension_ui_request","id":"15cb9528a3265215","method":"confirm","title":"确认 Bot 委派启动","message":"请核对本次完整解析事实（Bot、Task/Map、manager、zone 绑定、材料、实际输入）：\n{\n  \"request\": {\n    \"botId\": \"literal-task-bot\",\n    \"zoneId\": \"work/manager\",\n    \"input\": \"Summarize only the approved draft\",\n    \"materials\": [\n      {\n        \"id\": \"draft\",\n        \"zoneId\": \"work/source\",\n        \"path\": \"draft.txt\"\n      }\n    ],\n    \"sessionId\": \"01a1d11f-4ec7-747a-9b9b-bf489792a53c\"\n  },\n  \"bot\": {\n    \"id\": \"literal-task-bot\",\n    \"when\": \"Summarize drafts\",\n    \"task_id\": \"literal-worker\"\n  },\n  \"task\": {\n    \"id\": \"literal-worker\",\n    \"prompt\": \"Fixed business instructions\"\n  },\n  \"cwd\": \"E:/isolated/manager\",\n  \"name\": \"Independent Chat\",\n  \"materials\": [\n    {\n      \"id\": \"draft\",\n      \"zoneId\": \"work/source\",\n      \"path\": \"E:/isolated/source/draft.txt\"\n    }\n  ],\n  \"prompt\": \"Fixed business instructions\\nSummarize only the approved draft\"\n}\n\n批准仅授权此预览的一次启动，不表示业务完成。目标或位置含义变化时后端拒绝，需用户重新要求后再次预览与确认。聊天中的同意不能替代本次原生批准。\n\n完整 HTTP JSON 载荷：\n{\n  \"previewId\": \"literal-preview-task\",\n  \"sessionId\": \"01a1d11f-4ec7-747a-9b9b-bf489792a53c\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"requests":[{"route":"/api/chief/delegations/preview","body":{"botId":"literal-task-bot","zoneId":"work/manager","input":"Summarize only the approved draft","materials":[{"id":"draft","zoneId":"work/source","path":"draft.txt"}],"sessionId":"01a1d11f-4ec7-747a-9b9b-bf489792a53c"}},{"route":"/api/chief/delegations","body":{"previewId":"literal-preview-task","sessionId":"01a1d11f-4ec7-747a-9b9b-bf489792a53c"}}],"result":{"content":[{"type":"text","text":{}}],"details":{"httpStatus":202,"body":{"id":"literal-preview-task","stage":"starting"}}},"confirmationMs":2000,"observationMs":2100}
+{"host":"omp","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+{"host":"omp","kind":"task","condition":"denied","dialog":{"type":"extension_ui_request","id":"15cb952e60f9cdac","method":"confirm","title":"确认 Bot 委派启动","message":"请核对本次完整解析事实（Bot、Task/Map、manager、zone 绑定、材料、实际输入）：\n{\n  \"request\": {\n    \"botId\": \"literal-bot\",\n    \"zoneId\": \"work/explicit\",\n    \"input\": \"User said yes in chat, not in native UI\",\n    \"materials\": [],\n    \"sessionId\": \"01a1d11f-6516-706e-8b3f-d38d7e65f5c6\"\n  },\n  \"bot\": {\n    \"id\": \"literal-bot\"\n  },\n  \"task\": {\n    \"id\": \"literal-target\"\n  },\n  \"cwd\": \"E:/isolated/worker\",\n  \"name\": \"Literal Chat\",\n  \"materials\": [],\n  \"prompt\": \"Literal business input\"\n}\n\n批准仅授权此预览的一次启动，不表示业务完成。目标或位置含义变化时后端拒绝，需用户重新要求后再次预览与确认。聊天中的同意不能替代本次原生批准。\n\n完整 HTTP JSON 载荷：\n{\n  \"previewId\": \"literal-preview\",\n  \"sessionId\": \"01a1d11f-6516-706e-8b3f-d38d7e65f5c6\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"committed":0,"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。"}}},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"omp","kind":"task","condition":"dismissed","dialog":{"type":"extension_ui_request","id":"15cb95308339cdae","method":"confirm","title":"确认 Bot 委派启动","message":"请核对本次完整解析事实（Bot、Task/Map、manager、zone 绑定、材料、实际输入）：\n{\n  \"request\": {\n    \"botId\": \"literal-bot\",\n    \"zoneId\": \"work/explicit\",\n    \"input\": \"User said yes in chat, not in native UI\",\n    \"materials\": [],\n    \"sessionId\": \"01a1d11f-6516-706e-8b3f-d38d7e65f5c6\"\n  },\n  \"bot\": {\n    \"id\": \"literal-bot\"\n  },\n  \"task\": {\n    \"id\": \"literal-target\"\n  },\n  \"cwd\": \"E:/isolated/worker\",\n  \"name\": \"Literal Chat\",\n  \"materials\": [],\n  \"prompt\": \"Literal business input\"\n}\n\n批准仅授权此预览的一次启动，不表示业务完成。目标或位置含义变化时后端拒绝，需用户重新要求后再次预览与确认。聊天中的同意不能替代本次原生批准。\n\n完整 HTTP JSON 载荷：\n{\n  \"previewId\": \"literal-preview\",\n  \"sessionId\": \"01a1d11f-6516-706e-8b3f-d38d7e65f5c6\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"committed":0,"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。"}}},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"omp","kind":"task","condition":"cancelled","dialog":{"type":"extension_ui_request","id":"15cb95329b79cdb0","method":"confirm","title":"确认 Bot 委派启动","message":"请核对本次完整解析事实（Bot、Task/Map、manager、zone 绑定、材料、实际输入）：\n{\n  \"request\": {\n    \"botId\": \"literal-bot\",\n    \"zoneId\": \"work/explicit\",\n    \"input\": \"User said yes in chat, not in native UI\",\n    \"materials\": [],\n    \"sessionId\": \"01a1d11f-6516-706e-8b3f-d38d7e65f5c6\"\n  },\n  \"bot\": {\n    \"id\": \"literal-bot\"\n  },\n  \"task\": {\n    \"id\": \"literal-target\"\n  },\n  \"cwd\": \"E:/isolated/worker\",\n  \"name\": \"Literal Chat\",\n  \"materials\": [],\n  \"prompt\": \"Literal business input\"\n}\n\n批准仅授权此预览的一次启动，不表示业务完成。目标或位置含义变化时后端拒绝，需用户重新要求后再次预览与确认。聊天中的同意不能替代本次原生批准。\n\n完整 HTTP JSON 载荷：\n{\n  \"previewId\": \"literal-preview\",\n  \"sessionId\": \"01a1d11f-6516-706e-8b3f-d38d7e65f5c6\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"committed":0,"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。"}}},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"omp","kind":"task","condition":"timeout","dialog":{"type":"extension_ui_request","id":"15cb9534b4f9cdb3","method":"confirm","title":"确认 Bot 委派启动","message":"请核对本次完整解析事实（Bot、Task/Map、manager、zone 绑定、材料、实际输入）：\n{\n  \"request\": {\n    \"botId\": \"literal-bot\",\n    \"zoneId\": \"work/explicit\",\n    \"input\": \"User said yes in chat, not in native UI\",\n    \"materials\": [],\n    \"sessionId\": \"01a1d11f-6516-706e-8b3f-d38d7e65f5c6\"\n  },\n  \"bot\": {\n    \"id\": \"literal-bot\"\n  },\n  \"task\": {\n    \"id\": \"literal-target\"\n  },\n  \"cwd\": \"E:/isolated/worker\",\n  \"name\": \"Literal Chat\",\n  \"materials\": [],\n  \"prompt\": \"Literal business input\"\n}\n\n批准仅授权此预览的一次启动，不表示业务完成。目标或位置含义变化时后端拒绝，需用户重新要求后再次预览与确认。聊天中的同意不能替代本次原生批准。\n\n完整 HTTP JSON 载荷：\n{\n  \"previewId\": \"literal-preview\",\n  \"sessionId\": \"01a1d11f-6516-706e-8b3f-d38d7e65f5c6\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"committed":0,"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。"}}},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"omp","kind":"task","condition":"session-ended","dialog":{"type":"extension_ui_request","id":"15cb9538c5b9cdb6","method":"confirm","title":"确认 Bot 委派启动","message":"请核对本次完整解析事实（Bot、Task/Map、manager、zone 绑定、材料、实际输入）：\n{\n  \"request\": {\n    \"botId\": \"literal-bot\",\n    \"zoneId\": \"work/explicit\",\n    \"input\": \"User said yes in chat, not in native UI\",\n    \"materials\": [],\n    \"sessionId\": \"01a1d11f-6516-706e-8b3f-d38d7e65f5c6\"\n  },\n  \"bot\": {\n    \"id\": \"literal-bot\"\n  },\n  \"task\": {\n    \"id\": \"literal-target\"\n  },\n  \"cwd\": \"E:/isolated/worker\",\n  \"name\": \"Literal Chat\",\n  \"materials\": [],\n  \"prompt\": \"Literal business input\"\n}\n\n批准仅授权此预览的一次启动，不表示业务完成。目标或位置含义变化时后端拒绝，需用户重新要求后再次预览与确认。聊天中的同意不能替代本次原生批准。\n\n完整 HTTP JSON 载荷：\n{\n  \"previewId\": \"literal-preview\",\n  \"sessionId\": \"01a1d11f-6516-706e-8b3f-d38d7e65f5c6\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"committed":0,"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。"}}},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"omp","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+{"host":"omp","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+{"host":"omp","headlessExit":{"exitCode":0,"stderr":"","timedOut":false}}
+
+tests\workflow-chat\role-input-boundaries.test.ts:
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\role-input-boundaries.test.ts:13:24)
+(fail) P27 actual role input preserves backend fixed/work sections and adds only separate tool guidance [1.23ms]
+
+tests\harness-dock\chief-delegation.test.ts:
+{"host":"omp","kind":"map","dialog":{"type":"extension_ui_request","id":"15cb9544e49ba4fa","method":"confirm","title":"确认 Bot 委派启动","message":"请核对本次完整解析事实（Bot、Task/Map、manager、zone 绑定、材料、实际输入）：\n{\n  \"request\": {\n    \"botId\": \"literal-map-bot\",\n    \"zoneId\": \"work/manager\",\n    \"input\": \"Summarize only the approved draft\",\n    \"materials\": [\n      {\n        \"id\": \"draft\",\n        \"zoneId\": \"work/source\",\n        \"path\": \"draft.txt\"\n      }\n    ],\n    \"managerTaskId\": \"literal-manager\",\n    \"sessionId\": \"01a1d11f-be1c-72ed-9f80-a6625f704024\"\n  },\n  \"bot\": {\n    \"id\": \"literal-map-bot\",\n    \"when\": \"Summarize drafts\",\n    \"map\": \"literal.json\"\n  },\n  \"task\": {\n    \"id\": \"literal-manager\",\n    \"prompt\": \"Fixed business instructions\"\n  },\n  \"cwd\": \"E:/isolated/manager\",\n  \"name\": \"Independent Chat\",\n  \"materials\": [\n    {\n      \"id\": \"draft\",\n      \"zoneId\": \"work/source\",\n      \"path\": \"E:/isolated/source/draft.txt\"\n    }\n  ],\n  \"prompt\": \"Fixed business instructions\\nSummarize only the approved draft\",\n  \"map\": {\n    \"zoneBindings\": {\n      \"work/node\": \"E:/isolated/node\"\n    },\n    \"nodes\": {\n      \"A\": {\n        \"zone\": \"work/node\"\n      }\n    }\n  }\n}\n\n批准仅授权此预览的一次启动，不表示业务完成。目标或位置含义变化时后端拒绝，需用户重新要求后再次预览与确认。聊天中的同意不能替代本次原生批准。\n\n完整 HTTP JSON 载荷：\n{\n  \"previewId\": \"literal-preview-map\",\n  \"sessionId\": \"01a1d11f-be1c-72ed-9f80-a6625f704024\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"requests":[{"route":"/api/chief/delegations/preview","body":{"botId":"literal-map-bot","zoneId":"work/manager","input":"Summarize only the approved draft","materials":[{"id":"draft","zoneId":"work/source","path":"draft.txt"}],"managerTaskId":"literal-manager","sessionId":"01a1d11f-be1c-72ed-9f80-a6625f704024"}},{"route":"/api/chief/delegations","body":{"previewId":"literal-preview-map","sessionId":"01a1d11f-be1c-72ed-9f80-a6625f704024"}}],"result":{"content":[{"type":"text","text":{}}],"details":{"httpStatus":201,"body":{"id":"literal-run","run":{"nodes":{"A":{"status":"pending"}}},"managed":true,"startupError":null}}},"confirmationMs":2000,"observationMs":2100}
+{"host":"omp","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+
+tests\harness-dock\uncertain-effects.test.ts:
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\uncertain-effects.test.ts:14:22)
+(fail) P22 P24 accepted state and dispatch survive caller cancellation without automatic redo [4.72ms]
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\uncertain-effects.test.ts:51:22)
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\uncertain-effects.test.ts:97:22)
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\uncertain-effects.test.ts:118:22)
+(fail) P22 P23 P24 saved report remains queryable after disconnect and explicit new report remains usable [1.75ms]
+(fail) P23 real history failure preserves committed state and target-level external effects [0.38ms]
+(fail) P23 real non-success body remains visible and a repaired backend accepts explicit new calls [0.27ms]
+
+tests\harness-dock\chief-delegation.test.ts:
+{"host":"omp","kind":"map","condition":"denied","dialog":{"type":"extension_ui_request","id":"15cb954a6d6fe85b","method":"confirm","title":"确认 Bot 委派启动","message":"请核对本次完整解析事实（Bot、Task/Map、manager、zone 绑定、材料、实际输入）：\n{\n  \"request\": {\n    \"botId\": \"literal-bot\",\n    \"zoneId\": \"work/explicit\",\n    \"input\": \"User said yes in chat, not in native UI\",\n    \"materials\": [],\n    \"managerTaskId\": \"literal-manager\",\n    \"sessionId\": \"01a1d11f-d480-7302-8740-7012daf94cbb\"\n  },\n  \"bot\": {\n    \"id\": \"literal-bot\"\n  },\n  \"task\": {\n    \"id\": \"literal-target\"\n  },\n  \"cwd\": \"E:/isolated/worker\",\n  \"name\": \"Literal Chat\",\n  \"materials\": [],\n  \"prompt\": \"Literal business input\",\n  \"map\": {\n    \"zoneBindings\": {\n      \"work/node\": \"E:/isolated/node\"\n    }\n  }\n}\n\n批准仅授权此预览的一次启动，不表示业务完成。目标或位置含义变化时后端拒绝，需用户重新要求后再次预览与确认。聊天中的同意不能替代本次原生批准。\n\n完整 HTTP JSON 载荷：\n{\n  \"previewId\": \"literal-preview\",\n  \"sessionId\": \"01a1d11f-d480-7302-8740-7012daf94cbb\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"committed":0,"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。"}}},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"omp","kind":"map","condition":"dismissed","dialog":{"type":"extension_ui_request","id":"15cb954c8eafe85d","method":"confirm","title":"确认 Bot 委派启动","message":"请核对本次完整解析事实（Bot、Task/Map、manager、zone 绑定、材料、实际输入）：\n{\n  \"request\": {\n    \"botId\": \"literal-bot\",\n    \"zoneId\": \"work/explicit\",\n    \"input\": \"User said yes in chat, not in native UI\",\n    \"materials\": [],\n    \"managerTaskId\": \"literal-manager\",\n    \"sessionId\": \"01a1d11f-d480-7302-8740-7012daf94cbb\"\n  },\n  \"bot\": {\n    \"id\": \"literal-bot\"\n  },\n  \"task\": {\n    \"id\": \"literal-target\"\n  },\n  \"cwd\": \"E:/isolated/worker\",\n  \"name\": \"Literal Chat\",\n  \"materials\": [],\n  \"prompt\": \"Literal business input\",\n  \"map\": {\n    \"zoneBindings\": {\n      \"work/node\": \"E:/isolated/node\"\n    }\n  }\n}\n\n批准仅授权此预览的一次启动，不表示业务完成。目标或位置含义变化时后端拒绝，需用户重新要求后再次预览与确认。聊天中的同意不能替代本次原生批准。\n\n完整 HTTP JSON 载荷：\n{\n  \"previewId\": \"literal-preview\",\n  \"sessionId\": \"01a1d11f-d480-7302-8740-7012daf94cbb\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"committed":0,"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。"}}},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"omp","kind":"map","condition":"cancelled","dialog":{"type":"extension_ui_request","id":"15cb954ea66fe85f","method":"confirm","title":"确认 Bot 委派启动","message":"请核对本次完整解析事实（Bot、Task/Map、manager、zone 绑定、材料、实际输入）：\n{\n  \"request\": {\n    \"botId\": \"literal-bot\",\n    \"zoneId\": \"work/explicit\",\n    \"input\": \"User said yes in chat, not in native UI\",\n    \"materials\": [],\n    \"managerTaskId\": \"literal-manager\",\n    \"sessionId\": \"01a1d11f-d480-7302-8740-7012daf94cbb\"\n  },\n  \"bot\": {\n    \"id\": \"literal-bot\"\n  },\n  \"task\": {\n    \"id\": \"literal-target\"\n  },\n  \"cwd\": \"E:/isolated/worker\",\n  \"name\": \"Literal Chat\",\n  \"materials\": [],\n  \"prompt\": \"Literal business input\",\n  \"map\": {\n    \"zoneBindings\": {\n      \"work/node\": \"E:/isolated/node\"\n    }\n  }\n}\n\n批准仅授权此预览的一次启动，不表示业务完成。目标或位置含义变化时后端拒绝，需用户重新要求后再次预览与确认。聊天中的同意不能替代本次原生批准。\n\n完整 HTTP JSON 载荷：\n{\n  \"previewId\": \"literal-preview\",\n  \"sessionId\": \"01a1d11f-d480-7302-8740-7012daf94cbb\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"committed":0,"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。"}}},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"omp","kind":"map","condition":"timeout","dialog":{"type":"extension_ui_request","id":"15cb9550bf6fe862","method":"confirm","title":"确认 Bot 委派启动","message":"请核对本次完整解析事实（Bot、Task/Map、manager、zone 绑定、材料、实际输入）：\n{\n  \"request\": {\n    \"botId\": \"literal-bot\",\n    \"zoneId\": \"work/explicit\",\n    \"input\": \"User said yes in chat, not in native UI\",\n    \"materials\": [],\n    \"managerTaskId\": \"literal-manager\",\n    \"sessionId\": \"01a1d11f-d480-7302-8740-7012daf94cbb\"\n  },\n  \"bot\": {\n    \"id\": \"literal-bot\"\n  },\n  \"task\": {\n    \"id\": \"literal-target\"\n  },\n  \"cwd\": \"E:/isolated/worker\",\n  \"name\": \"Literal Chat\",\n  \"materials\": [],\n  \"prompt\": \"Literal business input\",\n  \"map\": {\n    \"zoneBindings\": {\n      \"work/node\": \"E:/isolated/node\"\n    }\n  }\n}\n\n批准仅授权此预览的一次启动，不表示业务完成。目标或位置含义变化时后端拒绝，需用户重新要求后再次预览与确认。聊天中的同意不能替代本次原生批准。\n\n完整 HTTP JSON 载荷：\n{\n  \"previewId\": \"literal-preview\",\n  \"sessionId\": \"01a1d11f-d480-7302-8740-7012daf94cbb\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"committed":0,"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。"}}},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"omp","kind":"map","condition":"session-ended","dialog":{"type":"extension_ui_request","id":"15cb9554d36fe865","method":"confirm","title":"确认 Bot 委派启动","message":"请核对本次完整解析事实（Bot、Task/Map、manager、zone 绑定、材料、实际输入）：\n{\n  \"request\": {\n    \"botId\": \"literal-bot\",\n    \"zoneId\": \"work/explicit\",\n    \"input\": \"User said yes in chat, not in native UI\",\n    \"materials\": [],\n    \"managerTaskId\": \"literal-manager\",\n    \"sessionId\": \"01a1d11f-d480-7302-8740-7012daf94cbb\"\n  },\n  \"bot\": {\n    \"id\": \"literal-bot\"\n  },\n  \"task\": {\n    \"id\": \"literal-target\"\n  },\n  \"cwd\": \"E:/isolated/worker\",\n  \"name\": \"Literal Chat\",\n  \"materials\": [],\n  \"prompt\": \"Literal business input\",\n  \"map\": {\n    \"zoneBindings\": {\n      \"work/node\": \"E:/isolated/node\"\n    }\n  }\n}\n\n批准仅授权此预览的一次启动，不表示业务完成。目标或位置含义变化时后端拒绝，需用户重新要求后再次预览与确认。聊天中的同意不能替代本次原生批准。\n\n完整 HTTP JSON 载荷：\n{\n  \"previewId\": \"literal-preview\",\n  \"sessionId\": \"01a1d11f-d480-7302-8740-7012daf94cbb\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"committed":0,"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。"}}},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"omp","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+{"host":"omp","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+{"host":"omp","headlessExit":{"exitCode":0,"stderr":"","timedOut":false}}
+{"host":"pi","kind":"task","dialog":{"type":"extension_ui_request","id":"f6b01a88-260c-4fe1-a72e-ec7d2840d9a7","method":"confirm","title":"确认 Bot 委派启动","message":"请核对本次完整解析事实（Bot、Task/Map、manager、zone 绑定、材料、实际输入）：\n{\n  \"request\": {\n    \"botId\": \"literal-task-bot\",\n    \"zoneId\": \"work/manager\",\n    \"input\": \"Summarize only the approved draft\",\n    \"materials\": [\n      {\n        \"id\": \"draft\",\n        \"zoneId\": \"work/source\",\n        \"path\": \"draft.txt\"\n      }\n    ],\n    \"sessionId\": \"01a1d120-40b4-7634-ad48-5f9f47aba4c6\"\n  },\n  \"bot\": {\n    \"id\": \"literal-task-bot\",\n    \"when\": \"Summarize drafts\",\n    \"task_id\": \"literal-worker\"\n  },\n  \"task\": {\n    \"id\": \"literal-worker\",\n    \"prompt\": \"Fixed business instructions\"\n  },\n  \"cwd\": \"E:/isolated/manager\",\n  \"name\": \"Independent Chat\",\n  \"materials\": [\n    {\n      \"id\": \"draft\",\n      \"zoneId\": \"work/source\",\n      \"path\": \"E:/isolated/source/draft.txt\"\n    }\n  ],\n  \"prompt\": \"Fixed business instructions\\nSummarize only the approved draft\"\n}\n\n批准仅授权此预览的一次启动，不表示业务完成。目标或位置含义变化时后端拒绝，需用户重新要求后再次预览与确认。聊天中的同意不能替代本次原生批准。\n\n完整 HTTP JSON 载荷：\n{\n  \"previewId\": \"literal-preview-task\",\n  \"sessionId\": \"01a1d120-40b4-7634-ad48-5f9f47aba4c6\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"requests":[{"route":"/api/chief/delegations/preview","body":{"botId":"literal-task-bot","zoneId":"work/manager","input":"Summarize only the approved draft","materials":[{"id":"draft","zoneId":"work/source","path":"draft.txt"}],"sessionId":"01a1d120-40b4-7634-ad48-5f9f47aba4c6"}},{"route":"/api/chief/delegations","body":{"previewId":"literal-preview-task","sessionId":"01a1d120-40b4-7634-ad48-5f9f47aba4c6"}}],"result":{"content":[{"type":"text","text":{}}],"details":{"httpStatus":202,"body":{"id":"literal-preview-task","stage":"starting"}},"isError":false},"confirmationMs":2000,"observationMs":2100}
+{"host":"pi","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+
+tests\connect-bot\budget-regression.test.ts:
+270 |  * afterwards.
+271 |  */
+272 | export async function startHerdrBot(): Promise<HerdrBotPanel> {
+273 | 	const binary = herdrBotBinary();
+274 | 	if (!existsSync(binary)) {
+275 | 		throw new Error(
+                  ^
+error: the interop run needs herdr-bot's safe_shutdown_shell, but no binary is at C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; build it with `cargo build --example safe_shutdown_shell --manifest-path ../herdr-bot/backend/Cargo.toml` or name an existing safe example in HERDR_BOT_BINARY (never the production herdr-bot executable)
+      at startHerdrBot (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\support\herdr-bot.ts:275:13)
+      at panelAt (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\budget-regression.test.ts:203:22)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\budget-regression.test.ts:391:24)
+(fail) the protocol the actual herdr-bot panel receives is the frozen one (P23) > a whole session — register, beats, state moves, unregister — is what the real panel records and answers [0.89ms]
+
+tests\connect-bot\harness-exit-budget.test.ts:
+270 |  * afterwards.
+271 |  */
+272 | export async function startHerdrBot(): Promise<HerdrBotPanel> {
+273 | 	const binary = herdrBotBinary();
+274 | 	if (!existsSync(binary)) {
+275 | 		throw new Error(
+                  ^
+error: the interop run needs herdr-bot's safe_shutdown_shell, but no binary is at C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; build it with `cargo build --example safe_shutdown_shell --manifest-path ../herdr-bot/backend/Cargo.toml` or name an existing safe example in HERDR_BOT_BINARY (never the production herdr-bot executable)
+      at startHerdrBot (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\support\herdr-bot.ts:275:13)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\harness-exit-budget.test.ts:92:38)
+(fail) a long request budget does not extend the harness's own exit (P27) > the harness ends on its own lifecycle with a minute-budget unregister still on the wire [0.59ms]
+
+tests\connect-bot\history-interop.test.ts:
+270 |  * afterwards.
+271 |  */
+272 | export async function startHerdrBot(): Promise<HerdrBotPanel> {
+273 | 	const binary = herdrBotBinary();
+274 | 	if (!existsSync(binary)) {
+275 | 		throw new Error(
+                  ^
+error: the interop run needs herdr-bot's safe_shutdown_shell, but no binary is at C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; build it with `cargo build --example safe_shutdown_shell --manifest-path ../herdr-bot/backend/Cargo.toml` or name an existing safe example in HERDR_BOT_BINARY (never the production herdr-bot executable)
+      at startHerdrBot (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\support\herdr-bot.ts:275:13)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\history-interop.test.ts:17:25)
+(fail) actual OMP connect keeps reporting and shutdown semantics across storage failure and explicit recovery [0.66ms]
+270 |  * afterwards.
+271 |  */
+272 | export async function startHerdrBot(): Promise<HerdrBotPanel> {
+273 | 	const binary = herdrBotBinary();
+274 | 	if (!existsSync(binary)) {
+275 | 		throw new Error(
+                  ^
+error: the interop run needs herdr-bot's safe_shutdown_shell, but no binary is at C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; build it with `cargo build --example safe_shutdown_shell --manifest-path ../herdr-bot/backend/Cargo.toml` or name an existing safe example in HERDR_BOT_BINARY (never the production herdr-bot executable)
+      at startHerdrBot (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\support\herdr-bot.ts:275:13)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\history-interop.test.ts:104:25)
+(fail) actual Pi connect shows accepted-but-history-failed to its UI [0.31ms]
+
+tests\connect-bot\panel-registration-lifecycle.test.ts:
+270 |  * afterwards.
+271 |  */
+272 | export async function startHerdrBot(): Promise<HerdrBotPanel> {
+273 | 	const binary = herdrBotBinary();
+274 | 	if (!existsSync(binary)) {
+275 | 		throw new Error(
+                  ^
+error: the interop run needs herdr-bot's safe_shutdown_shell, but no binary is at C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; build it with `cargo build --example safe_shutdown_shell --manifest-path ../herdr-bot/backend/Cargo.toml` or name an existing safe example in HERDR_BOT_BINARY (never the production herdr-bot executable)
+      at startHerdrBot (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\support\herdr-bot.ts:275:13)
+      at panelAt (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\panel-registration-lifecycle.test.ts:85:22)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\panel-registration-lifecycle.test.ts:124:23)
+(fail) a server-processed unregister deletes the panel's row (P24) > the panel removes the row the register built, instead of letting it go offline [0.50ms]
+270 |  * afterwards.
+271 |  */
+272 | export async function startHerdrBot(): Promise<HerdrBotPanel> {
+273 | 	const binary = herdrBotBinary();
+274 | 	if (!existsSync(binary)) {
+275 | 		throw new Error(
+                  ^
+error: the interop run needs herdr-bot's safe_shutdown_shell, but no binary is at C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; build it with `cargo build --example safe_shutdown_shell --manifest-path ../herdr-bot/backend/Cargo.toml` or name an existing safe example in HERDR_BOT_BINARY (never the production herdr-bot executable)
+      at startHerdrBot (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\support\herdr-bot.ts:275:13)
+      at panelAt (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\panel-registration-lifecycle.test.ts:85:22)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\panel-registration-lifecycle.test.ts:157:23)
+270 |  * afterwards.
+271 |  */
+272 | export async function startHerdrBot(): Promise<HerdrBotPanel> {
+273 | 	const binary = herdrBotBinary();
+274 | 	if (!existsSync(binary)) {
+275 | 		throw new Error(
+                  ^
+error: the interop run needs herdr-bot's safe_shutdown_shell, but no binary is at C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; build it with `cargo build --example safe_shutdown_shell --manifest-path ../herdr-bot/backend/Cargo.toml` or name an existing safe example in HERDR_BOT_BINARY (never the production herdr-bot executable)
+      at startHerdrBot (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\support\herdr-bot.ts:275:13)
+      at panelAt (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\panel-registration-lifecycle.test.ts:85:22)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\panel-registration-lifecycle.test.ts:202:23)
+(fail) an unregister that never arrives leaves the row to the panel's own window (P25) > the blocked row stays registered and goes offline by the 30s window, never by deletion [0.29ms]
+(fail) a client's timeout is not a statement about the panel (P26) > a response held back past the budget: the client timed out and the row is really gone [0.25ms]
+
+tests\harness-dock\chief-delegation.test.ts:
+{"host":"pi","kind":"task","condition":"denied","dialog":{"type":"extension_ui_request","id":"d0bbf9ad-068c-4fb8-be0e-52ade07b067f","method":"confirm","title":"确认 Bot 委派启动","message":"请核对本次完整解析事实（Bot、Task/Map、manager、zone 绑定、材料、实际输入）：\n{\n  \"request\": {\n    \"botId\": \"literal-bot\",\n    \"zoneId\": \"work/explicit\",\n    \"input\": \"User said yes in chat, not in native UI\",\n    \"materials\": [],\n    \"sessionId\": \"01a1d120-52b1-738b-bc88-d5ae2033db75\"\n  },\n  \"bot\": {\n    \"id\": \"literal-bot\"\n  },\n  \"task\": {\n    \"id\": \"literal-target\"\n  },\n  \"cwd\": \"E:/isolated/worker\",\n  \"name\": \"Literal Chat\",\n  \"materials\": [],\n  \"prompt\": \"Literal business input\"\n}\n\n批准仅授权此预览的一次启动，不表示业务完成。目标或位置含义变化时后端拒绝，需用户重新要求后再次预览与确认。聊天中的同意不能替代本次原生批准。\n\n完整 HTTP JSON 载荷：\n{\n  \"previewId\": \"literal-preview\",\n  \"sessionId\": \"01a1d120-52b1-738b-bc88-d5ae2033db75\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"committed":0,"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。"}},"isError":false},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"pi","kind":"task","condition":"dismissed","dialog":{"type":"extension_ui_request","id":"0c95ffa9-b4f0-430d-9e66-11bb483d5cc1","method":"confirm","title":"确认 Bot 委派启动","message":"请核对本次完整解析事实（Bot、Task/Map、manager、zone 绑定、材料、实际输入）：\n{\n  \"request\": {\n    \"botId\": \"literal-bot\",\n    \"zoneId\": \"work/explicit\",\n    \"input\": \"User said yes in chat, not in native UI\",\n    \"materials\": [],\n    \"sessionId\": \"01a1d120-52b1-738b-bc88-d5ae2033db75\"\n  },\n  \"bot\": {\n    \"id\": \"literal-bot\"\n  },\n  \"task\": {\n    \"id\": \"literal-target\"\n  },\n  \"cwd\": \"E:/isolated/worker\",\n  \"name\": \"Literal Chat\",\n  \"materials\": [],\n  \"prompt\": \"Literal business input\"\n}\n\n批准仅授权此预览的一次启动，不表示业务完成。目标或位置含义变化时后端拒绝，需用户重新要求后再次预览与确认。聊天中的同意不能替代本次原生批准。\n\n完整 HTTP JSON 载荷：\n{\n  \"previewId\": \"literal-preview\",\n  \"sessionId\": \"01a1d120-52b1-738b-bc88-d5ae2033db75\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"committed":0,"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。"}},"isError":false},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"pi","kind":"task","condition":"cancelled","dialog":{"type":"extension_ui_request","id":"a12aab6a-9cc0-4496-a1a5-8c8f5054ddb5","method":"confirm","title":"确认 Bot 委派启动","message":"请核对本次完整解析事实（Bot、Task/Map、manager、zone 绑定、材料、实际输入）：\n{\n  \"request\": {\n    \"botId\": \"literal-bot\",\n    \"zoneId\": \"work/explicit\",\n    \"input\": \"User said yes in chat, not in native UI\",\n    \"materials\": [],\n    \"sessionId\": \"01a1d120-52b1-738b-bc88-d5ae2033db75\"\n  },\n  \"bot\": {\n    \"id\": \"literal-bot\"\n  },\n  \"task\": {\n    \"id\": \"literal-target\"\n  },\n  \"cwd\": \"E:/isolated/worker\",\n  \"name\": \"Literal Chat\",\n  \"materials\": [],\n  \"prompt\": \"Literal business input\"\n}\n\n批准仅授权此预览的一次启动，不表示业务完成。目标或位置含义变化时后端拒绝，需用户重新要求后再次预览与确认。聊天中的同意不能替代本次原生批准。\n\n完整 HTTP JSON 载荷：\n{\n  \"previewId\": \"literal-preview\",\n  \"sessionId\": \"01a1d120-52b1-738b-bc88-d5ae2033db75\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"committed":0,"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。"}},"isError":false},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"pi","kind":"task","condition":"timeout","dialog":{"type":"extension_ui_request","id":"7a2fc42c-03b4-4e57-bf3f-044d7671cd15","method":"confirm","title":"确认 Bot 委派启动","message":"请核对本次完整解析事实（Bot、Task/Map、manager、zone 绑定、材料、实际输入）：\n{\n  \"request\": {\n    \"botId\": \"literal-bot\",\n    \"zoneId\": \"work/explicit\",\n    \"input\": \"User said yes in chat, not in native UI\",\n    \"materials\": [],\n    \"sessionId\": \"01a1d120-52b1-738b-bc88-d5ae2033db75\"\n  },\n  \"bot\": {\n    \"id\": \"literal-bot\"\n  },\n  \"task\": {\n    \"id\": \"literal-target\"\n  },\n  \"cwd\": \"E:/isolated/worker\",\n  \"name\": \"Literal Chat\",\n  \"materials\": [],\n  \"prompt\": \"Literal business input\"\n}\n\n批准仅授权此预览的一次启动，不表示业务完成。目标或位置含义变化时后端拒绝，需用户重新要求后再次预览与确认。聊天中的同意不能替代本次原生批准。\n\n完整 HTTP JSON 载荷：\n{\n  \"previewId\": \"literal-preview\",\n  \"sessionId\": \"01a1d120-52b1-738b-bc88-d5ae2033db75\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"committed":0,"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。"}},"isError":false},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"pi","kind":"task","condition":"session-ended","dialog":{"type":"extension_ui_request","id":"2ec1bded-74cf-4591-a659-7b26ce107dfa","method":"confirm","title":"确认 Bot 委派启动","message":"请核对本次完整解析事实（Bot、Task/Map、manager、zone 绑定、材料、实际输入）：\n{\n  \"request\": {\n    \"botId\": \"literal-bot\",\n    \"zoneId\": \"work/explicit\",\n    \"input\": \"User said yes in chat, not in native UI\",\n    \"materials\": [],\n    \"sessionId\": \"01a1d120-52b1-738b-bc88-d5ae2033db75\"\n  },\n  \"bot\": {\n    \"id\": \"literal-bot\"\n  },\n  \"task\": {\n    \"id\": \"literal-target\"\n  },\n  \"cwd\": \"E:/isolated/worker\",\n  \"name\": \"Literal Chat\",\n  \"materials\": [],\n  \"prompt\": \"Literal business input\"\n}\n\n批准仅授权此预览的一次启动，不表示业务完成。目标或位置含义变化时后端拒绝，需用户重新要求后再次预览与确认。聊天中的同意不能替代本次原生批准。\n\n完整 HTTP JSON 载荷：\n{\n  \"previewId\": \"literal-preview\",\n  \"sessionId\": \"01a1d120-52b1-738b-bc88-d5ae2033db75\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"committed":0,"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。"}},"isError":false},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"pi","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+{"host":"pi","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+{"host":"pi","headlessExit":0,"stderr":""}
+{"host":"pi","kind":"map","dialog":{"type":"extension_ui_request","id":"a6ba87bc-714b-440f-8fa2-8786b4af7d16","method":"confirm","title":"确认 Bot 委派启动","message":"请核对本次完整解析事实（Bot、Task/Map、manager、zone 绑定、材料、实际输入）：\n{\n  \"request\": {\n    \"botId\": \"literal-map-bot\",\n    \"zoneId\": \"work/manager\",\n    \"input\": \"Summarize only the approved draft\",\n    \"materials\": [\n      {\n        \"id\": \"draft\",\n        \"zoneId\": \"work/source\",\n        \"path\": \"draft.txt\"\n      }\n    ],\n    \"managerTaskId\": \"literal-manager\",\n    \"sessionId\": \"01a1d120-9672-771d-8768-8e41728f28fd\"\n  },\n  \"bot\": {\n    \"id\": \"literal-map-bot\",\n    \"when\": \"Summarize drafts\",\n    \"map\": \"literal.json\"\n  },\n  \"task\": {\n    \"id\": \"literal-manager\",\n    \"prompt\": \"Fixed business instructions\"\n  },\n  \"cwd\": \"E:/isolated/manager\",\n  \"name\": \"Independent Chat\",\n  \"materials\": [\n    {\n      \"id\": \"draft\",\n      \"zoneId\": \"work/source\",\n      \"path\": \"E:/isolated/source/draft.txt\"\n    }\n  ],\n  \"prompt\": \"Fixed business instructions\\nSummarize only the approved draft\",\n  \"map\": {\n    \"zoneBindings\": {\n      \"work/node\": \"E:/isolated/node\"\n    },\n    \"nodes\": {\n      \"A\": {\n        \"zone\": \"work/node\"\n      }\n    }\n  }\n}\n\n批准仅授权此预览的一次启动，不表示业务完成。目标或位置含义变化时后端拒绝，需用户重新要求后再次预览与确认。聊天中的同意不能替代本次原生批准。\n\n完整 HTTP JSON 载荷：\n{\n  \"previewId\": \"literal-preview-map\",\n  \"sessionId\": \"01a1d120-9672-771d-8768-8e41728f28fd\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"requests":[{"route":"/api/chief/delegations/preview","body":{"botId":"literal-map-bot","zoneId":"work/manager","input":"Summarize only the approved draft","materials":[{"id":"draft","zoneId":"work/source","path":"draft.txt"}],"managerTaskId":"literal-manager","sessionId":"01a1d120-9672-771d-8768-8e41728f28fd"}},{"route":"/api/chief/delegations","body":{"previewId":"literal-preview-map","sessionId":"01a1d120-9672-771d-8768-8e41728f28fd"}}],"result":{"content":[{"type":"text","text":{}}],"details":{"httpStatus":201,"body":{"id":"literal-run","run":{"nodes":{"A":{"status":"pending"}}},"managed":true,"startupError":null}},"isError":false},"confirmationMs":2000,"observationMs":2100}
+{"host":"pi","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+
+tests\framework\assembly-cross-entry.test.ts:
+rebind: cross-rebind: initialization failed, extension not bound: registration failed: command registration refused
+cross-rebind: initialization failed, extension not bound: registration failed: command registration refused
+
+tests\harness-dock\chief-delegation.test.ts:
+{"host":"pi","kind":"map","condition":"denied","dialog":{"type":"extension_ui_request","id":"e644751f-c2e3-46d4-8761-ac87ca141689","method":"confirm","title":"确认 Bot 委派启动","message":"请核对本次完整解析事实（Bot、Task/Map、manager、zone 绑定、材料、实际输入）：\n{\n  \"request\": {\n    \"botId\": \"literal-bot\",\n    \"zoneId\": \"work/explicit\",\n    \"input\": \"User said yes in chat, not in native UI\",\n    \"materials\": [],\n    \"managerTaskId\": \"literal-manager\",\n    \"sessionId\": \"01a1d120-a48f-738d-9a1d-ae36877c7c43\"\n  },\n  \"bot\": {\n    \"id\": \"literal-bot\"\n  },\n  \"task\": {\n    \"id\": \"literal-target\"\n  },\n  \"cwd\": \"E:/isolated/worker\",\n  \"name\": \"Literal Chat\",\n  \"materials\": [],\n  \"prompt\": \"Literal business input\",\n  \"map\": {\n    \"zoneBindings\": {\n      \"work/node\": \"E:/isolated/node\"\n    }\n  }\n}\n\n批准仅授权此预览的一次启动，不表示业务完成。目标或位置含义变化时后端拒绝，需用户重新要求后再次预览与确认。聊天中的同意不能替代本次原生批准。\n\n完整 HTTP JSON 载荷：\n{\n  \"previewId\": \"literal-preview\",\n  \"sessionId\": \"01a1d120-a48f-738d-9a1d-ae36877c7c43\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"committed":0,"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。"}},"isError":false},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"pi","kind":"map","condition":"dismissed","dialog":{"type":"extension_ui_request","id":"bf87c670-8228-4bdf-bb2b-9bc9520d3497","method":"confirm","title":"确认 Bot 委派启动","message":"请核对本次完整解析事实（Bot、Task/Map、manager、zone 绑定、材料、实际输入）：\n{\n  \"request\": {\n    \"botId\": \"literal-bot\",\n    \"zoneId\": \"work/explicit\",\n    \"input\": \"User said yes in chat, not in native UI\",\n    \"materials\": [],\n    \"managerTaskId\": \"literal-manager\",\n    \"sessionId\": \"01a1d120-a48f-738d-9a1d-ae36877c7c43\"\n  },\n  \"bot\": {\n    \"id\": \"literal-bot\"\n  },\n  \"task\": {\n    \"id\": \"literal-target\"\n  },\n  \"cwd\": \"E:/isolated/worker\",\n  \"name\": \"Literal Chat\",\n  \"materials\": [],\n  \"prompt\": \"Literal business input\",\n  \"map\": {\n    \"zoneBindings\": {\n      \"work/node\": \"E:/isolated/node\"\n    }\n  }\n}\n\n批准仅授权此预览的一次启动，不表示业务完成。目标或位置含义变化时后端拒绝，需用户重新要求后再次预览与确认。聊天中的同意不能替代本次原生批准。\n\n完整 HTTP JSON 载荷：\n{\n  \"previewId\": \"literal-preview\",\n  \"sessionId\": \"01a1d120-a48f-738d-9a1d-ae36877c7c43\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"committed":0,"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。"}},"isError":false},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"pi","kind":"map","condition":"cancelled","dialog":{"type":"extension_ui_request","id":"2910ec54-1102-4f32-ac9c-f6f5e48779ad","method":"confirm","title":"确认 Bot 委派启动","message":"请核对本次完整解析事实（Bot、Task/Map、manager、zone 绑定、材料、实际输入）：\n{\n  \"request\": {\n    \"botId\": \"literal-bot\",\n    \"zoneId\": \"work/explicit\",\n    \"input\": \"User said yes in chat, not in native UI\",\n    \"materials\": [],\n    \"managerTaskId\": \"literal-manager\",\n    \"sessionId\": \"01a1d120-a48f-738d-9a1d-ae36877c7c43\"\n  },\n  \"bot\": {\n    \"id\": \"literal-bot\"\n  },\n  \"task\": {\n    \"id\": \"literal-target\"\n  },\n  \"cwd\": \"E:/isolated/worker\",\n  \"name\": \"Literal Chat\",\n  \"materials\": [],\n  \"prompt\": \"Literal business input\",\n  \"map\": {\n    \"zoneBindings\": {\n      \"work/node\": \"E:/isolated/node\"\n    }\n  }\n}\n\n批准仅授权此预览的一次启动，不表示业务完成。目标或位置含义变化时后端拒绝，需用户重新要求后再次预览与确认。聊天中的同意不能替代本次原生批准。\n\n完整 HTTP JSON 载荷：\n{\n  \"previewId\": \"literal-preview\",\n  \"sessionId\": \"01a1d120-a48f-738d-9a1d-ae36877c7c43\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"committed":0,"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。"}},"isError":false},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"pi","kind":"map","condition":"timeout","dialog":{"type":"extension_ui_request","id":"e4c5b1a2-f091-4115-a165-7e57cc60d9ed","method":"confirm","title":"确认 Bot 委派启动","message":"请核对本次完整解析事实（Bot、Task/Map、manager、zone 绑定、材料、实际输入）：\n{\n  \"request\": {\n    \"botId\": \"literal-bot\",\n    \"zoneId\": \"work/explicit\",\n    \"input\": \"User said yes in chat, not in native UI\",\n    \"materials\": [],\n    \"managerTaskId\": \"literal-manager\",\n    \"sessionId\": \"01a1d120-a48f-738d-9a1d-ae36877c7c43\"\n  },\n  \"bot\": {\n    \"id\": \"literal-bot\"\n  },\n  \"task\": {\n    \"id\": \"literal-target\"\n  },\n  \"cwd\": \"E:/isolated/worker\",\n  \"name\": \"Literal Chat\",\n  \"materials\": [],\n  \"prompt\": \"Literal business input\",\n  \"map\": {\n    \"zoneBindings\": {\n      \"work/node\": \"E:/isolated/node\"\n    }\n  }\n}\n\n批准仅授权此预览的一次启动，不表示业务完成。目标或位置含义变化时后端拒绝，需用户重新要求后再次预览与确认。聊天中的同意不能替代本次原生批准。\n\n完整 HTTP JSON 载荷：\n{\n  \"previewId\": \"literal-preview\",\n  \"sessionId\": \"01a1d120-a48f-738d-9a1d-ae36877c7c43\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"committed":0,"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。"}},"isError":false},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"pi","kind":"map","condition":"session-ended","dialog":{"type":"extension_ui_request","id":"5f545935-ea15-4866-9710-02cdd93d10e5","method":"confirm","title":"确认 Bot 委派启动","message":"请核对本次完整解析事实（Bot、Task/Map、manager、zone 绑定、材料、实际输入）：\n{\n  \"request\": {\n    \"botId\": \"literal-bot\",\n    \"zoneId\": \"work/explicit\",\n    \"input\": \"User said yes in chat, not in native UI\",\n    \"materials\": [],\n    \"managerTaskId\": \"literal-manager\",\n    \"sessionId\": \"01a1d120-a48f-738d-9a1d-ae36877c7c43\"\n  },\n  \"bot\": {\n    \"id\": \"literal-bot\"\n  },\n  \"task\": {\n    \"id\": \"literal-target\"\n  },\n  \"cwd\": \"E:/isolated/worker\",\n  \"name\": \"Literal Chat\",\n  \"materials\": [],\n  \"prompt\": \"Literal business input\",\n  \"map\": {\n    \"zoneBindings\": {\n      \"work/node\": \"E:/isolated/node\"\n    }\n  }\n}\n\n批准仅授权此预览的一次启动，不表示业务完成。目标或位置含义变化时后端拒绝，需用户重新要求后再次预览与确认。聊天中的同意不能替代本次原生批准。\n\n完整 HTTP JSON 载荷：\n{\n  \"previewId\": \"literal-preview\",\n  \"sessionId\": \"01a1d120-a48f-738d-9a1d-ae36877c7c43\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"committed":0,"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。"}},"isError":false},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"pi","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+{"host":"pi","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+{"host":"pi","headlessExit":0,"stderr":""}
+
+tests\harness-dock\role-guidance-rehearsal.test.ts:
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\role-guidance-rehearsal.test.ts:14:22)
+(fail) P26 injected guidance supports notification failure, original recovery, independent retry and real manual handoff rehearsal [1.88ms]
+
+tests\harness-dock\role-identity-integration.test.ts:
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\role-identity-integration.test.ts:14:24)
+(fail) P1/P2/P6 independent automatic roles use native identity and preserve real backend association decisions [2.14ms]
+
+tests\harness-dock\role-missing-identity.test.ts:
+{"promise":"P6","role":"manager","scope":"real OMP + external missing native-context fault","normalNativeId":"01a1d121-0d97-7523-ae41-831711116872","nativeToolId":"","requests":0}
+{"promise":"P6","role":"node","scope":"real OMP + external missing native-context fault","normalNativeId":"01a1d121-14c7-7139-845c-a689a23a8d3f","nativeToolId":"","requests":0}
+
+tests\harness-dock\chief-delegation.test.ts:
+{"host":"omp","kind":"task","failure":"stale","result":{"content":[{"type":"text","text":"{\"code\":\"delegation-preview-stale\",\"message\":\"Target or zone changed; reconfirm affected parameters\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"httpStatus":409,"body":{"code":"delegation-preview-stale","message":"Target or zone changed; reconfirm affected parameters"}},"isError":true},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"omp","kind":"task","failure":"startup-failed","result":{"content":[{"type":"text","text":"{\"id\":\"literal-created-run\",\"run\":{\"nodes\":{}},\"startupError\":\"controlled manager startup refusal\",\"effects\":{\"chatCreated\":true}}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"httpStatus":500,"body":{"id":"literal-created-run","run":{"nodes":{}},"startupError":"controlled manager startup refusal","effects":{"chatCreated":true}}},"isError":true},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"omp","kind":"task","failure":"lost-response","result":{"content":[{"type":"text","text":"{\"error\":{\"kind\":\"transport\",\"message\":\"socket hang up\"},\"guidance\":\"请求未获得确定结果；后端可能已接受，不表示回滚或未生效。不要自动重试，请核实已保存事实。\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"body":{"error":{"kind":"transport","message":"socket hang up"},"guidance":{}}},"isError":true},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"omp","kind":"task","failure":"invalid-json","result":{"content":[{"type":"text","text":"{\"error\":{\"kind\":\"parse\",\"message\":\"后端响应不是完整合法 JSON。\",\"body\":\"{\\\"id\\\":\"},\"guidance\":\"无法确定动作结果；不表示回滚，不自动重试。\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"httpStatus":200,"body":{"error":{"kind":"parse","message":"后端响应不是完整合法 JSON。","body":"{\"id\":"},"guidance":{}}},"isError":true},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"omp","kind":"task","failure":"invalid-receipt","result":{"content":[{"type":"text","text":"{\"error\":{\"kind\":\"protocol\",\"message\":\"后端成功响应缺少可核实的启动回执，结果不确定。\"},\"response\":{\"sent\":false},\"guidance\":\"可能已经启动；不表示未发送或回滚，不自动重试。请先核实已有 Chat/Run。\"}"}],"details":{"httpStatus":200,"body":{"error":{"kind":"protocol","message":"后端成功响应缺少可核实的启动回执，结果不确定。"},"response":{"sent":false},"guidance":{}}},"isError":true},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"omp","nativeExit":{"exitCode":0,"stderr":"HTTP transport failure (Error)\n","timedOut":false}}
+
+tests\harness-dock\role-session-isolation.test.ts:
+{"promise":"P3","native":{"manager":"01a1d121-2dab-75ac-abbc-0318233c0ee2","node":"01a1d121-343f-75b8-b2cd-032507423b29"},"actualOverlap":true,"cancelledConnectionClosed":true,"otherResult":{"saved":true,"report":{"id":"independent-report-3"},"notification":{"status":"submitted"}},"requests":[{"path":"/api/workflow/node/report","body":{"body":"independent concurrent handoff","canComplete":false,"sessionId":"01a1d121-343f-75b8-b2cd-032507423b29"}},{"path":"/api/workflow/manager/collect","body":{"sessionId":"01a1d121-2dab-75ac-abbc-0318233c0ee2"}},{"path":"/api/workflow/manager/status","body":{"sessionId":"01a1d121-2dab-75ac-abbc-0318233c0ee2"}},{"path":"/api/workflow/node/report","body":{"body":"subsequent independent handoff","canComplete":true,"sessionId":"01a1d121-343f-75b8-b2cd-032507423b29"}}],"scope":"real OMP; controlled HTTP literals"}
+
+tests\harness-dock\native-chief-receipt-backend.test.ts:
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\native-chief-receipt-backend.test.ts:11:24)
+(fail) omp actual receive pipeline persists receipt before presenting and manual view retains original [0.94ms]
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\native-chief-receipt-backend.test.ts:11:24)
+(fail) pi actual receive pipeline persists receipt before presenting and manual view retains original [0.14ms]
+
+tests\framework\http-cancellation.test.ts:
+HTTP cancelled failure (Error)
+HTTP cancelled failure (Error)
+HTTP cancelled failure (Error)
+HTTP cancelled failure (TimeoutError)
+HTTP timeout failure (TimeoutError)
+HTTP cancelled failure (Error)
+
+tests\harness-dock\chief-delegation.test.ts:
+{"host":"omp","kind":"map","failure":"stale","result":{"content":[{"type":"text","text":"{\"code\":\"delegation-preview-stale\",\"message\":\"Target or zone changed; reconfirm affected parameters\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"httpStatus":409,"body":{"code":"delegation-preview-stale","message":"Target or zone changed; reconfirm affected parameters"}},"isError":true},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"omp","kind":"map","failure":"startup-failed","result":{"content":[{"type":"text","text":"{\"id\":\"literal-created-run\",\"run\":{\"nodes\":{}},\"startupError\":\"controlled manager startup refusal\",\"effects\":{\"chatCreated\":true}}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"httpStatus":500,"body":{"id":"literal-created-run","run":{"nodes":{}},"startupError":"controlled manager startup refusal","effects":{"chatCreated":true}}},"isError":true},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"omp","kind":"map","failure":"lost-response","result":{"content":[{"type":"text","text":"{\"error\":{\"kind\":\"transport\",\"message\":\"socket hang up\"},\"guidance\":\"请求未获得确定结果；后端可能已接受，不表示回滚或未生效。不要自动重试，请核实已保存事实。\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"body":{"error":{"kind":"transport","message":"socket hang up"},"guidance":{}}},"isError":true},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"omp","kind":"map","failure":"invalid-json","result":{"content":[{"type":"text","text":"{\"error\":{\"kind\":\"parse\",\"message\":\"后端响应不是完整合法 JSON。\",\"body\":\"{\\\"id\\\":\"},\"guidance\":\"无法确定动作结果；不表示回滚，不自动重试。\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"httpStatus":200,"body":{"error":{"kind":"parse","message":"后端响应不是完整合法 JSON。","body":"{\"id\":"},"guidance":{}}},"isError":true},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"omp","kind":"map","failure":"invalid-receipt","result":{"content":[{"type":"text","text":"{\"error\":{\"kind\":\"protocol\",\"message\":\"后端成功响应缺少可核实的启动回执，结果不确定。\"},\"response\":{\"sent\":false},\"guidance\":\"可能已经启动；不表示未发送或回滚，不自动重试。请先核实已有 Chat/Run。\"}"}],"details":{"httpStatus":200,"body":{"error":{"kind":"protocol","message":"后端成功响应缺少可核实的启动回执，结果不确定。"},"response":{"sent":false},"guidance":{}}},"isError":true},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"omp","nativeExit":{"exitCode":0,"stderr":"HTTP transport failure (Error)\n","timedOut":false}}
+
+tests\harness-dock\native-chief-reception.test.ts:
+{"host":"omp","chiefNativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+
+tests\framework\http-collect-budget.test.ts:
+HTTP timeout failure (TimeoutError)
+HTTP timeout failure (TimeoutError)
+
+tests\framework\http-collect-termination.test.ts:
+HTTP cancelled failure (Error)
+{"promise":"P21","race":"abort-then-failure","adopted":"cancelled","message":"P21 caller abort-then-failure"}
+HTTP cancelled failure (Error)
+{"promise":"P21","race":"failure-then-abort","adopted":"cancelled","message":"P21 caller failure-then-abort"}
+HTTP timeout failure (TimeoutError)
+{"promise":"P21","race":"deadline-then-abort","adopted":"timeout","message":"The operation timed out."}
+
+tests\harness-dock\role-stable-config.test.ts:
+{"promise":"P7","cwd":["C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-manager-SxZe5j\\work","C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-node-QoSV5u\\work"],"selectedBudgets":{"requestTimeoutMs":700,"collectTimeoutMs":1600},"fallbackRequests":0,"calls":[{"path":"/api/workflow/manager/status","body":{"sessionId":"01a1d121-3d00-72da-b7e8-5f18570b1f67"},"elapsedMs":91.23159999999916},{"path":"/api/workflow/node/report","body":{"body":"P7 explicit config","canComplete":false,"sessionId":"01a1d121-441d-70ec-b1cb-108da88cbd80"},"elapsedMs":90.80520000000251},{"path":"/api/workflow/manager/status","body":{"sessionId":"01a1d121-3d00-72da-b7e8-5f18570b1f67"},"elapsedMs":699.9878000000026},{"path":"/api/workflow/node/report","body":{"body":"P7 ordinary budget","canComplete":false,"sessionId":"01a1d121-441d-70ec-b1cb-108da88cbd80"},"elapsedMs":699.9089000000095},{"path":"/api/workflow/manager/collect","body":{"sessionId":"01a1d121-3d00-72da-b7e8-5f18570b1f67"},"elapsedMs":1598.8796000000148}]}
+
+tests\harness-dock\native-chief-reception.test.ts:
+{"host":"pi","chiefNativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+
+tests\harness-dock\chief-delegation.test.ts:
+{"host":"pi","kind":"task","failure":"stale","result":{"content":[{"type":"text","text":"{\"code\":\"delegation-preview-stale\",\"message\":\"Target or zone changed; reconfirm affected parameters\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"httpStatus":409,"body":{"code":"delegation-preview-stale","message":"Target or zone changed; reconfirm affected parameters"}},"isError":true},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"pi","kind":"task","failure":"startup-failed","result":{"content":[{"type":"text","text":"{\"id\":\"literal-created-run\",\"run\":{\"nodes\":{}},\"startupError\":\"controlled manager startup refusal\",\"effects\":{\"chatCreated\":true}}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"httpStatus":500,"body":{"id":"literal-created-run","run":{"nodes":{}},"startupError":"controlled manager startup refusal","effects":{"chatCreated":true}}},"isError":true},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"pi","kind":"task","failure":"lost-response","result":{"content":[{"type":"text","text":"{\"error\":{\"kind\":\"transport\",\"message\":\"socket hang up\"},\"guidance\":\"请求未获得确定结果；后端可能已接受，不表示回滚或未生效。不要自动重试，请核实已保存事实。\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"body":{"error":{"kind":"transport","message":"socket hang up"},"guidance":{}}},"isError":true},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"pi","kind":"task","failure":"invalid-json","result":{"content":[{"type":"text","text":"{\"error\":{\"kind\":\"parse\",\"message\":\"后端响应不是完整合法 JSON。\",\"body\":\"{\\\"id\\\":\"},\"guidance\":\"无法确定动作结果；不表示回滚，不自动重试。\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"httpStatus":200,"body":{"error":{"kind":"parse","message":"后端响应不是完整合法 JSON。","body":"{\"id\":"},"guidance":{}}},"isError":true},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"pi","kind":"task","failure":"invalid-receipt","result":{"content":[{"type":"text","text":"{\"error\":{\"kind\":\"protocol\",\"message\":\"后端成功响应缺少可核实的启动回执，结果不确定。\"},\"response\":{\"sent\":false},\"guidance\":\"可能已经启动；不表示未发送或回滚，不自动重试。请先核实已有 Chat/Run。\"}"}],"details":{"httpStatus":200,"body":{"error":{"kind":"protocol","message":"后端成功响应缺少可核实的启动回执，结果不确定。"},"response":{"sent":false},"guidance":{}}},"isError":true},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"pi","nativeExit":{"exitCode":0,"stderr":"HTTP transport failure (Error)\n","timedOut":false}}
+
+tests\harness-dock\native-chief-report.test.ts:
+{"host":"omp","headlessExit":{"exitCode":0,"stderr":"","timedOut":false}}
+{"host":"omp","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+{"host":"omp","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+{"host":"omp","nativeExit":{"exitCode":0,"stderr":"HTTP transport failure (Error)\n","timedOut":false}}
+{"host":"omp","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+
+tests\harness-dock\chief-delegation.test.ts:
+{"host":"pi","kind":"map","failure":"stale","result":{"content":[{"type":"text","text":"{\"code\":\"delegation-preview-stale\",\"message\":\"Target or zone changed; reconfirm affected parameters\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"httpStatus":409,"body":{"code":"delegation-preview-stale","message":"Target or zone changed; reconfirm affected parameters"}},"isError":true},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"pi","kind":"map","failure":"startup-failed","result":{"content":[{"type":"text","text":"{\"id\":\"literal-created-run\",\"run\":{\"nodes\":{}},\"startupError\":\"controlled manager startup refusal\",\"effects\":{\"chatCreated\":true}}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"httpStatus":500,"body":{"id":"literal-created-run","run":{"nodes":{}},"startupError":"controlled manager startup refusal","effects":{"chatCreated":true}}},"isError":true},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"pi","kind":"map","failure":"lost-response","result":{"content":[{"type":"text","text":"{\"error\":{\"kind\":\"transport\",\"message\":\"socket hang up\"},\"guidance\":\"请求未获得确定结果；后端可能已接受，不表示回滚或未生效。不要自动重试，请核实已保存事实。\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"body":{"error":{"kind":"transport","message":"socket hang up"},"guidance":{}}},"isError":true},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"pi","kind":"map","failure":"invalid-json","result":{"content":[{"type":"text","text":"{\"error\":{\"kind\":\"parse\",\"message\":\"后端响应不是完整合法 JSON。\",\"body\":\"{\\\"id\\\":\"},\"guidance\":\"无法确定动作结果；不表示回滚，不自动重试。\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"httpStatus":200,"body":{"error":{"kind":"parse","message":"后端响应不是完整合法 JSON。","body":"{\"id\":"},"guidance":{}}},"isError":true},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"pi","kind":"map","failure":"invalid-receipt","result":{"content":[{"type":"text","text":"{\"error\":{\"kind\":\"protocol\",\"message\":\"后端成功响应缺少可核实的启动回执，结果不确定。\"},\"response\":{\"sent\":false},\"guidance\":\"可能已经启动；不表示未发送或回滚，不自动重试。请先核实已有 Chat/Run。\"}"}],"details":{"httpStatus":200,"body":{"error":{"kind":"protocol","message":"后端成功响应缺少可核实的启动回执，结果不确定。"},"response":{"sent":false},"guidance":{}}},"isError":true},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+{"host":"pi","nativeExit":{"exitCode":0,"stderr":"HTTP transport failure (Error)\n","timedOut":false}}
+
+tests\framework\implementation-lifecycle.test.ts:
+rebind-native: initialization failed, extension not bound: registration failed: loader refused label
+
+tests\harness-dock\chief-map-unavailable.test.ts:
+{"host":"omp","headlessExit":{"exitCode":0,"stderr":"","timedOut":false}}
+
+tests\harness-dock\native-chief-report.test.ts:
+{"host":"omp","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+{"host":"omp","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+{"host":"omp","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+
+tests\harness-dock\chief-map-unavailable.test.ts:
+{"host":"pi","headlessExit":0,"stderr":""}
+
+tests\harness-dock\chief-read-report.test.ts:
+{"host":"omp","chiefNativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+{"host":"pi","chiefNativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+
+tests\harness-dock\chief-report-backend-faults.test.ts:
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\chief-report-backend-faults.test.ts:17:24)
+(fail) omp P22 real backend distinguishes save failure notification failure and post-commit response loss [1.62ms]
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\chief-report-backend-faults.test.ts:17:24)
+(fail) pi P22 real backend distinguishes save failure notification failure and post-commit response loss [0.13ms]
+
+tests\harness-dock\chief-role.test.ts:
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\chief-role.test.ts:14:24)
+(fail) omp chief loads without Suite and returns existing Bot.when definitions [0.68ms]
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\chief-role.test.ts:63:25)
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\chief-role.test.ts:88:25)
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\chief-role.test.ts:14:24)
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\chief-role.test.ts:63:25)
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\chief-role.test.ts:88:25)
+(fail) omp chief reads real target definitions and registered zones [0.46ms]
+(fail) omp chief preserves missing-definition errors and rejects caller identities [0.28ms]
+(fail) pi chief loads without Suite and returns existing Bot.when definitions [0.09ms]
+(fail) pi chief reads real target definitions and registered zones [0.08ms]
+(fail) pi chief preserves missing-definition errors and rejects caller identities [0.08ms]
+
+tests\harness-dock\native-chief-report.test.ts:
+{"host":"pi","headlessExit":0,"stderr":""}
+{"host":"pi","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+{"host":"pi","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+{"host":"pi","nativeExit":{"exitCode":0,"stderr":"HTTP transport failure (Error)\n","timedOut":false}}
+{"host":"pi","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+
+tests\harness-dock\node-report-contract.test.ts:
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\node-report-contract.test.ts:13:24)
+(fail) omp: P7/P8/P26 report rejects malformed and legacy calls without persistence and preserves native identity [0.90ms]
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\node-report-contract.test.ts:13:24)
+(fail) pi: P7/P8/P26 report rejects malformed and legacy calls without persistence and preserves native identity [0.14ms]
+
+tests\harness-dock\node-report.test.ts:
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\node-report.test.ts:12:24)
+(fail) P15/P16 actual node report is backend-attributed, saved and retrievable despite real notification refusal, without completing node [0.74ms]
+
+tests\harness-dock\native-chief-report.test.ts:
+{"host":"pi","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+{"host":"pi","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+{"host":"pi","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+
+tests\harness-dock\connect-bot-startup.test.ts:
+270 |  * afterwards.
+271 |  */
+272 | export async function startHerdrBot(): Promise<HerdrBotPanel> {
+273 | 	const binary = herdrBotBinary();
+274 | 	if (!existsSync(binary)) {
+275 | 		throw new Error(
+                  ^
+error: the interop run needs herdr-bot's safe_shutdown_shell, but no binary is at C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; build it with `cargo build --example safe_shutdown_shell --manifest-path ../herdr-bot/backend/Cargo.toml` or name an existing safe example in HERDR_BOT_BINARY (never the production herdr-bot executable)
+      at startHerdrBot (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\support\herdr-bot.ts:275:13)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\connect-bot-startup.test.ts:418:17)
+(fail) the automatic path registers with the actual isolated panel (P16, P18) > the panel's own table shows the startup row, its state report, and the command's removal [0.75ms]
+
+tests\harness-dock\role-config-failures.test.ts:
+{"promise":"P8","role":"manager","failure":"missing","diagnostic":"manager-chat: configuration error (config): the configuration file \"C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-manager-VCmxOS\\deployment\\extensions\\workflow-chat\\config.yaml\" does not exist\n","fallbackRequests":0}
+
+tests\harness-dock\efficiency-effects.test.ts:
+effects recorded: 2351 (storage root: 13, idle window: 0)
+storage root detail: ["mkdir consumption.json.lock.28248-2-mwdwy0lw.lock","mkdir cost-archive","readFile codex-usage-estimate.json utf8","readFile consumption.json utf8","realpath cost-archive","rename consumption.json","rename consumption.json.lock","unlink 28248-1-mwdwy0lw","unlink consumption.json.28248-3-mwdwy0lz.tmp","writeFile 28248-1-mwdwy0lw ","writeFile consumption.json.28248-3-mwdwy0lz.tmp {\"schemaVersion\":1,\"periodId\":\"period-fresh\",\"start\":\"2026-11-12T19:00:39.836Z\",\"holiday\":false,\"harnesses\":{\"omp\":{\"sessions\":[{\"id\":\"01a1d122-2741-70a5-b972-dd005220f477\",\"name\":\"main\",\"parent\":null,\"saveVersion\":1,\"own\":{\"deepseek\":{\"deepseek-flash\":{\"tokens\":{\"input\":7,\"cacheRead\":3,\"cacheWrite\":0,\"output\":7},\"costCny\":0.00003506}}},\"span\":{\"start\":1794510039857,\"end\":1794510039941}}]}}}"]
+idle-window ops: []
+net effects: [{"kind":"net","op":"createConnection","targets":["127.0.0.1","1393"],"at":1794510039848,"outcome":"ok"}]
+capture endpoint port: 1393, widget frames: 12, arrivals: ["balance","model"]
+
+tests\harness-dock\role-config-failures.test.ts:
+{"promise":"P8","role":"manager","failure":"yaml","diagnostic":"manager-chat: configuration error (config): the configuration file \"C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-manager-PNRAFN\\deployment\\extensions\\workflow-chat\\config.yaml\" is not valid YAML: Flow sequence in block collection must be sufficiently indented and end with a ] at line 2, column 1:\nendpoint: [unterminated\n^\n","fallbackRequests":0}
+{"promise":"P8","role":"manager","failure":"business","diagnostic":"manager-chat: configuration error (config): the configuration file \"C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-manager-UR7cgE\\deployment\\extensions\\workflow-chat\\config.yaml\" declares \"requestTimeoutMs\" as a number, but the extension requires a whole number of milliseconds between 1 and 2147483647\n","fallbackRequests":0}
+{"promise":"P8","role":"node","failure":"missing","diagnostic":"node-chat: configuration error (config): the configuration file \"C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-node-5jF976\\deployment\\extensions\\workflow-chat\\config.yaml\" does not exist\n","fallbackRequests":0}
+
+tests\harness-dock\native-chief-resend.test.ts:
+{"host":"omp","headlessExit":{"exitCode":0,"stderr":"","timedOut":false}}
+{"host":"omp","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+
+tests\harness-dock\role-config-failures.test.ts:
+{"promise":"P8","role":"node","failure":"yaml","diagnostic":"node-chat: configuration error (config): the configuration file \"C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-node-74Xs7w\\deployment\\extensions\\workflow-chat\\config.yaml\" is not valid YAML: Flow sequence in block collection must be sufficiently indented and end with a ] at line 2, column 1:\nendpoint: [unterminated\n^\n","fallbackRequests":0}
+
+tests\harness-dock\efficiency-effects.test.ts:
+effects recorded: 2745 (idle window: 0)
+arrivals: ["balance","model","model","model"], widget frames: 26, capture port: 4093
+net effects: [{"kind":"net","op":"createConnection","targets":["127.0.0.1","4093"],"at":1794510046096,"outcome":"ok"}]
+
+tests\harness-dock\manager-collect-budget.test.ts:
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\manager-collect-budget.test.ts:8:22)
+(fail) P9/P17 collect outlives the ordinary budget and waits with ready plus running nodes [0.87ms]
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\manager-collect-budget.test.ts:29:22)
+(fail) P9 collect's own shorter budget expires as a client error, not backend timeout [0.26ms]
+
+tests\harness-dock\manager-collect-lifecycle.test.ts:
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\manager-collect-lifecycle.test.ts:10:23)
+(fail) P19 real OMP abort releases collect after the real backend response head [0.57ms]
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\manager-collect-lifecycle.test.ts:10:23)
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\manager-collect-lifecycle.test.ts:10:23)
+(fail) P19 real OMP new_session releases collect after the real backend response head [0.12ms]
+(fail) P19 real OMP shutdown releases collect after the real backend response head [0.07ms]
+
+tests\harness-dock\manager-collect-pending.test.ts:
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\manager-collect-pending.test.ts:9:22)
+(fail) P17/P18 collect keeps real handoff pending across reads, completion and interleaved execution reports [0.92ms]
+
+tests\harness-dock\manager-dispatch-recovery.test.ts:
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\manager-dispatch-recovery.test.ts:10:22)
+(fail) P12 dispatch preserves success rejection and started-but-failed target in one batch [0.44ms]
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\manager-dispatch-recovery.test.ts:35:22)
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\manager-dispatch-recovery.test.ts:69:22)
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\manager-dispatch-recovery.test.ts:118:22)
+(fail) P14 recover requires human confirmation and resumes original execution while paused [0.49ms]
+(fail) P12 P14 retry requires confirmation and running Run and retains new and old execution effects [0.50ms]
+(fail) P14 reconciliation preserves uncertain then absence and verifies created original Chat [0.35ms]
+
+tests\harness-dock\nested-role-completion.test.ts:
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\nested-role-completion.test.ts:13:24)
+(fail) omp P18 ordinary native dual roles keep nested finish, outer readiness and explicit completion independent [1.51ms]
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\nested-role-completion.test.ts:13:24)
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\nested-role-completion.test.ts:13:24)
+ 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+ 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+                                                                             ^
+error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\nested-role-completion.test.ts:13:24)
+(fail) omp P18 chief-delegated native dual roles keep nested finish, outer readiness and explicit completion independent [0.12ms]
+(fail) pi P18 ordinary native dual roles keep nested finish, outer readiness and explicit completion independent [0.08ms]
+(fail) pi P18 chief-delegated native dual roles keep nested finish, outer readiness and explicit completion independent [0.05ms]
+
+tests\harness-dock\role-config-failures.test.ts:
+{"promise":"P8","role":"node","failure":"business","diagnostic":"node-chat: configuration error (config): the configuration file \"C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-node-0bWeGs\\deployment\\extensions\\workflow-chat\\config.yaml\" declares \"requestTimeoutMs\" as a number, but the extension requires a whole number of milliseconds between 1 and 2147483647\n","fallbackRequests":0}
+
+tests\harness-dock\native-chief-resend.test.ts:
+{"host":"omp","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+
+tests\harness-dock\native-report-confirmation.test.ts:
+{"host":"omp","headlessExit":{"exitCode":0,"stderr":"","timedOut":false}}
+{"host":"omp","condition":"native-no-ui","result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\",\"saved\":false}"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。","saved":false}}},"sent":0}
+
+tests\harness-dock\native-chief-resend.test.ts:
+{"host":"omp","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+
+tests\harness-dock\native-report-confirmation.test.ts:
+{"host":"omp","condition":"approved","dialog":{"type":"extension_ui_request","id":"15cb95f0143ecc72","method":"confirm","title":"发送报告？（仅批准本次报告发送）","message":"以下为本次待发送报告的完整内容；业务批准不等于发送批准。\n\nbody:\nComplete approved report\nLast line\n\ncan_complete: false\n\n完整 HTTP JSON 载荷：\n{\n  \"body\": \"Complete approved report\\nLast line\",\n  \"canComplete\": false,\n  \"outputs\": [\n    {\n      \"id\": \"draft\",\n      \"path\": \"E:/owned/draft.txt\"\n    }\n  ],\n  \"sessionId\": \"01a1d122-6c0a-7725-b4d5-d3c22f032759\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"result":{"content":[{"type":"text","text":"{\"saved\":true,\"notification\":{\"status\":\"failed\",\"reason\":\"controlled notification refusal\"}}"}],"details":{"httpStatus":200,"body":{"saved":true,"notification":{"status":"failed","reason":"controlled notification refusal"}}}},"sent":[{"body":"Complete approved report\nLast line","canComplete":false,"outputs":[{"id":"draft","path":"E:/owned/draft.txt"}],"sessionId":"01a1d122-6c0a-7725-b4d5-d3c22f032759"}],"confirmationMs":2000,"observationMs":2100}
+{"host":"omp","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+
+tests\harness-dock\native-chief-resend.test.ts:
+{"host":"pi","headlessExit":0,"stderr":""}
+{"host":"pi","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+{"host":"pi","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+{"host":"pi","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+
+tests\harness-dock\native-report-confirmation.test.ts:
+{"host":"omp","condition":"denied","dialog":{"type":"extension_ui_request","id":"15cb95f4cafe1df5","method":"confirm","title":"发送报告？（仅批准本次报告发送）","message":"以下为本次待发送报告的完整内容；业务批准不等于发送批准。\n\nbody:\nMust not send: denied\n\ncan_complete: false\n\n完整 HTTP JSON 载荷：\n{\n  \"body\": \"Must not send: denied\",\n  \"canComplete\": false,\n  \"sessionId\": \"01a1d122-7fe5-77a1-ba30-18214c65e2eb\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\",\"saved\":false}"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。","saved":false}}},"sent":[],"confirmationMs":2000,"observationMs":2100}
+{"host":"omp","condition":"dismissed","dialog":{"type":"extension_ui_request","id":"15cb95f6eabe1df7","method":"confirm","title":"发送报告？（仅批准本次报告发送）","message":"以下为本次待发送报告的完整内容；业务批准不等于发送批准。\n\nbody:\nMust not send: dismissed\n\ncan_complete: false\n\n完整 HTTP JSON 载荷：\n{\n  \"body\": \"Must not send: dismissed\",\n  \"canComplete\": false,\n  \"sessionId\": \"01a1d122-7fe5-77a1-ba30-18214c65e2eb\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\",\"saved\":false}"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。","saved":false}}},"sent":[],"confirmationMs":2000,"observationMs":2100}
+{"host":"omp","condition":"cancelled","dialog":{"type":"extension_ui_request","id":"15cb95f901be1df9","method":"confirm","title":"发送报告？（仅批准本次报告发送）","message":"以下为本次待发送报告的完整内容；业务批准不等于发送批准。\n\nbody:\nMust not send: cancelled\n\ncan_complete: false\n\n完整 HTTP JSON 载荷：\n{\n  \"body\": \"Must not send: cancelled\",\n  \"canComplete\": false,\n  \"sessionId\": \"01a1d122-7fe5-77a1-ba30-18214c65e2eb\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\",\"saved\":false}"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。","saved":false}}},"sent":[],"confirmationMs":2000,"observationMs":2100}
+{"host":"omp","condition":"timeout-and-late-approval","dialog":{"type":"extension_ui_request","id":"15cb95fb193e1dfc","method":"confirm","title":"发送报告？（仅批准本次报告发送）","message":"以下为本次待发送报告的完整内容；业务批准不等于发送批准。\n\nbody:\nMust not send: timeout-and-late-approval\n\ncan_complete: false\n\n完整 HTTP JSON 载荷：\n{\n  \"body\": \"Must not send: timeout-and-late-approval\",\n  \"canComplete\": false,\n  \"sessionId\": \"01a1d122-7fe5-77a1-ba30-18214c65e2eb\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\",\"saved\":false}"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。","saved":false}}},"sent":[],"confirmationMs":2000,"observationMs":2100}
+{"host":"omp","condition":"session-ended","dialog":{"type":"extension_ui_request","id":"15cb95ff2c7e1dff","method":"confirm","title":"发送报告？（仅批准本次报告发送）","message":"以下为本次待发送报告的完整内容；业务批准不等于发送批准。\n\nbody:\nMust not send: session-ended\n\ncan_complete: false\n\n完整 HTTP JSON 载荷：\n{\n  \"body\": \"Must not send: session-ended\",\n  \"canComplete\": false,\n  \"sessionId\": \"01a1d122-7fe5-77a1-ba30-18214c65e2eb\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\",\"saved\":false}"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。","saved":false}}},"sent":[],"confirmationMs":2000,"observationMs":2100}
+{"host":"omp","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+{"host":"omp","condition":"cancel","result":{"content":[{"type":"text","text":"{\"error\":{\"kind\":\"cancelled\",\"message\":\"Interrupted by user\"},\"guidance\":\"请求未获得确定结果；后端可能已接受，不表示回滚或未生效。不要自动重试，请核实已保存事实。\"}"}],"details":{"body":{"error":{"kind":"cancelled","message":"Interrupted by user"},"guidance":{}}},"isError":true},"requests":1,"confirmationMs":2000,"observationMs":2100}
+{"host":"omp","condition":"lost-response","result":{"content":[{"type":"text","text":"{\"error\":{\"kind\":\"transport\",\"message\":\"socket hang up\"},\"guidance\":\"请求未获得确定结果；后端可能已接受，不表示回滚或未生效。不要自动重试，请核实已保存事实。\"}"}],"details":{"body":{"error":{"kind":"transport","message":"socket hang up"},"guidance":{}}},"isError":true},"requests":1,"confirmationMs":2000,"observationMs":2100}
+{"host":"omp","condition":"invalid-json","result":{"content":[{"type":"text","text":"{\"error\":{\"kind\":\"parse\",\"message\":\"后端响应不是完整合法 JSON。\",\"body\":\"{\\\"saved\\\":\"},\"guidance\":\"无法确定动作结果；不表示回滚，不自动重试。\"}"}],"details":{"httpStatus":200,"body":{"error":{"kind":"parse","message":"后端响应不是完整合法 JSON。","body":"{\"saved\":"},"guidance":{}}},"isError":true},"requests":1,"confirmationMs":2000,"observationMs":2100}
+{"host":"omp","condition":"invalid-receipt","result":{"content":[{"type":"text","text":"{\"error\":{\"kind\":\"protocol\",\"message\":\"后端报告响应缺少 boolean saved，无法核实保存结果。\",\"response\":{\"sent\":false}},\"guidance\":\"报告结果不确定；后端可能已保存，不表示未发送、未发生或已回滚。不要自动重试，请核实已保存事实。\"}"}],"details":{"httpStatus":200,"body":{"error":{"kind":"protocol","message":"后端报告响应缺少 boolean saved，无法核实保存结果。","response":{"sent":false}},"guidance":{}}},"isError":true},"requests":1,"confirmationMs":2000,"observationMs":2100}
+{"host":"omp","nativeExit":{"exitCode":0,"stderr":"HTTP cancelled failure (Error)\nHTTP transport failure (Error)\n","timedOut":false}}
+{"host":"pi","headlessExit":0,"stderr":""}
+{"host":"pi","condition":"native-no-ui","result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\",\"saved\":false}"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。","saved":false}},"isError":false},"sent":0}
+{"host":"pi","condition":"approved","dialog":{"type":"extension_ui_request","id":"fc391e89-2878-4404-97b4-253f7ef6c158","method":"confirm","title":"发送报告？（仅批准本次报告发送）","message":"以下为本次待发送报告的完整内容；业务批准不等于发送批准。\n\nbody:\nComplete approved report\nLast line\n\ncan_complete: false\n\n完整 HTTP JSON 载荷：\n{\n  \"body\": \"Complete approved report\\nLast line\",\n  \"canComplete\": false,\n  \"outputs\": [\n    {\n      \"id\": \"draft\",\n      \"path\": \"E:/owned/draft.txt\"\n    }\n  ],\n  \"sessionId\": \"01a1d122-e6b7-724c-bd09-8a0776b8e748\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"result":{"content":[{"type":"text","text":"{\"saved\":true,\"notification\":{\"status\":\"failed\",\"reason\":\"controlled notification refusal\"}}"}],"details":{"httpStatus":200,"body":{"saved":true,"notification":{"status":"failed","reason":"controlled notification refusal"}}},"isError":false},"sent":[{"body":"Complete approved report\nLast line","canComplete":false,"outputs":[{"id":"draft","path":"E:/owned/draft.txt"}],"sessionId":"01a1d122-e6b7-724c-bd09-8a0776b8e748"}],"confirmationMs":2000,"observationMs":2100}
+{"host":"pi","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+{"host":"pi","condition":"denied","dialog":{"type":"extension_ui_request","id":"8d503996-9ef1-4844-81a0-8ccb2b408f6c","method":"confirm","title":"发送报告？（仅批准本次报告发送）","message":"以下为本次待发送报告的完整内容；业务批准不等于发送批准。\n\nbody:\nMust not send: denied\n\ncan_complete: false\n\n完整 HTTP JSON 载荷：\n{\n  \"body\": \"Must not send: denied\",\n  \"canComplete\": false,\n  \"sessionId\": \"01a1d122-f40f-758d-b515-de489cd7cb64\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\",\"saved\":false}"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。","saved":false}},"isError":false},"sent":[],"confirmationMs":2000,"observationMs":2100}
+{"host":"pi","condition":"dismissed","dialog":{"type":"extension_ui_request","id":"36519750-7eac-4c2a-870a-167c8a7c3cec","method":"confirm","title":"发送报告？（仅批准本次报告发送）","message":"以下为本次待发送报告的完整内容；业务批准不等于发送批准。\n\nbody:\nMust not send: dismissed\n\ncan_complete: false\n\n完整 HTTP JSON 载荷：\n{\n  \"body\": \"Must not send: dismissed\",\n  \"canComplete\": false,\n  \"sessionId\": \"01a1d122-f40f-758d-b515-de489cd7cb64\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\",\"saved\":false}"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。","saved":false}},"isError":false},"sent":[],"confirmationMs":2000,"observationMs":2100}
+{"host":"pi","condition":"cancelled","dialog":{"type":"extension_ui_request","id":"562f15ce-b5ab-4125-9aa6-ea4fd56b0c97","method":"confirm","title":"发送报告？（仅批准本次报告发送）","message":"以下为本次待发送报告的完整内容；业务批准不等于发送批准。\n\nbody:\nMust not send: cancelled\n\ncan_complete: false\n\n完整 HTTP JSON 载荷：\n{\n  \"body\": \"Must not send: cancelled\",\n  \"canComplete\": false,\n  \"sessionId\": \"01a1d122-f40f-758d-b515-de489cd7cb64\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\",\"saved\":false}"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。","saved":false}},"isError":false},"sent":[],"confirmationMs":2000,"observationMs":2100}
+{"host":"pi","condition":"timeout-and-late-approval","dialog":{"type":"extension_ui_request","id":"9ebd8c50-03cc-4f36-9149-1012fc9c87ad","method":"confirm","title":"发送报告？（仅批准本次报告发送）","message":"以下为本次待发送报告的完整内容；业务批准不等于发送批准。\n\nbody:\nMust not send: timeout-and-late-approval\n\ncan_complete: false\n\n完整 HTTP JSON 载荷：\n{\n  \"body\": \"Must not send: timeout-and-late-approval\",\n  \"canComplete\": false,\n  \"sessionId\": \"01a1d122-f40f-758d-b515-de489cd7cb64\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\",\"saved\":false}"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。","saved":false}},"isError":false},"sent":[],"confirmationMs":2000,"observationMs":2100}
+{"host":"pi","condition":"session-ended","dialog":{"type":"extension_ui_request","id":"c91030f8-cc69-48c3-9b88-d09e19b445b6","method":"confirm","title":"发送报告？（仅批准本次报告发送）","message":"以下为本次待发送报告的完整内容；业务批准不等于发送批准。\n\nbody:\nMust not send: session-ended\n\ncan_complete: false\n\n完整 HTTP JSON 载荷：\n{\n  \"body\": \"Must not send: session-ended\",\n  \"canComplete\": false,\n  \"sessionId\": \"01a1d122-f40f-758d-b515-de489cd7cb64\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\",\"saved\":false}"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。","saved":false}},"isError":false},"sent":[],"confirmationMs":2000,"observationMs":2100}
+{"host":"pi","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+{"host":"pi","condition":"cancel","result":{"content":[{"type":"text","text":"{\"error\":{\"kind\":\"cancelled\",\"message\":\"This operation was aborted\"},\"guidance\":\"请求未获得确定结果；后端可能已接受，不表示回滚或未生效。不要自动重试，请核实已保存事实。\"}"}],"details":{"body":{"error":{"kind":"cancelled","message":"This operation was aborted"},"guidance":{}}},"isError":true},"requests":1,"confirmationMs":2000,"observationMs":2100}
+{"host":"pi","condition":"lost-response","result":{"content":[{"type":"text","text":"{\"error\":{\"kind\":\"transport\",\"message\":\"socket hang up\"},\"guidance\":\"请求未获得确定结果；后端可能已接受，不表示回滚或未生效。不要自动重试，请核实已保存事实。\"}"}],"details":{"body":{"error":{"kind":"transport","message":"socket hang up"},"guidance":{}}},"isError":true},"requests":1,"confirmationMs":2000,"observationMs":2100}
+{"host":"pi","condition":"invalid-json","result":{"content":[{"type":"text","text":"{\"error\":{\"kind\":\"parse\",\"message\":\"后端响应不是完整合法 JSON。\",\"body\":\"{\\\"saved\\\":\"},\"guidance\":\"无法确定动作结果；不表示回滚，不自动重试。\"}"}],"details":{"httpStatus":200,"body":{"error":{"kind":"parse","message":"后端响应不是完整合法 JSON。","body":"{\"saved\":"},"guidance":{}}},"isError":true},"requests":1,"confirmationMs":2000,"observationMs":2100}
+{"host":"pi","condition":"invalid-receipt","result":{"content":[{"type":"text","text":"{\"error\":{\"kind\":\"protocol\",\"message\":\"后端报告响应缺少 boolean saved，无法核实保存结果。\",\"response\":{\"sent\":false}},\"guidance\":\"报告结果不确定；后端可能已保存，不表示未发送、未发生或已回滚。不要自动重试，请核实已保存事实。\"}"}],"details":{"httpStatus":200,"body":{"error":{"kind":"protocol","message":"后端报告响应缺少 boolean saved，无法核实保存结果。","response":{"sent":false}},"guidance":{}}},"isError":true},"requests":1,"confirmationMs":2000,"observationMs":2100}
+{"host":"pi","nativeExit":{"exitCode":0,"stderr":"HTTP cancelled failure (AbortError)\nHTTP transport failure (Error)\n","timedOut":false}}
+
+ 1881 pass
+ 51 fail
+ 12335 expect() calls
+Ran 1932 tests across 246 files. [304.66s]
+error: script "test" exited with code 1

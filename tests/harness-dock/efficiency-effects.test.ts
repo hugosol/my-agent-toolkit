@@ -1,3 +1,4 @@
+import { type InstalledOmp, resolveInstalledOmp } from "./installed-omp";
 /**
  * The efficiency effects of a real OMP session: what one Round costs the storage root, what a healthy
  * idle window costs, and whether the same-process path opened any local IPC at all.
@@ -31,13 +32,12 @@ import * as path from "node:path";
 import { MODEL_COST_WIDGET_KEY } from "../../extensions/model-cost/harnesses/omp/widget";
 import type { HostEffect } from "./support/effect-instrument";
 import { writeAgentSettings, writeProviderOverride } from "./agent-config";
-import { type IsolatedHarness, REPO_ROOT, ensureIsolatedHarness, readBaselineRecord } from "./baseline";
+import { REPO_ROOT } from "./baseline";
 import { type CaptureServer, type CaptureStep, type CapturedRequest, startCaptureServer } from "./capture-server";
 import { DOCK_CAPTURE_BASE_URL_ENV } from "./fixtures/extension-root/provider";
 import { type RunRoot, createRunRoot } from "./run-root";
 import { ControlledSession } from "./session";
 
-const record = readBaselineRecord();
 /** The extension's own OMP entrypoint, as the harness's loader discovers it. */
 const MODEL_COST_ENTRYPOINT = path.join(REPO_ROOT, "entrypoints", "omp", "model-cost.ts");
 /** The in-host recorder this file loads into the harness process before its own module graph. */
@@ -101,7 +101,7 @@ function openingOf(request: CapturedRequest): string {
 function delegatingStep(request: CapturedRequest): CaptureStep | undefined {
 	const opening = openingOf(request);
 	const answered = messagesOf(request).some(message => hasRole(message, "assistant"));
-	if (opening.includes(CHILD_ASSIGNMENT)) return answered ? undefined : { toolCall: { name: "yield", arguments: JSON.stringify({ data: "child result" }) } };
+	if (opening.includes(CHILD_ASSIGNMENT)) return answered ? undefined : { replyText: "child result" };
 	if (opening.includes(DELEGATE_PROMPT) && !answered) {
 		return {
 			toolCall: {
@@ -116,10 +116,10 @@ function delegatingStep(request: CapturedRequest): CaptureStep | undefined {
 	return {};
 }
 
-let harness: IsolatedHarness;
+let harness: InstalledOmp;
 
 beforeAll(async () => {
-	harness = await ensureIsolatedHarness(record);
+	harness = await resolveInstalledOmp();
 }, 300_000);
 
 /** One run's isolated home and the storage root the shipped configuration names inside it. */

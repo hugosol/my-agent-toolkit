@@ -1,3 +1,4 @@
+import { type InstalledOmp, resolveInstalledOmp } from "./installed-omp";
 /**
  * Controlled session: drive the isolated harness in RPC mode with an
  * explicit-only extension set, a temporary agent state directory and a temporary
@@ -20,8 +21,8 @@ export interface RpcFrame {
 }
 
 export interface SessionOptions {
-	/** Isolated harness to execute (see baseline.ensureIsolatedHarness). */
-	readonly harness: { readonly cliPath: string };
+	/** Isolated harness to execute (see baseline.). */
+	readonly harness: Pick<InstalledOmp, "path" | "argvPrefix">;
 	readonly runRoot: RunRoot;
 	/** Explicit extension paths (`-e`), each a module file or a discovery directory. */
 	readonly extensions: readonly string[];
@@ -121,8 +122,8 @@ export class ControlledSession {
 		const argv = [
 			// PATH's bun entry can be a Windows launcher whose child survives it.
 			// Spawn this runtime directly so kill/exited name the harness itself.
-			process.execPath,
-			options.harness.cliPath,
+			options.harness.path,
+			...options.harness.argvPrefix,
 			"--mode",
 			"rpc",
 			"--no-extensions",

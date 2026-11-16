@@ -116,8 +116,7 @@ which also states the exercised host version and the remaining limitations.
 
 ```bash
 # from the repository root; <state> is a throwaway directory, e.g. .cache/tui-accept/agent-state
-PI_CODING_AGENT_DIR=<state> bun \
-  .cache/omp-baseline/18.5.0/node_modules/@oh-my-pi/pi-coding-agent/src/cli.ts \
+PI_CODING_AGENT_DIR=<state> "${OMP_CLI:-omp}" \
   --no-extensions -e entrypoints/omp --model <provider>/<model>
 ```
 
@@ -139,12 +138,11 @@ the declaration in [`definition.ts`](definition.ts), and the migration's recorde
 
 ## H1b — automatic startup mode interactive acceptance (P8, human-led marker display)
 
-Same isolated state directory and exact harness install as H1; the only change is the entrypoint:
+Same isolated state directory and selected local harness installation as H1; the only change is the entrypoint:
 
 ```bash
 # from the repository root; <state> is a throwaway directory, e.g. .cache/tui-accept/agent-state-auto
-PI_CODING_AGENT_DIR=<state> bun \
-  .cache/omp-baseline/18.5.0/node_modules/@oh-my-pi/pi-coding-agent/src/cli.ts \
+PI_CODING_AGENT_DIR=<state> "${OMP_CLI:-omp}" \
   --no-extensions -e entrypoints/omp-auto/codebase-tools.ts --model <provider>/<model>
 
 # pi — the same automatic startup mode through pi's own entrypoint
@@ -192,16 +190,14 @@ session with the automatic entrypoint, exit, then resume it with the manual entr
 
 ```bash
 # 1. seed: automatic entrypoint, type one prompt, confirm the marker appears, then exit
-PI_CODING_AGENT_DIR="$PWD/$ACCEPT_ROOT/agent-state" bun \
-  .cache/omp-baseline/18.5.0/node_modules/@oh-my-pi/pi-coding-agent/src/cli.ts \
+PI_CODING_AGENT_DIR="$PWD/$ACCEPT_ROOT/agent-state" "${OMP_CLI:-omp}" \
   --no-extensions -e entrypoints/omp-auto/codebase-tools.ts \
   --session-dir "$PWD/$ACCEPT_ROOT/sessions" --cwd "$PWD/$ACCEPT_ROOT/work" \
   --model <provider>/<model>
 
 # 2. restore: manual entrypoint, resuming the session file the seed saved
 SESSION_FILE=$(ls -t "$PWD/$ACCEPT_ROOT/sessions"/*.jsonl | head -1)
-PI_CODING_AGENT_DIR="$PWD/$ACCEPT_ROOT/agent-state" bun \
-  .cache/omp-baseline/18.5.0/node_modules/@oh-my-pi/pi-coding-agent/src/cli.ts \
+PI_CODING_AGENT_DIR="$PWD/$ACCEPT_ROOT/agent-state" "${OMP_CLI:-omp}" \
   --no-extensions -e entrypoints/omp/codebase-tools.ts \
   --session-dir "$PWD/$ACCEPT_ROOT/sessions" --resume "$SESSION_FILE"
 ```

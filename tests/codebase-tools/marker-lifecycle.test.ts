@@ -13,7 +13,8 @@
  */
 import { beforeAll, describe, expect, test } from "bun:test";
 import * as path from "node:path";
-import { type IsolatedHarness, REPO_ROOT, ensureIsolatedHarness, readBaselineRecord } from "../harness-dock/baseline";
+import { REPO_ROOT } from "../harness-dock/baseline";
+import { type InstalledOmp, resolveInstalledOmp } from "../harness-dock/installed-omp";
 import { type CaptureServer, startCaptureServer } from "../harness-dock/capture-server";
 import { DOCK_CAPTURE_BASE_URL_ENV, DOCK_MODEL_SELECTOR } from "../harness-dock/fixtures/extension-root/provider";
 import { type RunRoot, createRunRoot } from "../harness-dock/run-root";
@@ -33,10 +34,10 @@ const MARKER_AREA_PLACEMENT = "aboveEditor";
 const MARKER_TEXT = "◈ codeBaseTools";
 const COMMAND = "codebase-tools";
 
-let harness: IsolatedHarness;
+let harness: InstalledOmp;
 
 beforeAll(async () => {
-	harness = await ensureIsolatedHarness(readBaselineRecord());
+	harness = await resolveInstalledOmp();
 }, 300_000);
 
 interface Run {

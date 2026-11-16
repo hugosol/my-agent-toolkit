@@ -67,6 +67,30 @@ pi -e D:/service/my-agent-toolkit/entrypoints/pi-auto/node-chat.ts
 
 原生身份同时出现在 manager 与 node 记录中并不自动授权双角色。配套后端要求唯一合法的父 execution／子 Run 关联；无关联身份碰撞仍返回 HTTP 403、`node-role-invalid`（“管理者身份没有唯一合法的父执行关联。”）。旧版“一律禁止 manager 提交节点报告”的诊断不再描述合法嵌套场景；升级后的集成检查应保留精确的状态码、错误码和关联拒绝语义，而不是放宽断言或允许任意同名身份。
 
+### 无 Chat 脚本的原生协议专项
+
+角色部署不变：manager 使用上列 OMP/Pi 的正常 manager-chat auto 入口；脚本由后端内置 Rust 执行，不安装 node-chat、解释器或脚本专用工具，不建立脚本 Chat／Tab。升级后在新建 manager Session 消费更新指引，已有 Session 的持久指引不热更新。字段与处置以 [无 Chat 的 Rust 脚本节点](README.md#无-chat-的-rust-脚本节点) 为准；配套后端的长期公开表示由其 `docs/workflow-runtime.md`、`docs/contracts/rust-script-bots.schema.json` 和字面实例维护。
+
+在本 toolkit worktree 根使用 Bun 1.4.4 和 frozen lock，选择已有宿主，不修改全局安装、PATH、配置或用户会话。示例中的原始 toolkit 根、Pi 和 Node 必须换成实际参与安装的绝对位置：
+
+```powershell
+bun install --frozen-lockfile
+$env:OMP_BASELINE_RECORD_ROOT = 'D:/source/my-agent-toolkit'
+$env:PI_CLI = 'D:/installed/pi/dist/bundle/cli.js'
+$env:PI_NODE = 'D:/installed/node/node.exe'
+$env:WORKFLOW_DUAL_EVIDENCE_DIR = Join-Path $PWD ('.scratch/rust-script-bots/evidence/protocol-' + [guid]::NewGuid())
+bun test tests/harness-dock/manager-script-protocol.test.ts
+bun test tests/workflow-chat
+bun run typecheck
+bun run check:integrations
+# 配对后端准备后再执行完整回归；不可选用生产后端。
+bun run test
+```
+
+专项在两个实际宿主的同一原生 manager＋node 嵌套 Session 中加载正常入口，使用真实 run／collect、自动 Session、HTTP 和原生 read 读取测试独占 messages.jsonl，并核对结果确实进入后续模型请求。受控对端提供无 Chat 的派发／成功报告、业务失败和已保存但材料失败、显式 fail／retry 的独立执行、recover 拒绝及旧报告完成拒绝；它检查错误和实际效果不丢失、confirmed=false 原样透传、非法身份不发送、无隐式下游派发。`captures/`、`sessions/` 和 `host.json` 保留 provider 请求、原生 frames／stderr／HTTP；每次运行使用独占目录，关闭并等待所属宿主退出、销毁回环连接后清理临时部署。受控工具调用不是模型自主决定，受控拒绝也不是后端门禁证明；不证明真实 Rust 业务、P34/P35、H1/H2 已通过。
+
+跨仓验收复用正常 manager 入口和上述专项，不复制第二套工具或后端验收。完整回归的 `HERDR_BOT_REPO`、独立绝对 `CARGO_TARGET_DIR`、`HERDR_BOT_BINARY`（safe_shutdown_shell）和 `HERDR_BOT_METADATA` 必须由参与后端的隔离验收提供，并先构建安全壳与 herdr-fixture；缺失时保留失败，不回落生产可执行文件运行关机检查。真实会话另须留证：dispatch 返回时业务尚未结束；自动通知／collect 后按报告 ID 读取；生命周期结束时 node 仍待显式 complete；失败先 fail，修复并经原确认 retry 后有新 execution、无新 Chat，旧 true 不放行新执行。保存两仓构建／锁文件身份、原生会话工具、实际配置／文件／报告及清理结果，最终真实模型／人工 H1/H2 确认由跨仓验收独立完成。
+
 ### 双角色原生 dock：机制验证
 
 先按仓库 [测试规范](../../docs/agents/testing.md) 选择 Bun 1.4.4，并准备已安装 OMP/Pi 与冻结基线依赖。隔离 worktree 显式设置 `OMP_BASELINE_RECORD_ROOT` 指向原始 toolkit 根；`PI_CLI` 可选择已安装 Pi，不安装新宿主或更改全局 PATH 绕过缺依赖。需要选择非 PATH 上的已有 Node 时，使用公共 `PI_NODE` 指向满足该 Pi 包 `engines.node` 的绝对可执行文件路径，同时显式设置 `PI_CLI`。这只选择原生 dock 的运行时，不选择真实 Herdr Chat 的运行时；后者仍需从专项保存的 OS 进程和安装入口核对。记录实际 Node／Pi 身份，保留原运行时的失败，不把另一运行时通过解释为修复原生退出故障，也不通过跳过或放宽退出断言取绿。然后在本 toolkit worktree 根执行：
@@ -164,7 +188,7 @@ bun test tests/harness-dock/node-report-contract.test.ts
 | 无关联、错误角色、歧义或入口缺失 | 对照固定 Task 类型、绝对路径、后端派发现场及原生 Session 关联。保留后端拒绝，不用名称/cwd/Owner key 猜身份，不补建连接。 |
 | 派发失败且可能已创建 Chat | 检查 failure.stage、effects 和原 agent；显式 reconcile_dispatch，按人工核实选择 uncertain/not_created/created。不能用 retry 跳过核实，不能将错误当成所有目标都未执行。 |
 | 执行 failed，已修复且原 Chat 可继续 | 显式 recover 并提供 confirmed=true 与真实依据；核对执行 ID/Task/zone/Chat 不变。它只恢复跟踪，不启动、Resume 或补发输入。paused 下也可 recover。 |
-| 执行 failed，必须独立重做 | 先查旧 Chat/材料和副作用并确认另起执行；running Run 才能显式 retry，提供 confirmed=true 和依据。核对新执行、新 Chat、旧历史/产物仍在；paused 时先作明确 resume 决定，resume 本身不派发。 |
+| 执行 failed，必须独立重做 | 先查材料、副作用及 Task/Map 的旧 Chat 并确认另起执行；running Run 才能显式 retry，提供 confirmed=true 和依据。核对新执行及旧历史/产物仍在：Task/Map 有新 Chat，脚本没有 Chat；paused 时先作明确 resume 决定，resume 本身不派发。脚本业务失败报告 false 后仍须先显式 fail；已结束脚本不能 recover。 |
 | 工作已可交接，包括人工补齐 | 阅读当前执行最新报告及其声明；只有 can_complete 严格为 true 才允许首次 complete，并记录编排依据和限制，不强制立即完成。拒绝后 collect 等待新报告，不反复对同一报告完成。不能用旧执行 true 或人工判断绕过门禁，也不伪造报告。complete 解除依赖但不派发下游、不终止原 Chat；允许无害收尾。 |
 | report saved=true，notification.failed | 保留报告 ID 与失败原因；管理者 collect 并按 ID 读取已保存报告作编排判断，详细成果留在文件中。不要仅为通知失败重报；通知 submitted 也不证明管理者已读。报告/停轮/退出都不是 completed。 |
 | 取消、断线或预算到期，结果不确定 | 重新显式查询现场，核对状态、报告 ID、执行关联及外部效果；不要立即重复变更或报告。新调用是人的新决定，不是客户端自主重试。 |

@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
-import { beginPiAcceptance, type PiAcceptanceRun } from "../../scripts/support/pi-acceptance";
+import { beginHarnessAcceptance, type HarnessAcceptanceRun } from "../../scripts/support/harness-acceptance";
 import { cpSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { createServer } from "node:http";
@@ -10,13 +10,13 @@ import { createRunRoot } from "../harness-dock/run-root";
 import { type PiCli, PiSession, resolvePiCli, writePiModels } from "../harness-dock/pi-session";
 
 let cli: PiCli;
-let acceptance: PiAcceptanceRun | undefined;
+let acceptance: HarnessAcceptanceRun | undefined;
 const registeredChecks = new Set<string>();
 const passedChecks = new Set<string>();
 let failed = false;
 beforeAll(async () => {
 	cli = resolvePiCli();
-	acceptance = await beginPiAcceptance("workflow-chat", cli);
+	acceptance = await beginHarnessAcceptance("pi", "workflow-chat", cli);
 }, 20_000);
 afterAll(async () => {
 	if (!acceptance) return;

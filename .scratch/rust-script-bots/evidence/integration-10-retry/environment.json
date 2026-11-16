@@ -1,0 +1,18 @@
+{
+  "ticket": "10-manager-script-protocol.md",
+  "worktree": "C:/Users/hugos/AppData/Local/Temp/hyper-ticket-4rOpvQ",
+  "index_project": "rust-script-manager-10",
+  "initial_worktree_status": "clean; no merge conflicts",
+  "bun": "1.4.4",
+  "OMP_BASELINE_RECORD_ROOT": "E:/Developer/myhub/my-agent-toolkit",
+  "PI_NODE": "D:/Users/hugos/AppData/Local/nvm/v22.19.0/node.exe",
+  "PI_CLI": "D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js",
+  "HERDR_BOT_REPO": "C:/Users/hugos/AppData/Local/Temp/hyper-ticket-Pe756W",
+  "CARGO_TARGET_DIR": "C:/Users/hugos/AppData/Local/Temp/hyper-ticket-Pe756W/.scratch/cargo-target",
+  "HERDR_BOT_BINARY": "C:/Users/hugos/AppData/Local/Temp/hyper-ticket-Pe756W/.scratch/cargo-target/debug/examples/safe_shutdown_shell.exe",
+  "HERDR_FIXTURE": "C:/Users/hugos/AppData/Local/Temp/hyper-ticket-Pe756W/.scratch/cargo-target/debug/herdr-fixture.exe",
+  "HERDR_BOT_METADATA": "C:/Users/hugos/AppData/Local/Temp/hyper-ticket-Pe756W/meta-data/task-options.toml",
+  "coordination": "Ticket 11 confirms unchanged paired paths and preserves artifacts until completion; currently running backend tests only, no concurrent toolkit full suite.",
+  "invocation_note": "Environment exports from setup did not persist across bash calls. First full run fell back to missing sibling paths (1881 pass/51 fail); preserved full.log. Second run explicitly exported all variables in the same invocation (1930 pass/3 fail); preserved full-paired.log. Initial focused run passed 16 tests but did not inherit setup overrides.",
+  "boundary": "Controlled native protocol tests do not certify real-model H1/H2. No production backend, integration workspace, TDD restart, branch switch, reset or retro used."
+}

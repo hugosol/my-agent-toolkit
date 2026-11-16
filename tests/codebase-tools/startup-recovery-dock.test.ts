@@ -16,7 +16,8 @@ import { beforeAll, describe, expect, test } from "bun:test";
 import { copyFileSync } from "node:fs";
 import * as path from "node:path";
 import { INIT_PROMPT, REMINDER_PROMPT } from "../../extensions/codebase-tools/shared-logic/prompts";
-import { type IsolatedHarness, REPO_ROOT, ensureIsolatedHarness, readBaselineRecord } from "../harness-dock/baseline";
+import { REPO_ROOT } from "../harness-dock/baseline";
+import { type InstalledOmp, resolveInstalledOmp } from "../harness-dock/installed-omp";
 import { type CaptureServer, type CapturedRequest, startCaptureServer } from "../harness-dock/capture-server";
 import { DOCK_CAPTURE_BASE_URL_ENV, DOCK_MODEL_SELECTOR } from "../harness-dock/fixtures/extension-root/provider";
 import { type RunRoot, createRunRoot } from "../harness-dock/run-root";
@@ -40,10 +41,10 @@ const DISABLED_NOTICE = "codeBaseTools disabled";
 const MARKER_AREA_KEY = "semantic-extensions";
 const MARKER_TEXT = "◈ codeBaseTools";
 
-let harness: IsolatedHarness;
+let harness: InstalledOmp;
 
 beforeAll(async () => {
-	harness = await ensureIsolatedHarness(readBaselineRecord());
+	harness = await resolveInstalledOmp();
 }, 300_000);
 
 interface Run {

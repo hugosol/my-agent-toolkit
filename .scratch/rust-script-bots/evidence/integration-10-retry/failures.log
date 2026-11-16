@@ -1,0 +1,712 @@
+4-tests\harness-dock\manager-resume-finish.test.ts:
+5- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+6- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+7-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+8-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+9-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+10-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+11-                                                                             ^
+12:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+13-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+14-      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+15-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\manager-resume-finish.test.ts:9:22)
+16:(fail) P10/P11/P13 resume restores eligibility without dispatch, retry or termination [1.23ms]
+17- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+18- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+19-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+20-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+21-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+22-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+23-                                                                             ^
+24:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+25-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+26-      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+27-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\manager-resume-finish.test.ts:28:22)
+28:(fail) P10/P11/P13 finish obeys all-node completion and retains terminal facts [0.67ms]
+29-
+30-tests\model-cost\harnesses\pi\pi-assembly-lifecycle.test.ts:
+31-modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+32-modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+33-modelCost: the subagent provider is reachable, and it did not accept this entry as a required child extension: Required child extensions id 'model-cost' is duplicated.
+--
+92-tests\harness-dock\manager-state-actions.test.ts:
+93- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+94- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+95-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+96-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+97-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+98-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+99-                                                                             ^
+100:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+101-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+102-      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+103-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\manager-state-actions.test.ts:10:22)
+104:(fail) P10/P11/P13 explicit complete preserves first handoff and only unlocks satisfied dependencies [0.68ms]
+105- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+106- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+107-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+108-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+109-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+110-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+111-                                                                             ^
+112:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+113-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+114-      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+115-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\manager-state-actions.test.ts:55:22)
+116- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+117- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+118-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+119-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+120-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+121-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+122-                                                                             ^
+123:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+124-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+125-      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+126-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\manager-state-actions.test.ts:80:22)
+127:(fail) P10/P11/P13 pause leaves existing execution alive and rejects new dispatch [0.34ms]
+128:(fail) P10/P11/P13 fail preserves original execution and first reason without extra host actions [0.40ms]
+129-
+130-tests\framework\session.test.ts:
+131-codebase-tools: no owning main session resolved for this session; the extension stays off
+132-codebase-tools: no owning main session resolved for this session; the extension stays off
+133-codebase-tools: no owning main session resolved for this session; the extension stays off
+--
+140-tests\harness-dock\baseline.test.ts:
+141-58 | 		// The anchor is a revision, not a checkout position: the checkout that holds it may have moved
+142-59 | 		// past it in commits of its own (the frozen baseline's later history removes material this
+143-60 | 		// migration moved out), so what a run relies on is that the recorded revision is still in that
+144-61 | 		// checkout's history and that its own bytes are the ones the record names. The record stays the
+145-62 | 		// authority; the observed tip is recorded per run in the migration run record (D-01).
+146-63 | 		expect(checkoutCarries(anchorPath, record.harness.revisionAnchor.commit)).toBe(true);
+147-                                                                                 ^
+148:error: expect(received).toBe(expected)
+149-
+150-Expected: true
+151-Received: false
+152-
+153-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\baseline.test.ts:63:77)
+154-85 | 			.filter(comparison => !comparison.identical)
+155-86 | 			.map(
+156-87 | 				comparison =>
+157-88 | 					`${comparison.path}: anchor ${comparison.anchorSha256 ?? "<missing>"} vs artifact ${comparison.artifactSha256 ?? "<missing>"}`,
+158-89 | 			);
+159-90 | 		expect(drifted).toEqual([]);
+160-                       ^
+161:error: expect(received).toEqual(expected)
+162-
+163-- []
+164-+ [
+165-+   "extensibility/extensions/loader.ts: anchor <missing> vs artifact 6ce3fcecb30caca84738683af80677638a9b6aa51b285709f32f5fad56bcd2c2",
+166-+   "extensibility/extensions/runner.ts: anchor <missing> vs artifact 2afd58d1e6668262cee01d1be868320c857aed208c3ced890f0c7930bc898ff2",
+--
+176-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\baseline.test.ts:90:19)
+177-105 | 			.filter(comparison => !comparison.matches)
+178-106 | 			.map(
+179-107 | 				comparison =>
+180-108 | 					`${comparison.path}: recorded ${comparison.recordedSha256} but found ${comparison.actualSha256 ?? "<missing>"} — ${REFRESH_HINT}`,
+181-109 | 			);
+182-110 | 		expect(stale).toEqual([]);
+183-                      ^
+184:error: expect(received).toEqual(expected)
+185-
+186-- []
+187-+ [
+188-+   "bun.lock: recorded ddf372c50d0c1080b9c66b28e655b2bfe1c694e932ea4b2ae020c704be927225 but found <missing> — refresh framework/docs/harness-baseline.json (sourceCombination/oracle lockfile sha256) after a deliberate dependency change",
+189-+ ]
+--
+194-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\baseline.test.ts:110:17)
+195-111 | 	});
+196-112 | 
+197-113 | 	test("the oracle checkout carries the recorded revision", () => {
+198-114 | 		const checkoutPath = resolveRecordPath(record.oracle.path);
+199-115 | 		const checkout = readCheckoutCommit(checkoutPath);
+200-116 | 		expect(checkout.error).toBeNull();
+201-                               ^
+202:error: expect(received).toBeNull()
+203-
+204-Received: "checkout path does not exist: C:\\Users\\hugos\\AppData\\Local\\Temp\\my-omp-toolkit"
+205-
+206-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\baseline.test.ts:116:26)
+207:(fail) baseline record > the recorded revision anchor is reachable in the checkout and names the recorded version [0.24ms]
+208:(fail) baseline record > the run artifact stays byte-identical to the recorded revision for the recorded contract files [1.23ms]
+209:(fail) baseline record > records the lockfiles of this repository and of the behavior oracle [0.34ms]
+210:(fail) baseline record > the oracle checkout carries the recorded revision [0.14ms]
+211-
+212-tests\workflow-chat\chief-report-recovery.test.ts:
+213-HTTP cancelled failure (Error)
+214-
+215-tests\workflow-chat\manager-collect-termination.test.ts:
+--
+235-tests\workflow-chat\role-input-boundaries.test.ts:
+236- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+237- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+238-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+239-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+240-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+241-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+242-                                                                             ^
+243:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+244-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+245-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\role-input-boundaries.test.ts:13:24)
+246:(fail) P27 actual role input preserves backend fixed/work sections and adds only separate tool guidance [1.23ms]
+247-
+248-tests\harness-dock\chief-delegation.test.ts:
+249-{"host":"omp","kind":"map","dialog":{"type":"extension_ui_request","id":"15cb9544e49ba4fa","method":"confirm","title":"确认 Bot 委派启动","message":"请核对本次完整解析事实（Bot、Task/Map、manager、zone 绑定、材料、实际输入）：\n{\n  \"request\": {\n    \"botId\": \"literal-map-bot\",\n    \"zoneId\": \"work/manager\",\n    \"input\": \"Summarize only the approved draft\",\n    \"materials\": [\n      {\n        \"id\": \"draft\",\n        \"zoneId\": \"work/source\",\n        \"path\": \"draft.txt\"\n      }\n    ],\n    \"managerTaskId\": \"literal-manager\",\n    \"sessionId\": \"01a1d11f-be1c-72ed-9f80-a6625f704024\"\n  },\n  \"bot\": {\n    \"id\": \"literal-map-bot\",\n    \"when\": \"Summarize drafts\",\n    \"map\": \"literal.json\"\n  },\n  \"task\": {\n    \"id\": \"literal-manager\",\n    \"prompt\": \"Fixed business instructions\"\n  },\n  \"cwd\": \"E:/isolated/manager\",\n  \"name\": \"Independent Chat\",\n  \"materials\": [\n    {\n      \"id\": \"draft\",\n      \"zoneId\": \"work/source\",\n      \"path\": \"E:/isolated/source/draft.txt\"\n    }\n  ],\n  \"prompt\": \"Fixed business instructions\\nSummarize only the approved draft\",\n  \"map\": {\n    \"zoneBindings\": {\n      \"work/node\": \"E:/isolated/node\"\n    },\n    \"nodes\": {\n      \"A\": {\n        \"zone\": \"work/node\"\n      }\n    }\n  }\n}\n\n批准仅授权此预览的一次启动，不表示业务完成。目标或位置含义变化时后端拒绝，需用户重新要求后再次预览与确认。聊天中的同意不能替代本次原生批准。\n\n完整 HTTP JSON 载荷：\n{\n  \"previewId\": \"literal-preview-map\",\n  \"sessionId\": \"01a1d11f-be1c-72ed-9f80-a6625f704024\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"requests":[{"route":"/api/chief/delegations/preview","body":{"botId":"literal-map-bot","zoneId":"work/manager","input":"Summarize only the approved draft","materials":[{"id":"draft","zoneId":"work/source","path":"draft.txt"}],"managerTaskId":"literal-manager","sessionId":"01a1d11f-be1c-72ed-9f80-a6625f704024"}},{"route":"/api/chief/delegations","body":{"previewId":"literal-preview-map","sessionId":"01a1d11f-be1c-72ed-9f80-a6625f704024"}}],"result":{"content":[{"type":"text","text":{}}],"details":{"httpStatus":201,"body":{"id":"literal-run","run":{"nodes":{"A":{"status":"pending"}}},"managed":true,"startupError":null}}},"confirmationMs":2000,"observationMs":2100}
+250-{"host":"omp","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+251-
+252-tests\harness-dock\uncertain-effects.test.ts:
+253- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+254- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+255-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+256-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+257-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+258-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+259-                                                                             ^
+260:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+261-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+262-      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+263-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\uncertain-effects.test.ts:14:22)
+264:(fail) P22 P24 accepted state and dispatch survive caller cancellation without automatic redo [4.72ms]
+265- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+266- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+267-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+268-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+269-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+270-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+271-                                                                             ^
+272:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+273-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+274-      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+275-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\uncertain-effects.test.ts:51:22)
+276- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+277- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+278-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+279-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+280-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+281-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+282-                                                                             ^
+283:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+284-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+285-      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+286-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\uncertain-effects.test.ts:97:22)
+287- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+288- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+289-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+290-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+291-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+292-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+293-                                                                             ^
+294:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+295-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+296-      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+297-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\uncertain-effects.test.ts:118:22)
+298:(fail) P22 P23 P24 saved report remains queryable after disconnect and explicit new report remains usable [1.75ms]
+299:(fail) P23 real history failure preserves committed state and target-level external effects [0.38ms]
+300:(fail) P23 real non-success body remains visible and a repaired backend accepts explicit new calls [0.27ms]
+301-
+302-tests\harness-dock\chief-delegation.test.ts:
+303-{"host":"omp","kind":"map","condition":"denied","dialog":{"type":"extension_ui_request","id":"15cb954a6d6fe85b","method":"confirm","title":"确认 Bot 委派启动","message":"请核对本次完整解析事实（Bot、Task/Map、manager、zone 绑定、材料、实际输入）：\n{\n  \"request\": {\n    \"botId\": \"literal-bot\",\n    \"zoneId\": \"work/explicit\",\n    \"input\": \"User said yes in chat, not in native UI\",\n    \"materials\": [],\n    \"managerTaskId\": \"literal-manager\",\n    \"sessionId\": \"01a1d11f-d480-7302-8740-7012daf94cbb\"\n  },\n  \"bot\": {\n    \"id\": \"literal-bot\"\n  },\n  \"task\": {\n    \"id\": \"literal-target\"\n  },\n  \"cwd\": \"E:/isolated/worker\",\n  \"name\": \"Literal Chat\",\n  \"materials\": [],\n  \"prompt\": \"Literal business input\",\n  \"map\": {\n    \"zoneBindings\": {\n      \"work/node\": \"E:/isolated/node\"\n    }\n  }\n}\n\n批准仅授权此预览的一次启动，不表示业务完成。目标或位置含义变化时后端拒绝，需用户重新要求后再次预览与确认。聊天中的同意不能替代本次原生批准。\n\n完整 HTTP JSON 载荷：\n{\n  \"previewId\": \"literal-preview\",\n  \"sessionId\": \"01a1d11f-d480-7302-8740-7012daf94cbb\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"committed":0,"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。"}}},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+304-{"host":"omp","kind":"map","condition":"dismissed","dialog":{"type":"extension_ui_request","id":"15cb954c8eafe85d","method":"confirm","title":"确认 Bot 委派启动","message":"请核对本次完整解析事实（Bot、Task/Map、manager、zone 绑定、材料、实际输入）：\n{\n  \"request\": {\n    \"botId\": \"literal-bot\",\n    \"zoneId\": \"work/explicit\",\n    \"input\": \"User said yes in chat, not in native UI\",\n    \"materials\": [],\n    \"managerTaskId\": \"literal-manager\",\n    \"sessionId\": \"01a1d11f-d480-7302-8740-7012daf94cbb\"\n  },\n  \"bot\": {\n    \"id\": \"literal-bot\"\n  },\n  \"task\": {\n    \"id\": \"literal-target\"\n  },\n  \"cwd\": \"E:/isolated/worker\",\n  \"name\": \"Literal Chat\",\n  \"materials\": [],\n  \"prompt\": \"Literal business input\",\n  \"map\": {\n    \"zoneBindings\": {\n      \"work/node\": \"E:/isolated/node\"\n    }\n  }\n}\n\n批准仅授权此预览的一次启动，不表示业务完成。目标或位置含义变化时后端拒绝，需用户重新要求后再次预览与确认。聊天中的同意不能替代本次原生批准。\n\n完整 HTTP JSON 载荷：\n{\n  \"previewId\": \"literal-preview\",\n  \"sessionId\": \"01a1d11f-d480-7302-8740-7012daf94cbb\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"committed":0,"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。"}}},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+305-{"host":"omp","kind":"map","condition":"cancelled","dialog":{"type":"extension_ui_request","id":"15cb954ea66fe85f","method":"confirm","title":"确认 Bot 委派启动","message":"请核对本次完整解析事实（Bot、Task/Map、manager、zone 绑定、材料、实际输入）：\n{\n  \"request\": {\n    \"botId\": \"literal-bot\",\n    \"zoneId\": \"work/explicit\",\n    \"input\": \"User said yes in chat, not in native UI\",\n    \"materials\": [],\n    \"managerTaskId\": \"literal-manager\",\n    \"sessionId\": \"01a1d11f-d480-7302-8740-7012daf94cbb\"\n  },\n  \"bot\": {\n    \"id\": \"literal-bot\"\n  },\n  \"task\": {\n    \"id\": \"literal-target\"\n  },\n  \"cwd\": \"E:/isolated/worker\",\n  \"name\": \"Literal Chat\",\n  \"materials\": [],\n  \"prompt\": \"Literal business input\",\n  \"map\": {\n    \"zoneBindings\": {\n      \"work/node\": \"E:/isolated/node\"\n    }\n  }\n}\n\n批准仅授权此预览的一次启动，不表示业务完成。目标或位置含义变化时后端拒绝，需用户重新要求后再次预览与确认。聊天中的同意不能替代本次原生批准。\n\n完整 HTTP JSON 载荷：\n{\n  \"previewId\": \"literal-preview\",\n  \"sessionId\": \"01a1d11f-d480-7302-8740-7012daf94cbb\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"committed":0,"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。"}}},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+--
+314-tests\connect-bot\budget-regression.test.ts:
+315-270 |  * afterwards.
+316-271 |  */
+317-272 | export async function startHerdrBot(): Promise<HerdrBotPanel> {
+318-273 | 	const binary = herdrBotBinary();
+319-274 | 	if (!existsSync(binary)) {
+320-275 | 		throw new Error(
+321-                  ^
+322:error: the interop run needs herdr-bot's safe_shutdown_shell, but no binary is at C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; build it with `cargo build --example safe_shutdown_shell --manifest-path ../herdr-bot/backend/Cargo.toml` or name an existing safe example in HERDR_BOT_BINARY (never the production herdr-bot executable)
+323-      at startHerdrBot (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\support\herdr-bot.ts:275:13)
+324-      at panelAt (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\budget-regression.test.ts:203:22)
+325-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\budget-regression.test.ts:391:24)
+326:(fail) the protocol the actual herdr-bot panel receives is the frozen one (P23) > a whole session — register, beats, state moves, unregister — is what the real panel records and answers [0.89ms]
+327-
+328-tests\connect-bot\harness-exit-budget.test.ts:
+329-270 |  * afterwards.
+330-271 |  */
+331-272 | export async function startHerdrBot(): Promise<HerdrBotPanel> {
+332-273 | 	const binary = herdrBotBinary();
+333-274 | 	if (!existsSync(binary)) {
+334-275 | 		throw new Error(
+335-                  ^
+336:error: the interop run needs herdr-bot's safe_shutdown_shell, but no binary is at C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; build it with `cargo build --example safe_shutdown_shell --manifest-path ../herdr-bot/backend/Cargo.toml` or name an existing safe example in HERDR_BOT_BINARY (never the production herdr-bot executable)
+337-      at startHerdrBot (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\support\herdr-bot.ts:275:13)
+338-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\harness-exit-budget.test.ts:92:38)
+339:(fail) a long request budget does not extend the harness's own exit (P27) > the harness ends on its own lifecycle with a minute-budget unregister still on the wire [0.59ms]
+340-
+341-tests\connect-bot\history-interop.test.ts:
+342-270 |  * afterwards.
+343-271 |  */
+344-272 | export async function startHerdrBot(): Promise<HerdrBotPanel> {
+345-273 | 	const binary = herdrBotBinary();
+346-274 | 	if (!existsSync(binary)) {
+347-275 | 		throw new Error(
+348-                  ^
+349:error: the interop run needs herdr-bot's safe_shutdown_shell, but no binary is at C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; build it with `cargo build --example safe_shutdown_shell --manifest-path ../herdr-bot/backend/Cargo.toml` or name an existing safe example in HERDR_BOT_BINARY (never the production herdr-bot executable)
+350-      at startHerdrBot (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\support\herdr-bot.ts:275:13)
+351-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\history-interop.test.ts:17:25)
+352:(fail) actual OMP connect keeps reporting and shutdown semantics across storage failure and explicit recovery [0.66ms]
+353-270 |  * afterwards.
+354-271 |  */
+355-272 | export async function startHerdrBot(): Promise<HerdrBotPanel> {
+356-273 | 	const binary = herdrBotBinary();
+357-274 | 	if (!existsSync(binary)) {
+358-275 | 		throw new Error(
+359-                  ^
+360:error: the interop run needs herdr-bot's safe_shutdown_shell, but no binary is at C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; build it with `cargo build --example safe_shutdown_shell --manifest-path ../herdr-bot/backend/Cargo.toml` or name an existing safe example in HERDR_BOT_BINARY (never the production herdr-bot executable)
+361-      at startHerdrBot (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\support\herdr-bot.ts:275:13)
+362-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\history-interop.test.ts:104:25)
+363:(fail) actual Pi connect shows accepted-but-history-failed to its UI [0.31ms]
+364-
+365-tests\connect-bot\panel-registration-lifecycle.test.ts:
+366-270 |  * afterwards.
+367-271 |  */
+368-272 | export async function startHerdrBot(): Promise<HerdrBotPanel> {
+369-273 | 	const binary = herdrBotBinary();
+370-274 | 	if (!existsSync(binary)) {
+371-275 | 		throw new Error(
+372-                  ^
+373:error: the interop run needs herdr-bot's safe_shutdown_shell, but no binary is at C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; build it with `cargo build --example safe_shutdown_shell --manifest-path ../herdr-bot/backend/Cargo.toml` or name an existing safe example in HERDR_BOT_BINARY (never the production herdr-bot executable)
+374-      at startHerdrBot (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\support\herdr-bot.ts:275:13)
+375-      at panelAt (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\panel-registration-lifecycle.test.ts:85:22)
+376-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\panel-registration-lifecycle.test.ts:124:23)
+377:(fail) a server-processed unregister deletes the panel's row (P24) > the panel removes the row the register built, instead of letting it go offline [0.50ms]
+378-270 |  * afterwards.
+379-271 |  */
+380-272 | export async function startHerdrBot(): Promise<HerdrBotPanel> {
+381-273 | 	const binary = herdrBotBinary();
+382-274 | 	if (!existsSync(binary)) {
+383-275 | 		throw new Error(
+384-                  ^
+385:error: the interop run needs herdr-bot's safe_shutdown_shell, but no binary is at C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; build it with `cargo build --example safe_shutdown_shell --manifest-path ../herdr-bot/backend/Cargo.toml` or name an existing safe example in HERDR_BOT_BINARY (never the production herdr-bot executable)
+386-      at startHerdrBot (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\support\herdr-bot.ts:275:13)
+387-      at panelAt (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\panel-registration-lifecycle.test.ts:85:22)
+388-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\panel-registration-lifecycle.test.ts:157:23)
+389-270 |  * afterwards.
+390-271 |  */
+391-272 | export async function startHerdrBot(): Promise<HerdrBotPanel> {
+392-273 | 	const binary = herdrBotBinary();
+393-274 | 	if (!existsSync(binary)) {
+394-275 | 		throw new Error(
+395-                  ^
+396:error: the interop run needs herdr-bot's safe_shutdown_shell, but no binary is at C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; build it with `cargo build --example safe_shutdown_shell --manifest-path ../herdr-bot/backend/Cargo.toml` or name an existing safe example in HERDR_BOT_BINARY (never the production herdr-bot executable)
+397-      at startHerdrBot (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\support\herdr-bot.ts:275:13)
+398-      at panelAt (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\panel-registration-lifecycle.test.ts:85:22)
+399-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\panel-registration-lifecycle.test.ts:202:23)
+400:(fail) an unregister that never arrives leaves the row to the panel's own window (P25) > the blocked row stays registered and goes offline by the 30s window, never by deletion [0.29ms]
+401:(fail) a client's timeout is not a statement about the panel (P26) > a response held back past the budget: the client timed out and the row is really gone [0.25ms]
+402-
+403-tests\harness-dock\chief-delegation.test.ts:
+404-{"host":"pi","kind":"task","condition":"denied","dialog":{"type":"extension_ui_request","id":"d0bbf9ad-068c-4fb8-be0e-52ade07b067f","method":"confirm","title":"确认 Bot 委派启动","message":"请核对本次完整解析事实（Bot、Task/Map、manager、zone 绑定、材料、实际输入）：\n{\n  \"request\": {\n    \"botId\": \"literal-bot\",\n    \"zoneId\": \"work/explicit\",\n    \"input\": \"User said yes in chat, not in native UI\",\n    \"materials\": [],\n    \"sessionId\": \"01a1d120-52b1-738b-bc88-d5ae2033db75\"\n  },\n  \"bot\": {\n    \"id\": \"literal-bot\"\n  },\n  \"task\": {\n    \"id\": \"literal-target\"\n  },\n  \"cwd\": \"E:/isolated/worker\",\n  \"name\": \"Literal Chat\",\n  \"materials\": [],\n  \"prompt\": \"Literal business input\"\n}\n\n批准仅授权此预览的一次启动，不表示业务完成。目标或位置含义变化时后端拒绝，需用户重新要求后再次预览与确认。聊天中的同意不能替代本次原生批准。\n\n完整 HTTP JSON 载荷：\n{\n  \"previewId\": \"literal-preview\",\n  \"sessionId\": \"01a1d120-52b1-738b-bc88-d5ae2033db75\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"committed":0,"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。"}},"isError":false},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+405-{"host":"pi","kind":"task","condition":"dismissed","dialog":{"type":"extension_ui_request","id":"0c95ffa9-b4f0-430d-9e66-11bb483d5cc1","method":"confirm","title":"确认 Bot 委派启动","message":"请核对本次完整解析事实（Bot、Task/Map、manager、zone 绑定、材料、实际输入）：\n{\n  \"request\": {\n    \"botId\": \"literal-bot\",\n    \"zoneId\": \"work/explicit\",\n    \"input\": \"User said yes in chat, not in native UI\",\n    \"materials\": [],\n    \"sessionId\": \"01a1d120-52b1-738b-bc88-d5ae2033db75\"\n  },\n  \"bot\": {\n    \"id\": \"literal-bot\"\n  },\n  \"task\": {\n    \"id\": \"literal-target\"\n  },\n  \"cwd\": \"E:/isolated/worker\",\n  \"name\": \"Literal Chat\",\n  \"materials\": [],\n  \"prompt\": \"Literal business input\"\n}\n\n批准仅授权此预览的一次启动，不表示业务完成。目标或位置含义变化时后端拒绝，需用户重新要求后再次预览与确认。聊天中的同意不能替代本次原生批准。\n\n完整 HTTP JSON 载荷：\n{\n  \"previewId\": \"literal-preview\",\n  \"sessionId\": \"01a1d120-52b1-738b-bc88-d5ae2033db75\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"committed":0,"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。"}},"isError":false},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+406-{"host":"pi","kind":"task","condition":"cancelled","dialog":{"type":"extension_ui_request","id":"a12aab6a-9cc0-4496-a1a5-8c8f5054ddb5","method":"confirm","title":"确认 Bot 委派启动","message":"请核对本次完整解析事实（Bot、Task/Map、manager、zone 绑定、材料、实际输入）：\n{\n  \"request\": {\n    \"botId\": \"literal-bot\",\n    \"zoneId\": \"work/explicit\",\n    \"input\": \"User said yes in chat, not in native UI\",\n    \"materials\": [],\n    \"sessionId\": \"01a1d120-52b1-738b-bc88-d5ae2033db75\"\n  },\n  \"bot\": {\n    \"id\": \"literal-bot\"\n  },\n  \"task\": {\n    \"id\": \"literal-target\"\n  },\n  \"cwd\": \"E:/isolated/worker\",\n  \"name\": \"Literal Chat\",\n  \"materials\": [],\n  \"prompt\": \"Literal business input\"\n}\n\n批准仅授权此预览的一次启动，不表示业务完成。目标或位置含义变化时后端拒绝，需用户重新要求后再次预览与确认。聊天中的同意不能替代本次原生批准。\n\n完整 HTTP JSON 载荷：\n{\n  \"previewId\": \"literal-preview\",\n  \"sessionId\": \"01a1d120-52b1-738b-bc88-d5ae2033db75\"\n}\n\n只有明确选择“是”才会发送。","timeout":2000},"committed":0,"result":{"content":[{"type":"text","text":"{\"sent\":false,\"reason\":\"confirmation-not-approved\",\"guidance\":\"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。\"}\n这里只返回启动请求结果，不表示业务完成；不等待执行者完成。拒绝或不确定结果不自动重试，不通过其他 HTTP/本机工具绕过确认。"}],"details":{"body":{"sent":false,"reason":"confirmation-not-approved","guidance":"请求未发送。结束本轮，等待用户重新要求执行；不要自动重试、补发、反复询问或绕过原生确认。"}},"isError":false},"confirmationMs":2000,"requestMs":2000,"observationMs":2100}
+--
+429-tests\harness-dock\role-guidance-rehearsal.test.ts:
+430- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+431- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+432-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+433-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+434-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+435-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+436-                                                                             ^
+437:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+438-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+439-      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+440-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\role-guidance-rehearsal.test.ts:14:22)
+441:(fail) P26 injected guidance supports notification failure, original recovery, independent retry and real manual handoff rehearsal [1.88ms]
+442-
+443-tests\harness-dock\role-identity-integration.test.ts:
+444- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+445- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+446-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+447-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+448-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+449-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+450-                                                                             ^
+451:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+452-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+453-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\role-identity-integration.test.ts:14:24)
+454:(fail) P1/P2/P6 independent automatic roles use native identity and preserve real backend association decisions [2.14ms]
+455-
+456-tests\harness-dock\role-missing-identity.test.ts:
+457-{"promise":"P6","role":"manager","scope":"real OMP + external missing native-context fault","normalNativeId":"01a1d121-0d97-7523-ae41-831711116872","nativeToolId":"","requests":0}
+458-{"promise":"P6","role":"node","scope":"real OMP + external missing native-context fault","normalNativeId":"01a1d121-14c7-7139-845c-a689a23a8d3f","nativeToolId":"","requests":0}
+459-
+--
+471-tests\harness-dock\native-chief-receipt-backend.test.ts:
+472- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+473- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+474-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+475-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+476-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+477-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+478-                                                                             ^
+479:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+480-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+481-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\native-chief-receipt-backend.test.ts:11:24)
+482:(fail) omp actual receive pipeline persists receipt before presenting and manual view retains original [0.94ms]
+483- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+484- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+485-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+486-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+487-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+488-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+489-                                                                             ^
+490:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+491-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+492-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\native-chief-receipt-backend.test.ts:11:24)
+493:(fail) pi actual receive pipeline persists receipt before presenting and manual view retains original [0.14ms]
+494-
+495-tests\framework\http-cancellation.test.ts:
+496-HTTP cancelled failure (Error)
+497-HTTP cancelled failure (Error)
+498-HTTP cancelled failure (Error)
+--
+573-tests\harness-dock\chief-report-backend-faults.test.ts:
+574- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+575- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+576-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+577-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+578-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+579-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+580-                                                                             ^
+581:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+582-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+583-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\chief-report-backend-faults.test.ts:17:24)
+584:(fail) omp P22 real backend distinguishes save failure notification failure and post-commit response loss [1.62ms]
+585- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+586- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+587-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+588-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+589-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+590-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+591-                                                                             ^
+592:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+593-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+594-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\chief-report-backend-faults.test.ts:17:24)
+595:(fail) pi P22 real backend distinguishes save failure notification failure and post-commit response loss [0.13ms]
+596-
+597-tests\harness-dock\chief-role.test.ts:
+598- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+599- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+600-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+601-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+602-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+603-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+604-                                                                             ^
+605:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+606-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+607-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\chief-role.test.ts:14:24)
+608:(fail) omp chief loads without Suite and returns existing Bot.when definitions [0.68ms]
+609- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+610- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+611-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+612-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+613-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+614-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+615-                                                                             ^
+616:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+617-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+618-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\chief-role.test.ts:63:25)
+619- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+620- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+621-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+622-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+623-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+624-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+625-                                                                             ^
+626:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+627-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+628-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\chief-role.test.ts:88:25)
+629- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+630- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+631-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+632-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+633-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+634-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+635-                                                                             ^
+636:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+637-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+638-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\chief-role.test.ts:14:24)
+639- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+640- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+641-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+642-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+643-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+644-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+645-                                                                             ^
+646:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+647-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+648-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\chief-role.test.ts:63:25)
+649- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+650- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+651-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+652-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+653-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+654-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+655-                                                                             ^
+656:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+657-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+658-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\chief-role.test.ts:88:25)
+659:(fail) omp chief reads real target definitions and registered zones [0.46ms]
+660:(fail) omp chief preserves missing-definition errors and rejects caller identities [0.28ms]
+661:(fail) pi chief loads without Suite and returns existing Bot.when definitions [0.09ms]
+662:(fail) pi chief reads real target definitions and registered zones [0.08ms]
+663:(fail) pi chief preserves missing-definition errors and rejects caller identities [0.08ms]
+664-
+665-tests\harness-dock\native-chief-report.test.ts:
+666-{"host":"pi","headlessExit":0,"stderr":""}
+667-{"host":"pi","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+668-{"host":"pi","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+--
+672-tests\harness-dock\node-report-contract.test.ts:
+673- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+674- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+675-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+676-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+677-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+678-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+679-                                                                             ^
+680:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+681-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+682-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\node-report-contract.test.ts:13:24)
+683:(fail) omp: P7/P8/P26 report rejects malformed and legacy calls without persistence and preserves native identity [0.90ms]
+684- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+685- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+686-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+687-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+688-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+689-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+690-                                                                             ^
+691:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+692-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+693-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\node-report-contract.test.ts:13:24)
+694:(fail) pi: P7/P8/P26 report rejects malformed and legacy calls without persistence and preserves native identity [0.14ms]
+695-
+696-tests\harness-dock\node-report.test.ts:
+697- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+698- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+699-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+700-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+701-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+702-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+703-                                                                             ^
+704:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+705-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+706-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\node-report.test.ts:12:24)
+707:(fail) P15/P16 actual node report is backend-attributed, saved and retrievable despite real notification refusal, without completing node [0.74ms]
+708-
+709-tests\harness-dock\native-chief-report.test.ts:
+710-{"host":"pi","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+711-{"host":"pi","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+712-{"host":"pi","nativeExit":{"exitCode":0,"stderr":"","timedOut":false}}
+--
+714-tests\harness-dock\connect-bot-startup.test.ts:
+715-270 |  * afterwards.
+716-271 |  */
+717-272 | export async function startHerdrBot(): Promise<HerdrBotPanel> {
+718-273 | 	const binary = herdrBotBinary();
+719-274 | 	if (!existsSync(binary)) {
+720-275 | 		throw new Error(
+721-                  ^
+722:error: the interop run needs herdr-bot's safe_shutdown_shell, but no binary is at C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; build it with `cargo build --example safe_shutdown_shell --manifest-path ../herdr-bot/backend/Cargo.toml` or name an existing safe example in HERDR_BOT_BINARY (never the production herdr-bot executable)
+723-      at startHerdrBot (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\connect-bot\support\herdr-bot.ts:275:13)
+724-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\connect-bot-startup.test.ts:418:17)
+725:(fail) the automatic path registers with the actual isolated panel (P16, P18) > the panel's own table shows the startup row, its state report, and the command's removal [0.75ms]
+726-
+727-tests\harness-dock\role-config-failures.test.ts:
+728-{"promise":"P8","role":"manager","failure":"missing","diagnostic":"manager-chat: configuration error (config): the configuration file \"C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-manager-VCmxOS\\deployment\\extensions\\workflow-chat\\config.yaml\" does not exist\n","fallbackRequests":0}
+729-
+730-tests\harness-dock\efficiency-effects.test.ts:
+--
+754-tests\harness-dock\manager-collect-budget.test.ts:
+755- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+756- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+757-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+758-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+759-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+760-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+761-                                                                             ^
+762:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+763-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+764-      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+765-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\manager-collect-budget.test.ts:8:22)
+766:(fail) P9/P17 collect outlives the ordinary budget and waits with ready plus running nodes [0.87ms]
+767- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+768- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+769-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+770-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+771-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+772-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+773-                                                                             ^
+774:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+775-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+776-      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+777-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\manager-collect-budget.test.ts:29:22)
+778:(fail) P9 collect's own shorter budget expires as a client error, not backend timeout [0.26ms]
+779-
+780-tests\harness-dock\manager-collect-lifecycle.test.ts:
+781- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+782- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+783-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+784-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+785-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+786-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+787-                                                                             ^
+788:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+789-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+790-      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+791-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\manager-collect-lifecycle.test.ts:10:23)
+792:(fail) P19 real OMP abort releases collect after the real backend response head [0.57ms]
+793- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+794- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+795-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+796-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+797-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+798-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+799-                                                                             ^
+800:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+801-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+802-      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+803-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\manager-collect-lifecycle.test.ts:10:23)
+804- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+805- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+806-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+807-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+808-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+809-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+810-                                                                             ^
+811:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+812-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+813-      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+814-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\manager-collect-lifecycle.test.ts:10:23)
+815:(fail) P19 real OMP new_session releases collect after the real backend response head [0.12ms]
+816:(fail) P19 real OMP shutdown releases collect after the real backend response head [0.07ms]
+817-
+818-tests\harness-dock\manager-collect-pending.test.ts:
+819- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+820- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+821-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+822-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+823-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+824-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+825-                                                                             ^
+826:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+827-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+828-      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+829-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\manager-collect-pending.test.ts:9:22)
+830:(fail) P17/P18 collect keeps real handoff pending across reads, completion and interleaved execution reports [0.92ms]
+831-
+832-tests\harness-dock\manager-dispatch-recovery.test.ts:
+833- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+834- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+835-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+836-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+837-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+838-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+839-                                                                             ^
+840:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+841-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+842-      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+843-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\manager-dispatch-recovery.test.ts:10:22)
+844:(fail) P12 dispatch preserves success rejection and started-but-failed target in one batch [0.44ms]
+845- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+846- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+847-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+848-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+849-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+850-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+851-                                                                             ^
+852:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+853-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+854-      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+855-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\manager-dispatch-recovery.test.ts:35:22)
+856- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+857- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+858-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+859-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+860-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+861-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+862-                                                                             ^
+863:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+864-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+865-      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+866-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\manager-dispatch-recovery.test.ts:69:22)
+867- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+868- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+869-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+870-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+871-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+872-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+873-                                                                             ^
+874:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+875-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+876-      at managerScenario (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\manager-scenario.ts:9:24)
+877-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\manager-dispatch-recovery.test.ts:118:22)
+878:(fail) P14 recover requires human confirmation and resumes original execution while paused [0.49ms]
+879:(fail) P12 P14 retry requires confirmation and running Run and retains new and old execution effects [0.50ms]
+880:(fail) P14 reconciliation preserves uncertain then absence and verifies created original Chat [0.35ms]
+881-
+882-tests\harness-dock\nested-role-completion.test.ts:
+883- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+884- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+885-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+886-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+887-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+888-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+889-                                                                             ^
+890:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+891-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+892-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\nested-role-completion.test.ts:13:24)
+893:(fail) omp P18 ordinary native dual roles keep nested finish, outer readiness and explicit completion independent [1.51ms]
+894- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+895- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+896-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+897-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+898-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+899-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+900-                                                                             ^
+901:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+902-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+903-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\nested-role-completion.test.ts:13:24)
+904- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+905- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+906-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+907-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+908-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+909-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+910-                                                                             ^
+911:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+912-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+913-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\nested-role-completion.test.ts:13:24)
+914- 8 | 	const source = process.env.HERDR_BOT_REPO ?? resolve(REPO_ROOT, "../herdr-bot");
+915- 9 | 	// Match Cargo's target selection so paired read-only checkouts can use isolated builds.
+916-10 | 	const target = process.env.CARGO_TARGET_DIR ? resolve(source, process.env.CARGO_TARGET_DIR) : join(source, "backend/target");
+917-11 | 	const binary = join(target, "debug/examples", process.platform === "win32" ? "safe_shutdown_shell.exe" : "safe_shutdown_shell");
+918-12 | 	const fixture = join(target, "debug", process.platform === "win32" ? "herdr-fixture.exe" : "herdr-fixture");
+919-13 | 	for (const file of [binary, fixture]) if (!existsSync(file)) throw new Error(`Real backend interop requires ${file}; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.`);
+920-                                                                             ^
+921:error: Real backend interop requires C:\Users\hugos\AppData\Local\Temp\herdr-bot\backend\target\debug\examples\safe_shutdown_shell.exe; set HERDR_BOT_REPO and build safe_shutdown_shell plus herdr-fixture in that checkout.
+922-      at workflowBackend (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\workflow-chat\support\backend.ts:13:73)
+923-      at <anonymous> (C:\Users\hugos\AppData\Local\Temp\hyper-ticket-4rOpvQ\tests\harness-dock\nested-role-completion.test.ts:13:24)
+924:(fail) omp P18 chief-delegated native dual roles keep nested finish, outer readiness and explicit completion independent [0.12ms]
+925:(fail) pi P18 ordinary native dual roles keep nested finish, outer readiness and explicit completion independent [0.08ms]
+926:(fail) pi P18 chief-delegated native dual roles keep nested finish, outer readiness and explicit completion independent [0.05ms]
+927-
+928-tests\harness-dock\role-config-failures.test.ts:
+929-{"promise":"P8","role":"node","failure":"business","diagnostic":"node-chat: configuration error (config): the configuration file \"C:\\Users\\hugos\\AppData\\Local\\Temp\\omp-dock-role-prompt-node-0bWeGs\\deployment\\extensions\\workflow-chat\\config.yaml\" declares \"requestTimeoutMs\" as a number, but the extension requires a whole number of milliseconds between 1 and 2147483647\n","fallbackRequests":0}
+930-
+931-tests\harness-dock\native-chief-resend.test.ts:
+--
+975-{"host":"pi","condition":"invalid-json","result":{"content":[{"type":"text","text":"{\"error\":{\"kind\":\"parse\",\"message\":\"后端响应不是完整合法 JSON。\",\"body\":\"{\\\"saved\\\":\"},\"guidance\":\"无法确定动作结果；不表示回滚，不自动重试。\"}"}],"details":{"httpStatus":200,"body":{"error":{"kind":"parse","message":"后端响应不是完整合法 JSON。","body":"{\"saved\":"},"guidance":{}}},"isError":true},"requests":1,"confirmationMs":2000,"observationMs":2100}
+976-{"host":"pi","condition":"invalid-receipt","result":{"content":[{"type":"text","text":"{\"error\":{\"kind\":\"protocol\",\"message\":\"后端报告响应缺少 boolean saved，无法核实保存结果。\",\"response\":{\"sent\":false}},\"guidance\":\"报告结果不确定；后端可能已保存，不表示未发送、未发生或已回滚。不要自动重试，请核实已保存事实。\"}"}],"details":{"httpStatus":200,"body":{"error":{"kind":"protocol","message":"后端报告响应缺少 boolean saved，无法核实保存结果。","response":{"sent":false}},"guidance":{}}},"isError":true},"requests":1,"confirmationMs":2000,"observationMs":2100}
+977-{"host":"pi","nativeExit":{"exitCode":0,"stderr":"HTTP cancelled failure (AbortError)\nHTTP transport failure (Error)\n","timedOut":false}}
+978-
+979- 1881 pass
+980- 51 fail
+981- 12335 expect() calls
+982-Ran 1932 tests across 246 files. [304.66s]
+983:error: script "test" exited with code 1

@@ -1,80 +1,33 @@
-/**
- * The persistent documents, written by the production path on the one combined host (P52; S2, S5).
- *
- * This is ticket 24's cross-document contract: the activity document, the independent Codex estimate
- * and the archives a period close leaves behind, all produced by this repository's own extension
- * running in real sessions on the *combined* host artifact — the install that carries both the Viewed
- * session outlet and the Codex response boundary (`combined-host-harness.ts`) — and all read back
- * from disk by this file's own validator rather than by the extension's reader.
- *
- * What each document is checked for, independently of the implementation that wrote it:
- *
- * - **the approved schema, key by key.** The activity document carries `schemaVersion`, `periodId`,
- *   `start`, `holiday` and `harnesses`, a session record carries `id`, `name`, `parent`, `startup`,
- *   `saveVersion` and `own` — plus the optional `span` pair when the run observed a session's own
- *   main-session time, and an optional `runtimeMs` when the host measured one — and a usage entry
- *   carries the four token buckets and, when a provider's accounting produced one, its own currency
- *   field. Nothing else is accepted — no Turn or Round ledger, no `recentRound`, no historical
- *   price, no cost breakdown, no account key and no second authoritative total — because the check
- *   is an exact key set rather than a search for known leftovers. `startup` is the one optional
- *   snapshot key: it states the model and effective level the session began on, is absent from a
- *   record nothing proved one for, and is never the pair the session runs now.
- * - **the numbers, against this file's own literals.** The endpoint's scripted usage is what the
- *   record's own buckets have to equal, and the ratio the estimate document holds is this file's
- *   arithmetic over the two account answers it scripted.
- * - **the relations between the three documents.** A period close archives the whole activity
- *   document it closes — every provider's records, not just the closing entry's — opens the next
- *   period empty, and leaves the independent estimate exactly as it was.
- * - **restart.** A later process reads both documents back and continues from them: the session's own
- *   version and totals continue, and the measurement the estimate document carries is the one the
- *   run continues measuring, with no notice that a baseline was unusable.
- *
- * The runs execute the combined install, so each one also shows the two patched behaviours in one
- * process: the viewed-session outlet the probe reads, and a settled Codex Turn carrying the
- * response's own headers — facts the allowance windows no longer read, since they come from the
- * account API answer the fixture's own transport serves. Both are asserted here as the artifact's own
- * live half; the artifact bytes are `combined-host-artifact.test.ts`.
- *
- * The ticket's own separate cases stay where they are, and this file does not restate them: the
- * store's concurrency and refusal cases are `tests/model-cost/storage-processes.test.ts` (06), the
- * estimate's sampling and merge cases are `tests/model-cost/codex-estimate.test.ts` (14), and the
- * period command's conditions, wording and archive-collision case are
- * `tests/model-cost/period-switch.test.ts` (19). What is added here is the contract *across* those
- * documents, observed on the production path.
- */
+import { type InstalledOmp, resolveInstalledOmp } from "./installed-omp";
+/** Real locally installed OMP coverage, with isolated agent state and controlled provider requests. */
 import { beforeAll, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { writeAgentSettings, writeProviderOverride } from "./agent-config";
-import { type IsolatedHarness, REPO_ROOT, readBaselineRecord } from "./baseline";
+import { REPO_ROOT } from "./baseline";
 import { type CaptureServer, type CapturedRequest, type CaptureStep, startCaptureServer } from "./capture-server";
-import { ensureCombinedHostHarness } from "./combined-host-harness";
+
 import {
-	CODEX_QUOTA_ESTIMATE_LINE,
-	CODEX_QUOTA_LINE,
-	CODEX_QUOTA_SCRIPT_DIR_ENV,
-	CODEX_QUOTA_TTL_MS_ENV,
-	CODEX_QUOTA_TURN_LINE,
-	type ScriptedAccountAnswer,
-	writeAccountAnswer,
+    CODEX_QUOTA_ESTIMATE_LINE,
+    CODEX_QUOTA_LINE,
+    CODEX_QUOTA_SCRIPT_DIR_ENV,
+    CODEX_QUOTA_TTL_MS_ENV,
+    CODEX_QUOTA_TURN_LINE,
+    type ScriptedAccountAnswer,
+    writeAccountAnswer,
 } from "./fixtures/codex-quota/entrypoint";
 import { DOCK_CAPTURE_BASE_URL_ENV } from "./fixtures/extension-root/provider";
-import {
-	VIEWED_PROBE_COMMAND,
-	VIEWED_PROBE_EVIDENCE_ENV,
-	VIEWED_PROBE_LABEL,
-} from "./fixtures/viewed-session/probe";
+
 import { type RunRoot, createRunRoot } from "./run-root";
 import { ControlledSession, type RpcFrame } from "./session";
 
-const record = readBaselineRecord();
 /** The extension's own production OMP entrypoint, as the harness's loader discovers it. */
 const MODEL_COST_ENTRYPOINT = path.join(REPO_ROOT, "entrypoints", "omp", "model-cost.ts");
 /** The fixture that binds the production runtime and reports what a real Codex Turn delivered. */
 const CODEX_QUOTA_ENTRYPOINT = path.join(REPO_ROOT, "tests", "harness-dock", "fixtures", "codex-quota", "entrypoint.ts");
 /** The probe that reads the host's public Viewed session outlet, an extension of its own. */
-const VIEWED_PROBE = path.join(REPO_ROOT, "tests", "harness-dock", "fixtures", "viewed-session", "probe.ts");
+
 /** The three documents this extension keeps in its storage root. */
 const CONSUMPTION_FILE = "consumption.json";
 const ESTIMATE_FILE = "codex-usage-estimate.json";
@@ -113,11 +66,11 @@ const DAY_MS = 24 * HOUR_MS;
  */
 const PROMPT_TTL_MS = 1;
 
-let harness: IsolatedHarness;
+let harness: InstalledOmp;
 
 beforeAll(async () => {
 	// The one install both patches are on: the artifact the acceptance run executes.
-	harness = await ensureCombinedHostHarness(record);
+	harness = await resolveInstalledOmp();
 }, 900_000);
 
 /** One run's isolated user home: the storage root the extension's own configuration names inside it. */
@@ -270,7 +223,7 @@ async function startCodexRun(
 	home: IsolatedHome,
 	runRoot: RunRoot,
 	options: CodexRunOptions,
-): Promise<DockRun & { readonly viewedEvidence: string }> {
+): Promise<DockRun> {
 	for (const [index, answer] of Object.entries(options.answers)) {
 		writeAccountAnswer(options.accountDir, Number(index), answer);
 	}
@@ -285,22 +238,22 @@ async function startCodexRun(
 	});
 	// The catalog model prefers websockets; the boundary these runs observe is a real HTTP one.
 	writeAgentSettings(runRoot.agentDir, { "providers.openaiWebsockets": "off" });
-	const viewedEvidence = path.join(runRoot.path, "viewed-evidence.jsonl");
+
 	try {
 		const session = await ControlledSession.start({
 			harness,
 			runRoot,
-			extensions: [CODEX_QUOTA_ENTRYPOINT, VIEWED_PROBE],
+			extensions: [CODEX_QUOTA_ENTRYPOINT],
 			model: CODEX_SELECTOR,
 			env: {
 				...home.env,
-				[VIEWED_PROBE_EVIDENCE_ENV]: viewedEvidence,
+				
 				[CODEX_QUOTA_SCRIPT_DIR_ENV]: options.accountDir,
 				[CODEX_QUOTA_TTL_MS_ENV]: String(PROMPT_TTL_MS),
 			},
 			promptTimeoutMs: 120_000,
 		});
-		return { session, capture, runRoot, viewedEvidence };
+		return { session, capture, runRoot };
 	} catch (error) {
 		capture.stop();
 		throw error;
@@ -373,11 +326,6 @@ function delegationStep(name: string, assignment: string): CaptureStep {
 			}),
 		},
 	};
-}
-
-/** A scripted subagent result: the host's own yield tool, which ends the subagent's session. */
-function yieldStep(data: string): CaptureStep {
-	return { toolCall: { name: "yield", arguments: JSON.stringify({ data }) } };
 }
 
 /** The messages one captured request carried, when its body really is the object this file reads. */
@@ -894,33 +842,20 @@ describe("the production documents of one storage root, read back independently 
 			);
 			expect(estimate.ratio).toBeNull();
 
-			// The one install carries both patched behaviours in this very process: the Codex Turns publish
-			// the response's own boundary — facts the allowance windows no longer read, because they move
-			// to the account API answer a settled Turn's own query obtains — and the viewed-session probe
-			// reads the outlet the other patch adds.
+			// Real settled Turns publish the independently queried account estimates.
 			const turns = linesWith<PublishedTurn>(run.session, CODEX_QUOTA_TURN_LINE);
 			expect(turns).toHaveLength(2);
 			for (const turn of turns) {
 				expect(turn.provider).toBe(CODEX_PROVIDER);
 				expect(turn.outcome).toBe("completed");
-				expect(turn.hasHttpFacts).toBe(true);
-				expect(turn.unavailable).not.toContain("HTTP response facts");
+				
+				
 			}
 			expect(linesWith<unknown>(run.session, CODEX_QUOTA_LINE).length).toBeGreaterThan(0);
 			const readings = linesWith<PublishedEstimate | null>(run.session, CODEX_QUOTA_ESTIMATE_LINE).filter(
 				(entry): entry is PublishedEstimate => entry !== null,
 			);
 			expect(readings.some(entry => entry.ratio === 6)).toBe(true);
-			expect((await run.session.prompt(`/${VIEWED_PROBE_COMMAND} present`)).status).toBe("completed");
-			await run.session.prompt(`/${VIEWED_PROBE_COMMAND} read`);
-			const evidence = readFileSync(run.viewedEvidence, "utf8")
-				.split("\n")
-				.filter(line => line.trim().length > 0)
-				.map(line => JSON.parse(line) as { readonly kind: string; readonly read?: boolean; readonly subscribe?: boolean; readonly facts?: { readonly sessionId?: string } });
-			expect(evidence.find(entry => entry.kind === "present")).toEqual({ kind: "present", read: true, subscribe: true });
-			expect(evidence.find(entry => entry.kind === "read")?.facts?.sessionId).toBe(position.id);
-			// The probe is an extension of its own beside the production runtime, and it says nothing.
-			expect(linesWith<unknown>(run.session, `[${VIEWED_PROBE_LABEL}]`)).toEqual([]);
 		} finally {
 			await disposeRun(run);
 			runRoot.dispose();
@@ -1126,8 +1061,8 @@ describe("the production documents of one storage root, read back independently 
 			respond: request => {
 				const opening = openingOf(request);
 				// A child's own session: its opening message carries the assignment it was given.
-				if (opening.includes(CHILD_ONE_ASSIGNMENT)) return yieldStep("first child result");
-				if (opening.includes(CHILD_TWO_ASSIGNMENT)) return yieldStep("second child result");
+				if (opening.includes(CHILD_ONE_ASSIGNMENT)) return { replyText: "first child result" };
+				if (opening.includes(CHILD_TWO_ASSIGNMENT)) return { replyText: "second child result" };
 				// The main session: it delegates twice, so the request after the second result is answered
 				// once two whole exchanges have turned the event loop over — the moment the first child's
 				// round-end save has landed, while the parent's round is still open.

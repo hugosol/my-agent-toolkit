@@ -1,8 +1,8 @@
 /**
- * Verification dock for the fixed harness baseline.
+ * Verification dock for the locally selected installed OMP host.
  *
- * Consumers (the framework and extension suites, the upgrade script) import from this
- * entry point only: baseline record + isolated install, isolated environment, controlled
+ * Consumers share the installed CLI resolver, historical baseline evidence readers,
+ * isolated environment, controlled
  * session driver, session JSONL read-back and outbound request capture.
  *
  * The dock drives sessions in RPC mode, captures outbound requests at a local
@@ -11,6 +11,7 @@
  */
 export * from "./agent-config";
 export * from "./baseline";
+export * from "./installed-omp";
 export * from "./capture-server";
 export * from "./env";
 export * from "./run-root";

@@ -1,47 +1,35 @@
-/**
- * The public binding in a running harness (P28, P56, S5).
- *
- * The dock materialises the recorded baseline install, loads this repository's own fixture
- * extension through the harness's real loader, and drives the session over RPC — the same
- * operator entrance the framework and extension suites use, so what is observed here is the
- * production public binding rather than a double.
- *
- * The evidence is the harness's own: the operator-visible stderr of the session, which carries
- * both the extension's own lines and the framework's notices, and the run completing without a
- * model request ever leaving the machine (the dock's local capture endpoint answers it).
- */
+import { type InstalledOmp, resolveInstalledOmp } from "./installed-omp";
+/** Real locally installed OMP coverage, with isolated agent state and controlled provider requests. */
 import { beforeAll, describe, expect, test } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import * as path from "node:path";
-import { type IsolatedHarness, ensureIsolatedHarness, readBaselineRecord } from "./baseline";
 import { type CaptureServer, startCaptureServer } from "./capture-server";
 import { DOCK_CAPTURE_BASE_URL_ENV, DOCK_MODEL_SELECTOR } from "./fixtures/extension-root/provider";
 import {
-	VIEWED_CAPTURE_BASE_URL_ENV,
-	VIEWED_MODEL_B,
-	VIEWED_MODEL_SELECTOR,
-	VIEWED_PROVIDER,
+    VIEWED_CAPTURE_BASE_URL_ENV,
+    VIEWED_MODEL_B,
+    VIEWED_MODEL_SELECTOR,
+    VIEWED_PROVIDER,
 } from "./fixtures/viewed-session/provider";
 import {
-	LIFECYCLE_ACTION_MS,
-	LIFECYCLE_ASYNC_ACTION,
-	LIFECYCLE_COMMAND,
-	LIFECYCLE_CONFIG_VALUE,
-	LIFECYCLE_INITIALIZATION_MS,
-	LIFECYCLE_SYNC_ACTION,
+    LIFECYCLE_ACTION_MS,
+    LIFECYCLE_ASYNC_ACTION,
+    LIFECYCLE_COMMAND,
+    LIFECYCLE_CONFIG_VALUE,
+    LIFECYCLE_INITIALIZATION_MS,
+    LIFECYCLE_SYNC_ACTION,
 } from "./fixtures/binding-lifecycle/entrypoint";
 import { type RunRoot, createRunRoot } from "./run-root";
 import { ControlledSession, type PromptOutcome, type RpcFrame } from "./session";
 
-const record = readBaselineRecord();
 const PROVIDER_FIXTURE = path.join(import.meta.dir, "fixtures", "extension-root", "provider.ts");
 const LIFECYCLE_FIXTURE = path.join(import.meta.dir, "fixtures", "binding-lifecycle", "entrypoint.ts");
 const VIEWED_PROVIDER_FIXTURE = path.join(import.meta.dir, "fixtures", "viewed-session", "provider.ts");
 
-let harness: IsolatedHarness;
+let harness: InstalledOmp;
 
 beforeAll(async () => {
-	harness = await ensureIsolatedHarness(record);
+	harness = await resolveInstalledOmp();
 });
 
 interface DockRun {

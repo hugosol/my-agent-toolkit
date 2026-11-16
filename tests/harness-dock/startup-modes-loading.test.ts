@@ -1,3 +1,4 @@
+import { type InstalledOmp, resolveInstalledOmp } from "./installed-omp";
 /**
  * Explicit loading, mode selection and configuration refusal on the real OMP harness (S2; P1,
  * P5, P29, P31, P34 of the extension-startup-modes contract).
@@ -30,16 +31,16 @@ import type { Server } from "bun";
 import { cpSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { INIT_PROMPT } from "../../extensions/codebase-tools/shared-logic/prompts";
-import { type IsolatedHarness, REPO_ROOT, ensureIsolatedHarness, readBaselineRecord } from "./baseline";
+import { REPO_ROOT } from "./baseline";
 import { type CaptureServer, type CapturedRequest, startCaptureServer } from "./capture-server";
 import { DOCK_CAPTURE_BASE_URL_ENV, DOCK_MODEL_SELECTOR } from "./fixtures/extension-root/provider";
 import { type RunRoot, createRunRoot } from "./run-root";
 import { ControlledSession, type RpcFrame } from "./session";
 
-let harness: IsolatedHarness;
+let harness: InstalledOmp;
 
 beforeAll(async () => {
-	harness = await ensureIsolatedHarness(readBaselineRecord());
+	harness = await resolveInstalledOmp();
 }, 300_000);
 
 /** The credential-free provider fixture, loaded beside the entrypoints under test. */

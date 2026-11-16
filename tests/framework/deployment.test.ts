@@ -7,7 +7,7 @@
  * (C11/C12/N8, P29/P30/P31/P42; see framework/docs/harness-support.md, "Shared-source
  * deployment prerequisite").
  *
- * Each test runs the isolated 18.5.0 install's own loader module against the real
+ * Each test runs the selected local installation's own loader module against the real
  * repository layout. Nothing here modifies harness source, the default global
  * install, formal configuration, or a running agent.
  */
@@ -15,7 +15,8 @@ import { beforeAll, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { pathToFileURL } from "node:url";
-import { type IsolatedHarness, REPO_ROOT, ensureIsolatedHarness, readBaselineRecord } from "../harness-dock/baseline";
+import { REPO_ROOT } from "../harness-dock/baseline";
+import { type InstalledOmp, resolveInstalledOmp } from "../harness-dock/installed-omp";
 import { startCaptureServer } from "../harness-dock/capture-server";
 import { listResolutionOffsets } from "../harness-dock/env";
 import { DOCK_CAPTURE_BASE_URL_ENV, DOCK_MODEL_SELECTOR } from "../harness-dock/fixtures/extension-root/provider";
@@ -71,9 +72,7 @@ interface DiscoveryHelpers {
 	getExtensionNameFromPath(extensionPath: string): string;
 }
 
-const record = readBaselineRecord();
-
-let harness: IsolatedHarness;
+let harness: InstalledOmp;
 let loader: ExtensionLoader;
 let helpers: DiscoveryHelpers;
 
@@ -104,9 +103,8 @@ function diagnosticsFor(extensionId: string, session: ControlledSession): string
 }
 
 beforeAll(async () => {
-	harness = await ensureIsolatedHarness(record);
-	// Dynamic import is required: the harness is an isolated exact install whose
-	// prefix is harness-selected, so no static specifier can name its loader.
+	harness = await resolveInstalledOmp();
+	// The selected local package owns the loader; no static specifier names every installation.
 	const loaderUrl = pathToFileURL(path.join(harness.packageRoot, "src", "extensibility", "extensions", "loader.ts")).href;
 	const helpersUrl = pathToFileURL(path.join(harness.packageRoot, "src", "discovery", "helpers.ts")).href;
 	// Unchecked cast: the isolated install owns these module types, and only the surface

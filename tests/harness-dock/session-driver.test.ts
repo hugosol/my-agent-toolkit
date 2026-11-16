@@ -1,17 +1,9 @@
-/**
- * The controlled-session dock must be able to: start the isolated harness
- * with a temporary agent state, execute an extension command, run a real turn, read
- * the session JSONL back, read the captured outbound request JSON back, exit
- * normally, and explain itself when a run fails.
- *
- * Each test owns its run (temporary agent state, session directory, capture directory).
- * The harness materialises its session file lazily, so read-back happens after a
- * turn and a graceful exit, which is when the file is complete.
- */
+import { type InstalledOmp, resolveInstalledOmp } from "./installed-omp";
+/** Real locally installed OMP coverage, with isolated agent state and controlled provider requests. */
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import * as path from "node:path";
-import { type IsolatedHarness, ensureIsolatedHarness, readBaselineRecord, verifyLockfile } from "./baseline";
+import { readBaselineRecord, verifyLockfile } from "./baseline";
 import { type CaptureServer, startCaptureServer } from "./capture-server";
 import { listResolutionOffsets } from "./env";
 import { DOCK_CAPTURE_BASE_URL_ENV, DOCK_MODEL_SELECTOR } from "./fixtures/extension-root/provider";
@@ -28,7 +20,7 @@ import { customEntries, customMessages } from "./session-log";
 const record = readBaselineRecord();
 const FIXTURE_EXTENSION_ROOT = path.join(import.meta.dir, "fixtures", "extension-root");
 
-let harness: IsolatedHarness;
+let harness: InstalledOmp;
 
 interface DockRun {
 	readonly session: ControlledSession;
@@ -68,15 +60,14 @@ async function disposeRun(run: DockRun): Promise<void> {
 
 describe("controlled session", () => {
 	test("starts the isolated artifact under a temporary agent state, not the default environment", async () => {
-		harness = await ensureIsolatedHarness(record);
+		harness = await resolveInstalledOmp();
 		const run = await startRun("isolation");
 		try {
 			// Exactly one resolution offset survives: the temporary agent state directory.
 			expect(listResolutionOffsets(run.session.env)).toEqual(["PI_CODING_AGENT_DIR"]);
 			expect(run.session.env.PI_CODING_AGENT_DIR).toBe(run.runRoot.agentDir);
 			// The process that runs is the isolated install, invoked explicit-only.
-			expect(run.session.argv[1]).toBe(harness.cliPath);
-			expect(run.session.argv[1]?.startsWith(harness.prefix)).toBe(true);
+			expect(run.session.argv.slice(0, 1 + harness.argvPrefix.length)).toEqual([harness.path, ...harness.argvPrefix]);
 			expect(run.session.argv).toContain("--no-extensions");
 			expect(run.session.argv).toContain(FIXTURE_EXTENSION_ROOT);
 
@@ -150,7 +141,7 @@ describe("controlled session", () => {
 			let caught: unknown;
 			try {
 				await ControlledSession.start({
-					harness: { cliPath: path.join(runRoot.workDir, "missing-cli.ts") },
+					harness: { path: process.execPath, argvPrefix: [path.join(runRoot.workDir, "missing-cli.ts")] },
 					runRoot,
 					extensions: [FIXTURE_EXTENSION_ROOT],
 					model: DOCK_MODEL_SELECTOR,

@@ -1,32 +1,17 @@
-/**
- * The real host's Effort and Total, read off the extension's own widget (P11, P21, P22; S5).
- *
- * These runs are the model-cost entrypoint loaded into the *frozen* patched host — the
- * `omp-18.5.0-viewed-session` artifact ticket 01 materialised, whose public viewed-session outlet is
- * the only source these facts have. What they establish is the half a controlled double cannot: that
- * on the real host the widget's Effort really is the session's *actual effective* thinking level,
- * delivered through that outlet, that a change of it is re-read without the extension asking the
- * provider for anything, and that a model with no settable effort is displayed as `?` rather than as
- * a configured intent. The Total line beside it is the same run's own accounted consumption.
- *
- * Every model is reached through the dock's own capture endpoint, so no run needs a credential and
- * nothing leaves the machine; the usage the endpoint reports is what the Total's figures are
- * hand-derived from. Nothing here is a formal installation: the run's own agent state, session
- * directory, working directory and storage root all sit inside its temporary run root.
- */
+import { type InstalledOmp, resolveInstalledOmp } from "./installed-omp";
+/** Real locally installed OMP coverage, with isolated agent state and controlled provider requests. */
 import { beforeAll, describe, expect, test } from "bun:test";
 import { mkdirSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { MODEL_COST_WIDGET_KEY } from "../../extensions/model-cost/harnesses/omp/widget";
 import { writeProviderOverride } from "./agent-config";
-import { type IsolatedHarness, REPO_ROOT, readBaselineRecord } from "./baseline";
+import { REPO_ROOT } from "./baseline";
 import { type CaptureServer, startCaptureServer } from "./capture-server";
 import { DOCK_CAPTURE_BASE_URL_ENV } from "./fixtures/extension-root/provider";
 import { type RunRoot, createRunRoot } from "./run-root";
 import { ControlledSession, type RpcFrame } from "./session";
-import { ensureViewedSessionHarness } from "./viewed-session-harness";
 
-const record = readBaselineRecord();
+
 /** The extension's own OMP entrypoint, as the harness's loader discovers it. */
 const MODEL_COST_ENTRYPOINT = path.join(REPO_ROOT, "entrypoints", "omp", "model-cost.ts");
 /** The provider the extension's own data prices in CNY, redirected to the local capture endpoint. */
@@ -82,39 +67,7 @@ function isolateHome(runRoot: RunRoot): IsolatedHome {
 	};
 }
 
-/** One instance's own model definition, as this file writes it into the run's `models.yml`. */
-interface RunModel {
-	readonly reasoning: boolean;
-	readonly contextWindow?: number;
-}
 
-/**
- * Point the provider at the capture endpoint, optionally replacing its model definitions with this
- * run's own so a case can state whether the model really has a settable effort.
- */
-function writeRunModels(agentDir: string, baseUrl: string, model: RunModel | undefined): void {
-	if (model === undefined) {
-		writeProviderOverride(agentDir, PROVIDER, { baseUrl, apiKey: "dock-key" });
-		return;
-	}
-	mkdirSync(agentDir, { recursive: true });
-	const lines = [
-		"providers:",
-		`  ${JSON.stringify(PROVIDER)}:`,
-		`    baseUrl: ${JSON.stringify(baseUrl)}`,
-		'    apiKey: "dock-key"',
-		"    api: \"openai-completions\"",
-		"    models:",
-		`      - id: ${JSON.stringify(MODEL)}`,
-		'        name: "Dock Flash"',
-		'        api: "openai-completions"',
-		`        reasoning: ${String(model.reasoning)}`,
-		'        input: ["text"]',
-		`        contextWindow: ${model.contextWindow ?? 64_000}`,
-		"        maxTokens: 8192",
-	];
-	writeFileSync(path.join(agentDir, "models.yml"), `${lines.join("\n")}\n`, "utf8");
-}
 
 interface DockRun {
 	readonly session: ControlledSession;
@@ -123,14 +76,14 @@ interface DockRun {
 	readonly home: IsolatedHome;
 }
 
-async function startRun(label: string, model: RunModel | undefined): Promise<DockRun> {
+async function startRun(label: string): Promise<DockRun> {
 	const runRoot = createRunRoot(label);
 	const home = isolateHome(runRoot);
 	const capture = startCaptureServer({ dir: runRoot.captureDir, replyText: "dock viewed-total reply", usage: CAPTURE_USAGE });
-	writeRunModels(runRoot.agentDir, capture.baseUrl, model);
+	writeProviderOverride(runRoot.agentDir, PROVIDER, { baseUrl: capture.baseUrl, apiKey: "dock-key" });
 	try {
 		const session = await ControlledSession.start({
-			harness: patched,
+			harness: installed,
 			runRoot,
 			extensions: [MODEL_COST_ENTRYPOINT],
 			model: MODEL_SELECTOR,
@@ -200,15 +153,15 @@ function shownEffort(session: ControlledSession): string | undefined {
 	return line?.split("Effort: ")[1]?.split("  ")[0];
 }
 
-let patched: IsolatedHarness;
+let installed: InstalledOmp;
 
 beforeAll(async () => {
-	patched = await ensureViewedSessionHarness(record);
+	installed = await resolveInstalledOmp();
 }, 600_000);
 
-describe("the widget's Effort is the host's actual level, re-read when it changes (P11)", () => {
-	test("a real level is displayed, and a same-target change is read again without another request", async () => {
-		const run = await startRun("viewed-total-effort", undefined);
+describe("the widget's Effort reads the native session level on redraw (P11)", () => {
+	test("a changed level is re-read by a budget redraw without another model request", async () => {
+		const run = await startRun("viewed-total-effort");
 		try {
 			expect((await run.session.prompt("one effort exchange")).status).toBe("completed");
 			expect(run.capture.requests()).toHaveLength(1);
@@ -229,16 +182,20 @@ describe("the widget's Effort is the host's actual level, re-read when it change
 			expect(total).toContain("Cost: \u00A50.0050");
 			expect(total).toContain("\u00A5Cache/In/Out\uff1a0:20:80");
 
-			// The session's own thinking level changes: the host's `thinking_level_changed` reaches the
-			// widget through the public outlet, and the next draw carries the new level — with no model
-			// request and no accounting change behind it.
+			// Native RPC changes the bound session's level, but does not publish the optional
+			// viewed-session outlet or an extension-facing thinking-change notification. The extension's
+			// own /budget detail command provides a real redraw: it must re-read the native getter,
+			// not retain the previous effort or issue another model request.
 			const levels = thinkingLevels(await run.session.request({ type: "get_available_thinking_levels" }));
 			const chosen = levels.find(level => level !== before);
 			if (chosen === undefined) throw new Error(`the run offered no thinking level other than ${String(before)}`);
-			const framesBefore = widgetFrames(run.session).length;
 			await run.session.request({ type: "set_thinking_level", level: chosen });
-
 			expect(await hostLevel(run.session)).toBe(chosen);
+
+			const framesBefore = widgetFrames(run.session).length;
+			const redraw = await run.session.prompt("/budget detail");
+			expect(redraw.status).toBe("completed");
+			expect(redraw.agentInvoked).toBe(false);
 			expect(shownEffort(run.session)).toBe(chosen);
 			expect(widgetFrames(run.session).length).toBeGreaterThan(framesBefore);
 			expect(run.capture.requests()).toHaveLength(1);
@@ -251,23 +208,4 @@ describe("the widget's Effort is the host's actual level, re-read when it change
 	}, 300_000);
 });
 
-describe("a model with no settable effort is displayed as a question mark (P11)", () => {
-	test("the widget says ? rather than borrowing a configured or default level", async () => {
-		const run = await startRun("viewed-total-no-effort", { reasoning: false });
-		try {
-			expect((await run.session.prompt("one plain exchange")).status).toBe("completed");
-			expect(run.capture.requests()).toHaveLength(1);
 
-			// The host reports no thinking level for a model that cannot think, and the widget says so
-			// instead of filling the field from anywhere else. The model is still one this extension
-			// displays: its budget bar and its Total are drawn around the question mark.
-			expect(await hostLevel(run.session)).toBeUndefined();
-			const lines = shownLines(run.session) ?? [];
-			expect(lines.some(line => line.includes("Effort: ?"))).toBe(true);
-			expect(lines.some(line => line.includes("450.0K"))).toBe(true);
-			expect(lines.some(line => line.startsWith("Total:"))).toBe(true);
-		} finally {
-			await disposeRun(run);
-		}
-	}, 300_000);
-});

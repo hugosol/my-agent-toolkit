@@ -1,5 +1,5 @@
 {
-  "$comment": "Single checkable record of the fixed verification baseline: harness revision anchor, run/acceptance artifact, and dependency lockfiles. Checked by tests/harness-dock/baseline.test.ts. Support status and the verification policy stay in framework/docs/harness-support.md; this file records only the correspondence between the anchor, the artifact actually run, and the lockfiles.",
+  "$comment": "Historical first-release verification baseline: harness revision anchor, acceptance artifact and dependency lockfiles. This record does not select or install the current test harness. Current local-version acceptance lives in omp-acceptance.json; support status and verification policy stay in framework/docs/harness-support.md.",
   "recorded": "2026-10-07",
   "harness": {
     "package": "@oh-my-pi/pi-coding-agent",
@@ -18,9 +18,9 @@
       "prefix": ".cache/omp-baseline/18.5.0",
       "installCommand": "bun install in the prefix directory with an exact dependency entry",
       "cliEntry": "src/cli.ts",
-      "role": "the only harness that acceptance/verification runs execute; the local checkout cannot run a full session because its native addon is not built",
+      "role": "historical first-release acceptance artifact; current verification uses the locally selected installed OMP without installing or patching it",
       "byteIdentity": {
-        "source": "reused conclusion of the migration's extension-path probes (2026-10-06): the isolated 18.5.0 install is byte-identical to the checkout at the recorded revision for the files that carry the extension, session, model and auth contracts; every dock run re-checks the recorded hashes against both sides (tests/harness-dock/baseline.test.ts, verifyArtifactByteIdentity)",
+        "source": "reused conclusion of the migration's extension-path probes (2026-10-06): the isolated 18.5.0 install is byte-identical to the checkout at the recorded revision for the files that carry the extension, session, model and auth contracts; retained as historical evidence, not re-applied to current installed versions",
         "method": "sha256",
         "conclusion": "6/6 identical",
         "files": [

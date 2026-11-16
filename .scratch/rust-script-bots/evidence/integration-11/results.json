@@ -1,0 +1,23 @@
+{
+  "ticket":"11-cross-repository-acceptance",
+  "repository":"toolkit",
+  "worktree":"C:/Users/hugos/AppData/Local/Temp/hyper-ticket-9Z2J1e",
+  "testedBaseHead":"208453735f37678bdc9228b20b733f0c3578ac2c",
+  "automatedPassed":true,
+  "mergeResolution":"merge-resolution.json",
+  "environment":{"bun":"1.4.4","HERDR_BOT_REPO":"C:/Users/hugos/AppData/Local/Temp/hyper-ticket-Pe756W","CARGO_TARGET_DIR":"C:/Users/hugos/AppData/Local/Temp/hyper-ticket-Pe756W/.scratch/cargo-target","HERDR_BOT_BINARY":"C:/Users/hugos/AppData/Local/Temp/hyper-ticket-Pe756W/.scratch/cargo-target/debug/examples/safe_shutdown_shell.exe","HERDR_BOT_METADATA":"C:/Users/hugos/AppData/Local/Temp/hyper-ticket-Pe756W/meta-data/task-options.toml","PI_CLI":"D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js","PI_NODE":"D:/Users/hugos/AppData/Local/nvm/v22.19.0/node.exe","OMP_BASELINE_RECORD_ROOT":"E:/Developer/myhub/my-agent-toolkit","parallelism":"Project canonical bun run test uses --parallel=4; no serial override"},
+  "commands":[
+    {"command":"bun run typecheck","exit":0,"log":"typecheck.log"},
+    {"command":"bun run check:integrations","exit":0,"log":"integrations.log"},
+    {"command":"bun run test","exit":1,"testsPassed":1909,"testsFailed":23,"log":"canonical-suite.log","retainedFailure":"22 patched OMP cases lacked published stats embedded-client.generated.txt; one Pi headless provider failed before HTTP with Fetch bad port"},
+    {"command":"bun run typecheck","exit":0,"log":"typecheck-fixed.log"},
+    {"command":"bun test tests/harness-dock/native-chief-report.test.ts tests/harness-dock/model-cost-codex-quota.test.ts tests/harness-dock/viewed-session-host.test.ts tests/harness-dock/model-cost-persistence.test.ts --parallel=4","exit":0,"testsPassed":22,"log":"fixed-focused.log"},
+    {"command":"bun run test","exit":0,"testsPassed":1932,"testsFailed":0,"files":246,"expectCalls":13297,"log":"canonical-fixed-suite.log"},
+    {"command":"bun run check:integrations","exit":0,"log":"integrations-fixed.log"},
+    {"command":"bun test tests/harness-dock/manager-script-protocol.test.ts","exit":0,"owner":"Executed by the complete cross-repository acceptance entry; exact command/cwd/stdout/stderr recorded in paired herdr evidence"},
+    {"command":"bun scripts/rust-script-acceptance.ts --herdr-bot-worktree C:/Users/hugos/AppData/Local/Temp/hyper-ticket-Pe756W --isolation-config C:/Users/hugos/AppData/Local/Temp/hyper-ticket-Pe756W/.scratch/rust-script-bots/evidence/11-initial/isolation.json --evidence-dir C:/Users/hugos/AppData/Local/Temp/hyper-ticket-Pe756W/.scratch/rust-script-bots/evidence/integration-11-cross-repository/business","exit":0,"scenariosPassed":4,"allOwnedProcessesExited":true,"cleanupErrors":[]}
+  ],
+  "repair":{"source":"Shared controlled provider now binds only IANA dynamic loopback ports (49152-65535), reallocating only EADDRINUSE before any host request; normal concurrency/deadlines/assertions unchanged","dependencies":"Prepared missing real base64 gzip dashboard tar archives from each installed package's own dist/client in three owned patched caches; every archived member compared byte-for-byte with its source. No empty placeholder, fake fallback, package repin or external checkout mutation.","dependencyIdentity":"stats-asset-preparation.json"},
+  "nativeEvidenceDirectories":["canonical-native","fixed-native","canonical-fixed-native"],
+  "remainingHumanChecks":{"H1/P34":"unverified; user-owned real manager confirmation","H2/P35":"unverified; user-owned failure/repair/retry understanding"}
+}

@@ -48,7 +48,7 @@ import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { resolvePiCli } from "../tests/harness-dock/pi-session";
 import { createInterface } from "node:readline/promises";
-import { beginPiAcceptance, rejectLegacyPiVersionArgument } from "./support/pi-acceptance";
+import { beginHarnessAcceptance, rejectLegacyPiVersionArgument } from "./support/harness-acceptance";
 import {
 	ACCRUED,
 	BALANCE_TOTAL,
@@ -416,7 +416,7 @@ function reportObservations(observations: readonly Observation[]): boolean {
 /** The operator's own real TUI: the run's isolated root, the entry loaded, and the terminal handed over. */
 async function interactiveShell(argv: readonly string[]): Promise<void> {
 	const cli = resolvePiCli(optionValue(argv, "pi", process.env.PI_CLI ?? ""));
-	const acceptance = await beginPiAcceptance("tui-human", cli);
+	const acceptance = await beginHarnessAcceptance("pi", "tui-human", cli);
 	try {
 	const run = await prepareAcceptanceRun({ cli, label: "tui-acceptance-interactive" });
 	console.log(`# the real pi terminal UI, fixed scenario, isolated run root: ${run.root.path}`);
@@ -456,7 +456,7 @@ if (argv.includes("--interactive")) {
 	const providerEntry = optionValue(argv, "provider", PROVIDER_ENTRY);
 	const quietMs = Number(optionValue(argv, "quiet-ms", "1200"));
 	const out = path.resolve(optionValue(argv, "out", DEFAULT_OUT));
-	const acceptance = await beginPiAcceptance("tui-capture", cli);
+	const acceptance = await beginHarnessAcceptance("pi", "tui-capture", cli);
 	try {
 	const run = await prepareAcceptanceRun({ cli, label: "tui-acceptance", providerEntry });
 	let passed = false;

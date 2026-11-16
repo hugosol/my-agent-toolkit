@@ -96,11 +96,10 @@ cutover and rollback checklist; the per-promise scenarios and the prepared mater
 that round is claimed until the user confirms it, and the same isolation rule below applies to every
 command it runs.
 
-**Isolation rule for every command below.** Run the isolated exact install
-(`.cache/omp-baseline/18.5.0`, materialised by the first suite run), keep the agent state in a
-throwaway directory via `PI_CODING_AGENT_DIR`, and pass `--no-extensions -e <repo>/entrypoints/omp`
-(never the default global install, the formal configuration `~/.omp/agent/config.yml`, or a running
-agent). The isolated agent state starts empty, so give it a credential for the model you intend to
+**Isolation rule for every command below.** Run the locally selected installed OMP (`OMP_CLI`
+or local resolution), keep agent state in a throwaway directory via `PI_CODING_AGENT_DIR`, and
+pass `--no-extensions -e <repo>/entrypoints/omp`. Never modify the installation or use formal
+configuration `~/.omp/agent/config.yml` or a running agent. The isolated agent state starts empty, so give it a credential for the model you intend to
 run — `PI_CODING_AGENT_DIR=<state> bun <cli> login <provider>`, `--api-key`, or the provider's API-key
 environment variable. The `--no-extensions -e` pair is the explicit-only root described in
 [load-source mutual exclusion](docs/harness-support.md#load-source-mutual-exclusion).
@@ -120,7 +119,7 @@ bun scripts/capture-codex-outbound.ts --prepare   # isolated settings + the wiza
 bun scripts/capture-codex-outbound.ts --run       # one real turn; the request JSON is recorded
 ```
 
-`--prepare` prints the exact `PI_CODING_AGENT_DIR=… bun <isolated 18.5.0 cli> login openai-codex`
+`--prepare` prints the exact `PI_CODING_AGENT_DIR=… bun <selected local cli> login openai-codex`
 command; the credential lands in that directory's `agent.db` and never enters a prompt or this
 repository. `--run` without a credential exits non-zero and re-prints those steps — that is the
 expected not-yet-delivered state. A completed run records `rr-session-N.json` request bodies plus the
@@ -166,18 +165,14 @@ they prove the loader behavior, not the human cutover.
 This is the explicit maintainer action in step 4 of
 [Upgrading the supported harness](#upgrading-the-supported-harness). Support is an evidence claim
 recorded in this repository, not a runtime list: update the four-state support record in
-[`docs/harness-support.md`](docs/harness-support.md), refresh
-[`docs/harness-baseline.json`](docs/harness-baseline.json) (re-checked by
-[`tests/harness-dock/baseline.test.ts`](../tests/harness-dock/baseline.test.ts)), then restart. No
-framework source declares a supported version any more and normal startup reads none — the dock
-selects the version to run from the record (or from `OMP_TEST_VERSION` for a candidate), and a
-binding neither warns about nor refuses a harness the record does not list. The candidate
-result record from [`scripts/verify-omp-candidate.ts`](../scripts/verify-omp-candidate.ts)
-(`.cache/omp-baseline/<version>/candidate-verification.json`) is input to that decision, never the
-decision itself.
+[`docs/harness-support.md`](docs/harness-support.md) using the selected installation's evidence.
+[`docs/harness-baseline.json`](docs/harness-baseline.json) retains historical first-release facts;
+normal startup reads no support list. The dock selects the installed OMP through `OMP_CLI` or
+local resolution. Complete successful dock runs update [`docs/omp-acceptance.json`](docs/omp-acceptance.json)
+automatically, but that scoped record is input to a support decision, never the decision itself.
 
 ## Upgrading the supported harness
 
-The complete procedure now lives in [Harness version verification](docs/harness-support.md#version-verification): fixed-baseline checks, exact-version candidate verification, extension regressions, real-host scripts, evidence limits and the explicit maintainer promotion step.
+The complete procedure now lives in [Harness version verification](docs/harness-support.md#version-verification): local installed-version acceptance, extension regressions, real-host scripts, evidence limits and the explicit maintainer support-promotion step.
 
-The long-term upgrade alarm covers framework capabilities, not every extension promise. Candidate runs are on demand, isolated from the default installation, and do not automatically change support status. Support records, upgrade criteria and version evidence are maintained only in [`harness-support.md`](docs/harness-support.md), with the machine-checkable baseline in [`harness-baseline.json`](docs/harness-baseline.json).
+The long-term upgrade alarm covers framework capabilities, not every extension promise. Dock runs follow the locally selected installation, isolate session state without modifying the executable, and do not automatically change support status. Support records, upgrade criteria and version evidence are maintained only in [`harness-support.md`](docs/harness-support.md), with the machine-checkable baseline in [`harness-baseline.json`](docs/harness-baseline.json).

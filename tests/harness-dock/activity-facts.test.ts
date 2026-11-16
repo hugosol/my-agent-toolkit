@@ -1,42 +1,16 @@
-/**
- * The activity axis on a real harness (S3; contract P10, P33; ticket 02).
- *
- * This is the isolated real-host observation of the reading an extension consumes at the public
- * interface: the dock materialises the recorded baseline install, loads this repository's own
- * model-cost entrypoint and two probe fixtures through the harness's real loader, and drives real RPC
- * sessions whose model requests go to the dock's local capture endpoint. Nothing here is a double: the
- * runs, the tool execution, the responses, the usage the endpoint reports and the host's own task the
- * framework re-checks an end candidate on are the host's.
- *
- * What is observed is the sequence itself. The activity probe records every `session_activity`
- * delivery, in order, and the round probe (`round-facts`) records the edges the same run dispatched, so
- * a case can place each reading against the edge that produced it and against nothing else. The cases
- * below are the acceptance scenarios of the promise, on the harness rather than in a substitute:
- *
- * - one prompt whose run makes two model requests (a tool continuation) is one period of work: the
- *   session reads `working` once and `idle` once, and no reading at all appears between them — the
- *   continuation is a pause inside the Round, not an end;
- * - a second prompt in the same session opens a second Round and reads its own pair, so the reading
- *   tracks the framework's Round rather than sticking after the first run or repeating itself;
- * - a session that is left while its run is in flight keeps reading `working` — the switch states no
- *   end, saves nothing and turns nothing idle — and the Round it had open is the one its own
- *   settlement ends afterwards.
- *
- * Every expectation is a hand-computed literal of the sequence: which readings exist, in which order,
- * for which actual session, and how many of each — never a value recomputed from the extension.
- */
+import { type InstalledOmp, resolveInstalledOmp } from "./installed-omp";
+/** Real locally installed OMP coverage, with isolated agent state and controlled provider requests. */
 import { beforeAll, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import * as path from "node:path";
 import { writeProviderOverride } from "./agent-config";
-import { type IsolatedHarness, REPO_ROOT, ensureIsolatedHarness, readBaselineRecord } from "./baseline";
+import { REPO_ROOT } from "./baseline";
 import { type CaptureServer, type CaptureServerOptions, startCaptureServer } from "./capture-server";
 import { ACTIVITY_FACTS_ID } from "./fixtures/activity-facts/entrypoint";
 import { DOCK_CAPTURE_BASE_URL_ENV } from "./fixtures/extension-root/provider";
 import { type RunRoot, createRunRoot } from "./run-root";
 import { ControlledSession } from "./session";
 
-const record = readBaselineRecord();
 /** The extension's own OMP entrypoint, as the harness's loader discovers it. */
 const MODEL_COST_ENTRYPOINT = path.join(REPO_ROOT, "entrypoints", "omp", "model-cost.ts");
 /** The dock's own provider fixture, which redirects the extension's provider to the capture endpoint. */
@@ -74,10 +48,10 @@ const FIRST_PROMPT = "dock run: one exchange";
 const SECOND_PROMPT = "dock run: one more exchange in this session";
 const SWITCH_PROMPT = "dock run: left behind while this run is in flight";
 
-let harness: IsolatedHarness;
+let harness: InstalledOmp;
 
 beforeAll(async () => {
-	harness = await ensureIsolatedHarness(record);
+	harness = await resolveInstalledOmp();
 });
 
 /** One run's isolated home and the storage root the extension's shipped configuration names inside it. */

@@ -1,0 +1,1462 @@
+{
+  "schemaVersion": 1,
+  "scope": "workflow-chat",
+  "startedAt": "2026-11-12T16:18:12.500Z",
+  "cli": {
+    "command": [
+      "D:/Users/hugos/AppData/Local/nvm/v22.19.0/node.exe",
+      "D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js"
+    ],
+    "path": "D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js",
+    "source": "node script"
+  },
+  "source": {
+    "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-4rOpvQ",
+    "head": "2eb079a592129deb7716c1a48de8b1d00827ce9f",
+    "status": [
+      " M extensions/workflow-chat/OPERATIONS.md",
+      " M extensions/workflow-chat/README.md",
+      " M extensions/workflow-chat/manager-chat/shared-logic/prompts/init.md",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-001-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-002-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-003-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-004-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-005-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-006-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-007-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-008-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-009-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-010-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-011-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-012-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-013-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-014-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-015-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-016-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-017-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-018-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-019-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-020-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-021-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-022-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-023-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-024-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-025-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-026-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-027-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-028-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/host.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/sessions/2026-11-12T16-15-45-690Z_01a1d08b-321a-72ee-8680-4515438e2aac.jsonl",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/captures/request-001-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/captures/request-002-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/captures/request-003-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/captures/request-004-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/captures/request-005-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/captures/request-006-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/captures/request-007-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/captures/request-008-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/host.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/sessions/2026-11-12T16-15-43-872Z_01a1d08b-2b00-71ce-ae12-ca39bb4a17b1.jsonl",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-001-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-002-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-003-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-004-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-005-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-006-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-007-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-008-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-009-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-010-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-011-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-012-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-013-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-014-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-015-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-016-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-017-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-018-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-019-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-020-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-021-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-022-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-023-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-024-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-025-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-026-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-027-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-028-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/host.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/sessions/2026-11-12T16-15-48-449Z_01a1d08b-3ce1-76bc-9dbc-b35e05aec3ea.jsonl",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/captures/request-001-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/captures/request-002-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/captures/request-003-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/captures/request-004-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/captures/request-005-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/captures/request-006-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/captures/request-007-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/captures/request-008-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/host.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/sessions/2026-11-12T16-15-47-104Z_01a1d08b-37a0-73bf-98a1-76a3afadaeb9.jsonl",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/captures/request-001-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/captures/request-002-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/captures/request-003-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/captures/request-004-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/captures/request-005-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/captures/request-006-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/captures/request-007-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/captures/request-008-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/host.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/sessions/2026-11-12T16-13-59-627Z_01a1d089-93cb-7445-83a3-b54217823464.jsonl",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/captures/request-001-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/captures/request-002-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/captures/request-003-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/captures/request-004-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/captures/request-005-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/captures/request-006-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/captures/request-007-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/captures/request-008-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/host.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/sessions/2026-11-12T16-14-00-837Z_01a1d089-9885-76ae-b6a8-641596ad8cb5.jsonl",
+      "?? .scratch/rust-script-bots/evidence/ticket10/pi-acceptance.before.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/captures/request-001-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/captures/request-002-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/captures/request-003-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/captures/request-004-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/captures/request-005-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/captures/request-006-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/captures/request-007-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/captures/request-008-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/host.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/sessions/2026-11-12T16-15-07-334Z_01a1d08a-9c46-701f-ab29-e1169270dd14.jsonl",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-gaT5cN/captures/request-001-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-gaT5cN/captures/request-002-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-gaT5cN/host.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-gaT5cN/sessions/2026-11-12T16-15-09-123Z_01a1d08a-a343-71fc-9df6-b4134da5a6f4.jsonl",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-JjZurM/captures/request-001-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-JjZurM/captures/request-002-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-JjZurM/host.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-JjZurM/sessions/2026-11-12T16-15-11-558Z_01a1d08a-acc6-76c1-a379-27fb0dfd7c5c.jsonl",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/captures/request-001-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/captures/request-002-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/captures/request-003-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/captures/request-004-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/captures/request-005-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/captures/request-006-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/captures/request-007-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/captures/request-008-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/host.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/sessions/2026-11-12T16-15-10-213Z_01a1d08a-a785-71df-b8e9-951ddfec72e6.jsonl",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-native/omp-omp-dock-role-prompt-dual-ZNqZfm/captures/request-001-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-native/omp-omp-dock-role-prompt-dual-ZNqZfm/captures/request-002-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-native/omp-omp-dock-role-prompt-dual-ZNqZfm/host.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-native/omp-omp-dock-role-prompt-dual-ZNqZfm/sessions/2026-11-12T16-13-26-113Z_01a1d089-10e1-7680-95fc-73463c9a1c97.jsonl",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-native/pi-omp-dock-dual-role-pi-VcyLqH/captures/request-001-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-native/pi-omp-dock-dual-role-pi-VcyLqH/captures/request-002-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-native/pi-omp-dock-dual-role-pi-VcyLqH/host.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-native/pi-omp-dock-dual-role-pi-VcyLqH/sessions/2026-11-12T16-13-27-953Z_01a1d089-1810-700a-a11e-885e1f9a2fd6.jsonl",
+      "?? tests/harness-dock/manager-script-protocol.test.ts"
+    ],
+    "diffSha256": "a0b147065456cfbb7f4398aa696d173b3e60db44efea2d6ebf2091a907c1d991",
+    "untrackedFiles": [
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-001-_v1_chat_completions.json",
+        "sha256": "c43740e54b6a256221470986cd5e1759ffe266abd0cf964069c1afccf362273c"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-002-_v1_chat_completions.json",
+        "sha256": "d94634c8f462a69b009a52c7b9698ba971b64ae541866d8728195744f343afe3"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-003-_v1_chat_completions.json",
+        "sha256": "4233ff6abbbee12396c16f3dcdb74b265cd9ed27ec533b75fa7a9b14e07ed93d"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-004-_v1_chat_completions.json",
+        "sha256": "12a4f4d9af35169890e462132b56defd543ea78ffddaaa315a8860ca15faba94"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-005-_v1_chat_completions.json",
+        "sha256": "bb50e88c400482046cbf3ffc4b202f378e355a26430e67790a32b3cb9fcc8b26"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-006-_v1_chat_completions.json",
+        "sha256": "b6fd633312b2412fb2fc496fbc0295c67aa6c96a0405d6720e21dcda55c51acd"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-007-_v1_chat_completions.json",
+        "sha256": "931765c1e588d9a80f6029576b2a4aa569afb47a2cd78777c888a08bcfc7b650"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-008-_v1_chat_completions.json",
+        "sha256": "7d81ec4d823ba6fd0df5a5444ae82e78b5538c05b65e7cc9abfcc9691b415793"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-009-_v1_chat_completions.json",
+        "sha256": "7bd1f0444e3b6d54439316f10054dbbbc980470fab29dea36bb40a31235de8de"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-010-_v1_chat_completions.json",
+        "sha256": "aecdcf85f884d8484e37530f1866db80bffa3a02ea0b8e26024c0e5a47c64cd5"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-011-_v1_chat_completions.json",
+        "sha256": "29efc01ded55453edab01b88b8778b6553e8ff90b09a5375c97f7f7b344f5655"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-012-_v1_chat_completions.json",
+        "sha256": "b1009ae0b7e5666c9a7a095cec6a28dec0e0fb40aba9a9040b0f57648b324393"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-013-_v1_chat_completions.json",
+        "sha256": "82ac5e2cce236814d3731baaeaff31ae6b4c912123feb92efac17eca28052579"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-014-_v1_chat_completions.json",
+        "sha256": "8afaffda610c5178552e6bd8638b645e45330ef7448a698fcb520d1b7bd077d9"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-015-_v1_chat_completions.json",
+        "sha256": "d3924ae99996cd836b6daab426428a2c7d6ae6e91d41bd5771b74b15677c89e7"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-016-_v1_chat_completions.json",
+        "sha256": "55a90de59f818cb6c4cdcdfab4b57af6ea84046209ccb5d01ffa1935016f19f1"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-017-_v1_chat_completions.json",
+        "sha256": "abb291841fef284d28f2902dc6fa4590a2c12b3d6061e3e8d4432ebadaaf8531"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-018-_v1_chat_completions.json",
+        "sha256": "9213db357371d2b8a80335526ec19af7f1ca9d7f9d7495e6cb7ff14be304f41d"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-019-_v1_chat_completions.json",
+        "sha256": "be98cc776139674470841229dd8936f3b45a70be94715a71838bf34304c8b676"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-020-_v1_chat_completions.json",
+        "sha256": "faca7f46ca4424ce52eedd945df405fda98573f5c9df4ecf6cbae119c6d24e2e"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-021-_v1_chat_completions.json",
+        "sha256": "0573d7fe7798fb197fc96ab9432fc8d652e5f8799718883d1c552d6a188969ce"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-022-_v1_chat_completions.json",
+        "sha256": "27d1bd2c369db8456983ad955289d18e4f74e4c053a26c51cb38bcf80e9f8b3f"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-023-_v1_chat_completions.json",
+        "sha256": "7e524622635ac2a4a0488a57fa1b8478417daa5492d2dca55c88ae0ba914cc1f"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-024-_v1_chat_completions.json",
+        "sha256": "d85fa72ffb4258906217b71115f2e85f69e1a2130f9a7510e0ac0d283360f90d"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-025-_v1_chat_completions.json",
+        "sha256": "a0e70b660c1b53e84674267e900d0f1950b0fb0e7fd00ea77b9c252e9668e541"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-026-_v1_chat_completions.json",
+        "sha256": "91a3c9515b60afd601b74da7a2ced1a2253004364445047d3e7dc641f5abc035"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-027-_v1_chat_completions.json",
+        "sha256": "a0ef7f9a953ac16fe17a4227751f1395d891fd96cda796ad25493d6cfcd3f9f3"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-028-_v1_chat_completions.json",
+        "sha256": "b76af3f6b83c4b6681516c4c4827d8edcdd601af0c2f7a106193dfb3ad564dfc"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/host.json",
+        "sha256": "4f8ab6e6636c4652f3d3a2b1f2cc6d6a7d1a91aaca6a339a2851f72a12fb1c08"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/sessions/2026-11-12T16-15-45-690Z_01a1d08b-321a-72ee-8680-4515438e2aac.jsonl",
+        "sha256": "20939b6975d5fd2dcad01033467aedd6ead8c644519fecbe88f691f77a7ebf56"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/captures/request-001-_v1_chat_completions.json",
+        "sha256": "73258efa86c831809f9d1608aa94697a5720454ff12313c12d07fefdd4ac18a6"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/captures/request-002-_v1_chat_completions.json",
+        "sha256": "2f576a74a510aa588c50eb42cefff030d6d0f83b501324d02cc4acf6f1476189"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/captures/request-003-_v1_chat_completions.json",
+        "sha256": "9644e4ece65e82e5c72bd78a59ba6231f8dd76abc54632d6739958d3cfa76a30"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/captures/request-004-_v1_chat_completions.json",
+        "sha256": "ee0f895f0ecd2200a1fe5f9858aa62078ad630e929a0b25b4dfe043901b05188"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/captures/request-005-_v1_chat_completions.json",
+        "sha256": "85aed9ebf3f84bdc8cd75fd67b970c2c39abdb032b9cc4772071239a51f67574"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/captures/request-006-_v1_chat_completions.json",
+        "sha256": "4a0e21925187d5dbd38fb6bea266d9d0f2b1185cf5076a97ec33ccbb7a701164"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/captures/request-007-_v1_chat_completions.json",
+        "sha256": "16a3a2d35ec362d2fe07d8229dc3ca73dff4935485887abf5543202f1b821bd6"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/captures/request-008-_v1_chat_completions.json",
+        "sha256": "51a10246c641da170450c7f011c40ebe654280707b347e16d20b510bfc061c83"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/host.json",
+        "sha256": "4fde4343fa3ee54d59661d2a2a5529476cdfaafd467822c9523184e0cc1cb6a7"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/sessions/2026-11-12T16-15-43-872Z_01a1d08b-2b00-71ce-ae12-ca39bb4a17b1.jsonl",
+        "sha256": "1fe8357863f7d723e0a899478beb46d5981d3fa96d39bcf37b6ad980afd70f92"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-001-_v1_chat_completions.json",
+        "sha256": "233939d2cb56499aa63c1fa92bfec653b6a724d02281c444c8a7c32ccfc619f1"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-002-_v1_chat_completions.json",
+        "sha256": "b67fe862f5b785b9dea9f59759f55063907e17864c375723b0e0eede0b9433f1"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-003-_v1_chat_completions.json",
+        "sha256": "1506b51c0bda1d43e51cbd6a3c69558989949992ba57fe2c76391fe0b82e4cbe"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-004-_v1_chat_completions.json",
+        "sha256": "8069f8ff08db2d37c57c7bc96580811599ef5aeb227620e75881937fb8b2db2d"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-005-_v1_chat_completions.json",
+        "sha256": "70f56bb8bb390bbfe156715ce9c988d5b558a64b847f8214ecd31f240d62ba3b"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-006-_v1_chat_completions.json",
+        "sha256": "4c240dff6fa08a36853bf234583e4f7534c0553155eb458cdee90fb4ec655d0c"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-007-_v1_chat_completions.json",
+        "sha256": "8d981d205b940e62fa8b7c4d56efcb590451230ba35d92528a6e4fb77fa0565d"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-008-_v1_chat_completions.json",
+        "sha256": "ded4b707c14a86b4d623f894c43f9d9b336c9c782c5c20c2388916c44ceb989d"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-009-_v1_chat_completions.json",
+        "sha256": "d35ccb3d6b2f0b67361386c3aaff9485b717e229c7d856eae9564e45399764aa"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-010-_v1_chat_completions.json",
+        "sha256": "fb4c54c1d793f4d97a21805518d754f30e3f25d4576ea14d04a3b608aae9f937"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-011-_v1_chat_completions.json",
+        "sha256": "bd2674e234dd8a0006f3b7a763733bebddf35edda1c4aa7a202fad47e85f05c6"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-012-_v1_chat_completions.json",
+        "sha256": "b5499437861a405da1608ee8d2c1b84b65c2e5d488ecb2b7f9ea6f13ead3efc3"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-013-_v1_chat_completions.json",
+        "sha256": "a5536117ef85205503b2a8d6628a31c0b29336c864c8407e231d357c63ce0e7f"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-014-_v1_chat_completions.json",
+        "sha256": "e6ff084951fc93bf84235592a69774a58cf7939b10b348928bafd417cc75f12d"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-015-_v1_chat_completions.json",
+        "sha256": "6d6f8dd03f2e0e470ba59e0d2d889418acef1067b53f5c625fc86dd7ab35daef"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-016-_v1_chat_completions.json",
+        "sha256": "9f6c4ff032a4cad710be5d454cdd3aa016d7776096a9c594bd7fcbcdda59ae2a"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-017-_v1_chat_completions.json",
+        "sha256": "20e402ebc39467873b06e83bd81452037addff38a358e0499c94f095658f8ce1"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-018-_v1_chat_completions.json",
+        "sha256": "9d7ebbdb86ed9f3bbdada02a552cef0d9cbf1bf026870b9387769c57f9436e0f"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-019-_v1_chat_completions.json",
+        "sha256": "769eae378199b1f18127375d64fb689348f8bd700f0a7d7c15a8b70fcbf38e6c"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-020-_v1_chat_completions.json",
+        "sha256": "35b69ac3b98948d76ac13e0a0d91927d3219f1ecb319a1b4a15621a46a13b03d"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-021-_v1_chat_completions.json",
+        "sha256": "54951b907522cf793a29a106886976b79e74fbfdaaaa4c92974a7f9d24888b1d"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-022-_v1_chat_completions.json",
+        "sha256": "bb46d45f1680b9bc1666458078143ad5c8a66282b7bb7b825609f789f84d1a87"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-023-_v1_chat_completions.json",
+        "sha256": "dd0324c8c4c721982721a8b181c5dc8af09ed33a79673c33143d6e23a4c617a6"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-024-_v1_chat_completions.json",
+        "sha256": "ab61b9c687bcca7ccae33423e8e99d1c4322e33cfeb40b2bfa8eb062b896966f"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-025-_v1_chat_completions.json",
+        "sha256": "0e1c52676c63d5bd4056b157866350e0a7bd9d54bbe793c5d55a1cbb551063a4"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-026-_v1_chat_completions.json",
+        "sha256": "5ebe6c6f9929cab015feb37476c79a0cda1b033075615d5fbd064b7572c99f00"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-027-_v1_chat_completions.json",
+        "sha256": "f64e480c62a9cc256f9bd752c148ed1622ae77c69d9463528dbbc57146eda4bb"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-028-_v1_chat_completions.json",
+        "sha256": "0b97109f3955560e07bf37a27150906c0c378a7fb83c4b9af784c6d75d194a06"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/host.json",
+        "sha256": "048fecb81a44c36771148078659d67fa449dcb0c99c18a83c4de8bf5f2874564"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/sessions/2026-11-12T16-15-48-449Z_01a1d08b-3ce1-76bc-9dbc-b35e05aec3ea.jsonl",
+        "sha256": "a662b1c2cbe4a51c6e236af51a08c883bde9c2fe9b4415d5253ddfc4a3141194"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/captures/request-001-_v1_chat_completions.json",
+        "sha256": "b80234473ff49c01c0ff05a454c4cbd06543dddc6143f0bd96d2f20f00b7bf9f"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/captures/request-002-_v1_chat_completions.json",
+        "sha256": "35d7f265584497573475ed80334bdec7c432b937c29f0a1fdbeff33128ebf8fa"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/captures/request-003-_v1_chat_completions.json",
+        "sha256": "0bbe15c9fe5b0f2f3ab17ec29e600d1004355472b5abc5104afb915f21a8d591"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/captures/request-004-_v1_chat_completions.json",
+        "sha256": "423b4cbaae5f0bab2b2c5c0f06981436e19af70e6a6e6fc35d0badc7d8d0f343"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/captures/request-005-_v1_chat_completions.json",
+        "sha256": "ca380f2fb94f0ee5d7ff3825aff71545c9ca85494be5a689760ea9767f430300"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/captures/request-006-_v1_chat_completions.json",
+        "sha256": "0d07ab1235244882c4c41d0e60e426b517e1d4f3a48581ea143756cffe7a5932"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/captures/request-007-_v1_chat_completions.json",
+        "sha256": "56fa417af0a9d12856632a9b3b634e5d2f90b730b83be853c6cb83fad095b02e"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/captures/request-008-_v1_chat_completions.json",
+        "sha256": "6ddaa7b793793ab1dbe592467e7ee18438258dad693aded4a483860f1ec6555c"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/host.json",
+        "sha256": "d216971688c4454157fa7a12638cc1c7ae092172a9d03023ab37758ad55467fa"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/sessions/2026-11-12T16-15-47-104Z_01a1d08b-37a0-73bf-98a1-76a3afadaeb9.jsonl",
+        "sha256": "63c6bb637b85f6c242c78698c8664033cdd45cbf0cbc0040f0d097fc6813e929"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/captures/request-001-_v1_chat_completions.json",
+        "sha256": "8651bc681d49946f40d9f41d115507d2a616c4c8590605808df76a14b73716c4"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/captures/request-002-_v1_chat_completions.json",
+        "sha256": "c55df886f51c896184cc7becd2539d1766584e41b047c7b4de3e5edf0707b8f8"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/captures/request-003-_v1_chat_completions.json",
+        "sha256": "b47898033bd8b8db3d98bc5a61fb5eee9269356d1c72b6ce7979dd169648af0b"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/captures/request-004-_v1_chat_completions.json",
+        "sha256": "704d600029d2898399826b58e9c75e011d31425dc0fe537581b0b9058212fa77"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/captures/request-005-_v1_chat_completions.json",
+        "sha256": "62330537d3ddd1c81c22365595ae095e3bce0f670b3ec55a13661aff6bda1283"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/captures/request-006-_v1_chat_completions.json",
+        "sha256": "1e6c3a4b61ab9ed3e574fd8bb2a5c22eb4b6704e1a253953209131d5988cbb61"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/captures/request-007-_v1_chat_completions.json",
+        "sha256": "b4f5dbff5180babb919fdfa47318dc0eed0b5605acc3fb4f051b169513807589"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/captures/request-008-_v1_chat_completions.json",
+        "sha256": "ccbafdc2518b6de2a304fd68bfc7055b2523e50ab38d3bfd45b14a443a9addd9"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/host.json",
+        "sha256": "53c4a2ecc0b430d7a647d724b44f7d2cc1cd65531104e56a321f6578ffc7a910"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/sessions/2026-11-12T16-13-59-627Z_01a1d089-93cb-7445-83a3-b54217823464.jsonl",
+        "sha256": "fd651f36de4e90a6dec952f2851f2b650491e0437b5deeea759e08042a426966"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/captures/request-001-_v1_chat_completions.json",
+        "sha256": "0e60d947a2f29f4daa79cf73a74d766ed33f804781320c6a320c4ad479a5f38e"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/captures/request-002-_v1_chat_completions.json",
+        "sha256": "f61d2a6ad0373c1c7b80eb97e251e1a864a0c45980fcb75f4d918fda6c343a53"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/captures/request-003-_v1_chat_completions.json",
+        "sha256": "25eefefda972589c1ac118bd8196439753dcfcc3f27fc94794bca9fdff2a41a9"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/captures/request-004-_v1_chat_completions.json",
+        "sha256": "466f7eda3d7e5fb5073493ee35d47e8fe24b95000801cae6d13d77a069953fd7"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/captures/request-005-_v1_chat_completions.json",
+        "sha256": "b20970a2759e9a312590e01be6968872eebf63330582abcdb345b916dd319e24"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/captures/request-006-_v1_chat_completions.json",
+        "sha256": "7c2816e7061fa7f6e230003f83681146e249176337e854f098e499bfe7a5daea"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/captures/request-007-_v1_chat_completions.json",
+        "sha256": "bf70e3dc5472ab42d286737ecdb57301be0a0e33d1c17c45fc03deeac70993a2"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/captures/request-008-_v1_chat_completions.json",
+        "sha256": "252a3afe2a6c71631d810271b654b1b093cadeb4d9463902121508cdc65df3fb"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/host.json",
+        "sha256": "d342ac8d551f0866e80b4e445b92e76dc4d85e08adb6b47e854abd9f30085c09"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/sessions/2026-11-12T16-14-00-837Z_01a1d089-9885-76ae-b6a8-641596ad8cb5.jsonl",
+        "sha256": "abe7021c7a05899372a8febf3cadcca764feda9a20418a69c33c6c6c8394da6d"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/pi-acceptance.before.json",
+        "sha256": "6479849a625899603e467477010329726f9a3978f6440daec0ee5c3eb5eb515c"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/captures/request-001-_v1_chat_completions.json",
+        "sha256": "0262957510b1e255cbd815fc2b43d60c765411f0e48a077ddcd8bd196f2a8252"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/captures/request-002-_v1_chat_completions.json",
+        "sha256": "18c93d48d4742556e4423d9e0adb2066a5281869f0c8b5a6bb9564b6196e0b8a"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/captures/request-003-_v1_chat_completions.json",
+        "sha256": "f047496eb326d617066f06ce62e4d48cb39621cc0e86459aef281e542c8d4f46"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/captures/request-004-_v1_chat_completions.json",
+        "sha256": "866339b29a538d34b266e8146c4eb2d67d44ecd374141ed8b0b7c97231bb08e7"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/captures/request-005-_v1_chat_completions.json",
+        "sha256": "33d7f627077e719e095d2616f981c63bf6adc107cdee5c0867929e2df86b182d"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/captures/request-006-_v1_chat_completions.json",
+        "sha256": "39fe86d079d74851f46f8bdba256a0202adfb6305ad114b4f9d41929351a8bfd"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/captures/request-007-_v1_chat_completions.json",
+        "sha256": "a7f7bcd48cc74fa56ab282e57fab886359671062b3efd9db98b72598e2a7203d"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/captures/request-008-_v1_chat_completions.json",
+        "sha256": "d455f1828ee5fd14426b563c05207e24b35fef05a3b4ac1a95beab7d6cf5c048"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/host.json",
+        "sha256": "c866fb2620ad61bc18e52ebdb86922633fa16c07f68705def82515d9c51f92d7"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/sessions/2026-11-12T16-15-07-334Z_01a1d08a-9c46-701f-ab29-e1169270dd14.jsonl",
+        "sha256": "5cd176f546b48e124f338f27f707b84ccae8e8c8ab7448553364fbacee7d2b01"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-gaT5cN/captures/request-001-_v1_chat_completions.json",
+        "sha256": "364cfd05b61c9186e3cd29b339a4c24215ec201c5883ac81794ff91616305fb5"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-gaT5cN/captures/request-002-_v1_chat_completions.json",
+        "sha256": "102a3588db80b6dae46b122b2c9e87e1ccad3eb8a7a47d16a70e3f5e947677db"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-gaT5cN/host.json",
+        "sha256": "71481b50ac9dc02192ebd9b34da1b7aa9158ae3c53646a5e7d701c5f038d41e4"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-gaT5cN/sessions/2026-11-12T16-15-09-123Z_01a1d08a-a343-71fc-9df6-b4134da5a6f4.jsonl",
+        "sha256": "b242f99a3a0c672a8814f8e44bca989be8913553b10d871c8bf8206d218ded30"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-JjZurM/captures/request-001-_v1_chat_completions.json",
+        "sha256": "ba1c4291f9d4b093406c75669105bf2c39cfadc2bd5b551a08887b6019d34b9b"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-JjZurM/captures/request-002-_v1_chat_completions.json",
+        "sha256": "53ec72f3a854ca34b29f2d5486276ecf103eab2c1985ace75c5f4f96a2c6d53e"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-JjZurM/host.json",
+        "sha256": "75828ac71d0ac88778c6bd54e818a104cecd900d04f26fb3da51b85a0a6727e4"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-JjZurM/sessions/2026-11-12T16-15-11-558Z_01a1d08a-acc6-76c1-a379-27fb0dfd7c5c.jsonl",
+        "sha256": "9916d58f70076218b5de0a3359360be2329aa853a0dbde67d9407e1587112b6e"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/captures/request-001-_v1_chat_completions.json",
+        "sha256": "a01be7b10aabceadb4cd63d7b7a3a505cbe19ccf7fbcf2af8831c7fdcde599de"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/captures/request-002-_v1_chat_completions.json",
+        "sha256": "ad8fe4cfcabc36d1415046ba46294208bca1070539b1aa9f525aee07ffbec01c"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/captures/request-003-_v1_chat_completions.json",
+        "sha256": "ab3178c422bdd03b2a6e9ecdd5c6897dc365e831554754357e7beb0b56b1cf8e"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/captures/request-004-_v1_chat_completions.json",
+        "sha256": "3d5309295132381df044773f09dce52c366b60cb313513bd9ebc37657eb8ee75"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/captures/request-005-_v1_chat_completions.json",
+        "sha256": "9727ecd38ec0c22a37fa23d6507158530bb210207ba8ebf7d997aeaf4297c800"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/captures/request-006-_v1_chat_completions.json",
+        "sha256": "69cedd7daea69728401ea8d2c3d5f864a4e2fd051e7816a7dc36f4126f9e51b9"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/captures/request-007-_v1_chat_completions.json",
+        "sha256": "e202bb2955491c132309b76465f4b43324271b073be303b4f0819770240a8dc6"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/captures/request-008-_v1_chat_completions.json",
+        "sha256": "74b84fc9a1a83e7cfdd8c11f984a835a43b35e462f59c3f49aa8bd79fd04fe4c"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/host.json",
+        "sha256": "5b4740b263b321926f572e9f9e48577354afcd34493b17b2a751f34e447f706c"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/sessions/2026-11-12T16-15-10-213Z_01a1d08a-a785-71df-b8e9-951ddfec72e6.jsonl",
+        "sha256": "3e0607603ce63d5a4bdcc4a18790222c65b01525f7b94f4a8eed4c40da81cbc7"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-native/omp-omp-dock-role-prompt-dual-ZNqZfm/captures/request-001-_v1_chat_completions.json",
+        "sha256": "1c7596c09fbe1dc389f22f4ef5eb156a2a65750b9a67504b0ec2e08db0334550"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-native/omp-omp-dock-role-prompt-dual-ZNqZfm/captures/request-002-_v1_chat_completions.json",
+        "sha256": "b1d69d34dce9d73b123b3e0650bf56ae157bca3acca2af9edd75b8fce44236ae"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-native/omp-omp-dock-role-prompt-dual-ZNqZfm/host.json",
+        "sha256": "aeb0dc8dedcccd5268d640104b3aa1664aec43f9fe5eb4fd3884ef20e896382f"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-native/omp-omp-dock-role-prompt-dual-ZNqZfm/sessions/2026-11-12T16-13-26-113Z_01a1d089-10e1-7680-95fc-73463c9a1c97.jsonl",
+        "sha256": "ad3666c1ef59f3f6b765c44df5bb60fca223a8bcdf5ef5f517a106af0a1a339d"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-native/pi-omp-dock-dual-role-pi-VcyLqH/captures/request-001-_v1_chat_completions.json",
+        "sha256": "a96d72431ba9e3355bbf8f1aad01edaf2ef732f7b575735e7ffcf4c18133204f"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-native/pi-omp-dock-dual-role-pi-VcyLqH/captures/request-002-_v1_chat_completions.json",
+        "sha256": "956093c9716fe826750807c6600d546177bfef12f84e58ca3df340a1efd893e8"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-native/pi-omp-dock-dual-role-pi-VcyLqH/host.json",
+        "sha256": "87e20d6de1219253d1f36bd729f691d55cef2e9e5f2c268532b01788e3f3a431"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-native/pi-omp-dock-dual-role-pi-VcyLqH/sessions/2026-11-12T16-13-27-953Z_01a1d089-1810-700a-a11e-885e1f9a2fd6.jsonl",
+        "sha256": "b6905050ddf35f9047b62e1a4ccff99b8f1ab7f50028430c14a96efb0b393c32"
+      },
+      {
+        "path": "tests/harness-dock/manager-script-protocol.test.ts",
+        "sha256": "07267519252b783af61b7891aa4be9be4df6989ac1e6c9123eb037c6696c189f"
+      }
+    ],
+    "sha256": "7206c9556f2a81672e31026228b8a5a78c8d77ffc54054a3fa6abcb1df2dad61"
+  },
+  "lockfiles": [
+    {
+      "path": "bun.lock",
+      "bytes": 11550,
+      "sha256": "28ce4c0d7b7d1d45a44e335a6647b0959c333875af42ca87ba63c87bcf4c2168"
+    }
+  ],
+  "runtime": {
+    "driver": {
+      "executable": "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe",
+      "node": "26.3.0",
+      "bun": "1.4.4"
+    },
+    "cli": {
+      "execPath": "D:\\Users\\hugos\\AppData\\Local\\nvm\\v22.19.0\\node.exe",
+      "node": "22.19.0",
+      "bun": null
+    },
+    "artifact": {
+      "path": "D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js",
+      "bytes": 160,
+      "sha256": "e79626f2dd6f94aa45d30f3fa63cd84319a6eefcd150b353cfaf274366926774"
+    },
+    "platform": "win32",
+    "arch": "x64"
+  },
+  "version": "1.5.2",
+  "status": "passed",
+  "checks": [
+    "Pi manager: native tools, first Prompt identity, strict parameters and original results",
+    "Pi node: native tools, first Prompt identity, strict parameters and original results",
+    "Pi collect owns a complete-body budget independent of ordinary requests",
+    "Pi tool AbortSignal releases transport, switch preserves auto startup, and shutdown releases active collect"
+  ],
+  "complete": true,
+  "finishedAt": "2026-11-12T16:18:20.975Z",
+  "finishedSource": {
+    "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-4rOpvQ",
+    "head": "2eb079a592129deb7716c1a48de8b1d00827ce9f",
+    "status": [
+      " M extensions/workflow-chat/OPERATIONS.md",
+      " M extensions/workflow-chat/README.md",
+      " M extensions/workflow-chat/manager-chat/shared-logic/prompts/init.md",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-001-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-002-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-003-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-004-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-005-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-006-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-007-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-008-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-009-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-010-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-011-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-012-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-013-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-014-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-015-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-016-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-017-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-018-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-019-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-020-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-021-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-022-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-023-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-024-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-025-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-026-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-027-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-028-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/host.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/sessions/2026-11-12T16-15-45-690Z_01a1d08b-321a-72ee-8680-4515438e2aac.jsonl",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/captures/request-001-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/captures/request-002-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/captures/request-003-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/captures/request-004-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/captures/request-005-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/captures/request-006-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/captures/request-007-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/captures/request-008-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/host.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/sessions/2026-11-12T16-15-43-872Z_01a1d08b-2b00-71ce-ae12-ca39bb4a17b1.jsonl",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-001-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-002-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-003-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-004-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-005-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-006-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-007-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-008-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-009-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-010-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-011-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-012-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-013-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-014-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-015-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-016-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-017-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-018-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-019-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-020-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-021-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-022-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-023-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-024-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-025-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-026-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-027-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-028-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/host.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/sessions/2026-11-12T16-15-48-449Z_01a1d08b-3ce1-76bc-9dbc-b35e05aec3ea.jsonl",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/captures/request-001-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/captures/request-002-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/captures/request-003-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/captures/request-004-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/captures/request-005-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/captures/request-006-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/captures/request-007-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/captures/request-008-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/host.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/sessions/2026-11-12T16-15-47-104Z_01a1d08b-37a0-73bf-98a1-76a3afadaeb9.jsonl",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/captures/request-001-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/captures/request-002-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/captures/request-003-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/captures/request-004-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/captures/request-005-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/captures/request-006-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/captures/request-007-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/captures/request-008-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/host.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/sessions/2026-11-12T16-13-59-627Z_01a1d089-93cb-7445-83a3-b54217823464.jsonl",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/captures/request-001-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/captures/request-002-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/captures/request-003-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/captures/request-004-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/captures/request-005-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/captures/request-006-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/captures/request-007-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/captures/request-008-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/host.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/sessions/2026-11-12T16-14-00-837Z_01a1d089-9885-76ae-b6a8-641596ad8cb5.jsonl",
+      "?? .scratch/rust-script-bots/evidence/ticket10/pi-acceptance.before.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/captures/request-001-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/captures/request-002-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/captures/request-003-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/captures/request-004-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/captures/request-005-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/captures/request-006-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/captures/request-007-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/captures/request-008-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/host.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/sessions/2026-11-12T16-15-07-334Z_01a1d08a-9c46-701f-ab29-e1169270dd14.jsonl",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-gaT5cN/captures/request-001-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-gaT5cN/captures/request-002-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-gaT5cN/host.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-gaT5cN/sessions/2026-11-12T16-15-09-123Z_01a1d08a-a343-71fc-9df6-b4134da5a6f4.jsonl",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-JjZurM/captures/request-001-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-JjZurM/captures/request-002-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-JjZurM/host.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-JjZurM/sessions/2026-11-12T16-15-11-558Z_01a1d08a-acc6-76c1-a379-27fb0dfd7c5c.jsonl",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/captures/request-001-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/captures/request-002-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/captures/request-003-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/captures/request-004-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/captures/request-005-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/captures/request-006-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/captures/request-007-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/captures/request-008-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/host.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/sessions/2026-11-12T16-15-10-213Z_01a1d08a-a785-71df-b8e9-951ddfec72e6.jsonl",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-native/omp-omp-dock-role-prompt-dual-ZNqZfm/captures/request-001-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-native/omp-omp-dock-role-prompt-dual-ZNqZfm/captures/request-002-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-native/omp-omp-dock-role-prompt-dual-ZNqZfm/host.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-native/omp-omp-dock-role-prompt-dual-ZNqZfm/sessions/2026-11-12T16-13-26-113Z_01a1d089-10e1-7680-95fc-73463c9a1c97.jsonl",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-native/pi-omp-dock-dual-role-pi-VcyLqH/captures/request-001-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-native/pi-omp-dock-dual-role-pi-VcyLqH/captures/request-002-_v1_chat_completions.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-native/pi-omp-dock-dual-role-pi-VcyLqH/host.json",
+      "?? .scratch/rust-script-bots/evidence/ticket10/red-native/pi-omp-dock-dual-role-pi-VcyLqH/sessions/2026-11-12T16-13-27-953Z_01a1d089-1810-700a-a11e-885e1f9a2fd6.jsonl",
+      "?? tests/harness-dock/manager-script-protocol.test.ts"
+    ],
+    "diffSha256": "a0b147065456cfbb7f4398aa696d173b3e60db44efea2d6ebf2091a907c1d991",
+    "untrackedFiles": [
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-001-_v1_chat_completions.json",
+        "sha256": "c43740e54b6a256221470986cd5e1759ffe266abd0cf964069c1afccf362273c"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-002-_v1_chat_completions.json",
+        "sha256": "d94634c8f462a69b009a52c7b9698ba971b64ae541866d8728195744f343afe3"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-003-_v1_chat_completions.json",
+        "sha256": "4233ff6abbbee12396c16f3dcdb74b265cd9ed27ec533b75fa7a9b14e07ed93d"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-004-_v1_chat_completions.json",
+        "sha256": "12a4f4d9af35169890e462132b56defd543ea78ffddaaa315a8860ca15faba94"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-005-_v1_chat_completions.json",
+        "sha256": "bb50e88c400482046cbf3ffc4b202f378e355a26430e67790a32b3cb9fcc8b26"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-006-_v1_chat_completions.json",
+        "sha256": "b6fd633312b2412fb2fc496fbc0295c67aa6c96a0405d6720e21dcda55c51acd"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-007-_v1_chat_completions.json",
+        "sha256": "931765c1e588d9a80f6029576b2a4aa569afb47a2cd78777c888a08bcfc7b650"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-008-_v1_chat_completions.json",
+        "sha256": "7d81ec4d823ba6fd0df5a5444ae82e78b5538c05b65e7cc9abfcc9691b415793"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-009-_v1_chat_completions.json",
+        "sha256": "7bd1f0444e3b6d54439316f10054dbbbc980470fab29dea36bb40a31235de8de"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-010-_v1_chat_completions.json",
+        "sha256": "aecdcf85f884d8484e37530f1866db80bffa3a02ea0b8e26024c0e5a47c64cd5"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-011-_v1_chat_completions.json",
+        "sha256": "29efc01ded55453edab01b88b8778b6553e8ff90b09a5375c97f7f7b344f5655"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-012-_v1_chat_completions.json",
+        "sha256": "b1009ae0b7e5666c9a7a095cec6a28dec0e0fb40aba9a9040b0f57648b324393"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-013-_v1_chat_completions.json",
+        "sha256": "82ac5e2cce236814d3731baaeaff31ae6b4c912123feb92efac17eca28052579"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-014-_v1_chat_completions.json",
+        "sha256": "8afaffda610c5178552e6bd8638b645e45330ef7448a698fcb520d1b7bd077d9"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-015-_v1_chat_completions.json",
+        "sha256": "d3924ae99996cd836b6daab426428a2c7d6ae6e91d41bd5771b74b15677c89e7"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-016-_v1_chat_completions.json",
+        "sha256": "55a90de59f818cb6c4cdcdfab4b57af6ea84046209ccb5d01ffa1935016f19f1"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-017-_v1_chat_completions.json",
+        "sha256": "abb291841fef284d28f2902dc6fa4590a2c12b3d6061e3e8d4432ebadaaf8531"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-018-_v1_chat_completions.json",
+        "sha256": "9213db357371d2b8a80335526ec19af7f1ca9d7f9d7495e6cb7ff14be304f41d"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-019-_v1_chat_completions.json",
+        "sha256": "be98cc776139674470841229dd8936f3b45a70be94715a71838bf34304c8b676"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-020-_v1_chat_completions.json",
+        "sha256": "faca7f46ca4424ce52eedd945df405fda98573f5c9df4ecf6cbae119c6d24e2e"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-021-_v1_chat_completions.json",
+        "sha256": "0573d7fe7798fb197fc96ab9432fc8d652e5f8799718883d1c552d6a188969ce"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-022-_v1_chat_completions.json",
+        "sha256": "27d1bd2c369db8456983ad955289d18e4f74e4c053a26c51cb38bcf80e9f8b3f"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-023-_v1_chat_completions.json",
+        "sha256": "7e524622635ac2a4a0488a57fa1b8478417daa5492d2dca55c88ae0ba914cc1f"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-024-_v1_chat_completions.json",
+        "sha256": "d85fa72ffb4258906217b71115f2e85f69e1a2130f9a7510e0ac0d283360f90d"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-025-_v1_chat_completions.json",
+        "sha256": "a0e70b660c1b53e84674267e900d0f1950b0fb0e7fd00ea77b9c252e9668e541"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-026-_v1_chat_completions.json",
+        "sha256": "91a3c9515b60afd601b74da7a2ced1a2253004364445047d3e7dc641f5abc035"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-027-_v1_chat_completions.json",
+        "sha256": "a0ef7f9a953ac16fe17a4227751f1395d891fd96cda796ad25493d6cfcd3f9f3"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/captures/request-028-_v1_chat_completions.json",
+        "sha256": "b76af3f6b83c4b6681516c4c4827d8edcdd601af0c2f7a106193dfb3ad564dfc"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/host.json",
+        "sha256": "4f8ab6e6636c4652f3d3a2b1f2cc6d6a7d1a91aaca6a339a2851f72a12fb1c08"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-7XAdDC/sessions/2026-11-12T16-15-45-690Z_01a1d08b-321a-72ee-8680-4515438e2aac.jsonl",
+        "sha256": "20939b6975d5fd2dcad01033467aedd6ead8c644519fecbe88f691f77a7ebf56"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/captures/request-001-_v1_chat_completions.json",
+        "sha256": "73258efa86c831809f9d1608aa94697a5720454ff12313c12d07fefdd4ac18a6"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/captures/request-002-_v1_chat_completions.json",
+        "sha256": "2f576a74a510aa588c50eb42cefff030d6d0f83b501324d02cc4acf6f1476189"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/captures/request-003-_v1_chat_completions.json",
+        "sha256": "9644e4ece65e82e5c72bd78a59ba6231f8dd76abc54632d6739958d3cfa76a30"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/captures/request-004-_v1_chat_completions.json",
+        "sha256": "ee0f895f0ecd2200a1fe5f9858aa62078ad630e929a0b25b4dfe043901b05188"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/captures/request-005-_v1_chat_completions.json",
+        "sha256": "85aed9ebf3f84bdc8cd75fd67b970c2c39abdb032b9cc4772071239a51f67574"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/captures/request-006-_v1_chat_completions.json",
+        "sha256": "4a0e21925187d5dbd38fb6bea266d9d0f2b1185cf5076a97ec33ccbb7a701164"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/captures/request-007-_v1_chat_completions.json",
+        "sha256": "16a3a2d35ec362d2fe07d8229dc3ca73dff4935485887abf5543202f1b821bd6"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/captures/request-008-_v1_chat_completions.json",
+        "sha256": "51a10246c641da170450c7f011c40ebe654280707b347e16d20b510bfc061c83"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/host.json",
+        "sha256": "4fde4343fa3ee54d59661d2a2a5529476cdfaafd467822c9523184e0cc1cb6a7"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/omp-omp-dock-role-prompt-dual-edWEDJ/sessions/2026-11-12T16-15-43-872Z_01a1d08b-2b00-71ce-ae12-ca39bb4a17b1.jsonl",
+        "sha256": "1fe8357863f7d723e0a899478beb46d5981d3fa96d39bcf37b6ad980afd70f92"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-001-_v1_chat_completions.json",
+        "sha256": "233939d2cb56499aa63c1fa92bfec653b6a724d02281c444c8a7c32ccfc619f1"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-002-_v1_chat_completions.json",
+        "sha256": "b67fe862f5b785b9dea9f59759f55063907e17864c375723b0e0eede0b9433f1"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-003-_v1_chat_completions.json",
+        "sha256": "1506b51c0bda1d43e51cbd6a3c69558989949992ba57fe2c76391fe0b82e4cbe"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-004-_v1_chat_completions.json",
+        "sha256": "8069f8ff08db2d37c57c7bc96580811599ef5aeb227620e75881937fb8b2db2d"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-005-_v1_chat_completions.json",
+        "sha256": "70f56bb8bb390bbfe156715ce9c988d5b558a64b847f8214ecd31f240d62ba3b"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-006-_v1_chat_completions.json",
+        "sha256": "4c240dff6fa08a36853bf234583e4f7534c0553155eb458cdee90fb4ec655d0c"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-007-_v1_chat_completions.json",
+        "sha256": "8d981d205b940e62fa8b7c4d56efcb590451230ba35d92528a6e4fb77fa0565d"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-008-_v1_chat_completions.json",
+        "sha256": "ded4b707c14a86b4d623f894c43f9d9b336c9c782c5c20c2388916c44ceb989d"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-009-_v1_chat_completions.json",
+        "sha256": "d35ccb3d6b2f0b67361386c3aaff9485b717e229c7d856eae9564e45399764aa"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-010-_v1_chat_completions.json",
+        "sha256": "fb4c54c1d793f4d97a21805518d754f30e3f25d4576ea14d04a3b608aae9f937"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-011-_v1_chat_completions.json",
+        "sha256": "bd2674e234dd8a0006f3b7a763733bebddf35edda1c4aa7a202fad47e85f05c6"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-012-_v1_chat_completions.json",
+        "sha256": "b5499437861a405da1608ee8d2c1b84b65c2e5d488ecb2b7f9ea6f13ead3efc3"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-013-_v1_chat_completions.json",
+        "sha256": "a5536117ef85205503b2a8d6628a31c0b29336c864c8407e231d357c63ce0e7f"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-014-_v1_chat_completions.json",
+        "sha256": "e6ff084951fc93bf84235592a69774a58cf7939b10b348928bafd417cc75f12d"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-015-_v1_chat_completions.json",
+        "sha256": "6d6f8dd03f2e0e470ba59e0d2d889418acef1067b53f5c625fc86dd7ab35daef"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-016-_v1_chat_completions.json",
+        "sha256": "9f6c4ff032a4cad710be5d454cdd3aa016d7776096a9c594bd7fcbcdda59ae2a"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-017-_v1_chat_completions.json",
+        "sha256": "20e402ebc39467873b06e83bd81452037addff38a358e0499c94f095658f8ce1"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-018-_v1_chat_completions.json",
+        "sha256": "9d7ebbdb86ed9f3bbdada02a552cef0d9cbf1bf026870b9387769c57f9436e0f"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-019-_v1_chat_completions.json",
+        "sha256": "769eae378199b1f18127375d64fb689348f8bd700f0a7d7c15a8b70fcbf38e6c"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-020-_v1_chat_completions.json",
+        "sha256": "35b69ac3b98948d76ac13e0a0d91927d3219f1ecb319a1b4a15621a46a13b03d"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-021-_v1_chat_completions.json",
+        "sha256": "54951b907522cf793a29a106886976b79e74fbfdaaaa4c92974a7f9d24888b1d"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-022-_v1_chat_completions.json",
+        "sha256": "bb46d45f1680b9bc1666458078143ad5c8a66282b7bb7b825609f789f84d1a87"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-023-_v1_chat_completions.json",
+        "sha256": "dd0324c8c4c721982721a8b181c5dc8af09ed33a79673c33143d6e23a4c617a6"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-024-_v1_chat_completions.json",
+        "sha256": "ab61b9c687bcca7ccae33423e8e99d1c4322e33cfeb40b2bfa8eb062b896966f"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-025-_v1_chat_completions.json",
+        "sha256": "0e1c52676c63d5bd4056b157866350e0a7bd9d54bbe793c5d55a1cbb551063a4"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-026-_v1_chat_completions.json",
+        "sha256": "5ebe6c6f9929cab015feb37476c79a0cda1b033075615d5fbd064b7572c99f00"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-027-_v1_chat_completions.json",
+        "sha256": "f64e480c62a9cc256f9bd752c148ed1622ae77c69d9463528dbbc57146eda4bb"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/captures/request-028-_v1_chat_completions.json",
+        "sha256": "0b97109f3955560e07bf37a27150906c0c378a7fb83c4b9af784c6d75d194a06"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/host.json",
+        "sha256": "048fecb81a44c36771148078659d67fa449dcb0c99c18a83c4de8bf5f2874564"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-IQeVMI/sessions/2026-11-12T16-15-48-449Z_01a1d08b-3ce1-76bc-9dbc-b35e05aec3ea.jsonl",
+        "sha256": "a662b1c2cbe4a51c6e236af51a08c883bde9c2fe9b4415d5253ddfc4a3141194"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/captures/request-001-_v1_chat_completions.json",
+        "sha256": "b80234473ff49c01c0ff05a454c4cbd06543dddc6143f0bd96d2f20f00b7bf9f"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/captures/request-002-_v1_chat_completions.json",
+        "sha256": "35d7f265584497573475ed80334bdec7c432b937c29f0a1fdbeff33128ebf8fa"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/captures/request-003-_v1_chat_completions.json",
+        "sha256": "0bbe15c9fe5b0f2f3ab17ec29e600d1004355472b5abc5104afb915f21a8d591"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/captures/request-004-_v1_chat_completions.json",
+        "sha256": "423b4cbaae5f0bab2b2c5c0f06981436e19af70e6a6e6fc35d0badc7d8d0f343"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/captures/request-005-_v1_chat_completions.json",
+        "sha256": "ca380f2fb94f0ee5d7ff3825aff71545c9ca85494be5a689760ea9767f430300"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/captures/request-006-_v1_chat_completions.json",
+        "sha256": "0d07ab1235244882c4c41d0e60e426b517e1d4f3a48581ea143756cffe7a5932"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/captures/request-007-_v1_chat_completions.json",
+        "sha256": "56fa417af0a9d12856632a9b3b634e5d2f90b730b83be853c6cb83fad095b02e"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/captures/request-008-_v1_chat_completions.json",
+        "sha256": "6ddaa7b793793ab1dbe592467e7ee18438258dad693aded4a483860f1ec6555c"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/host.json",
+        "sha256": "d216971688c4454157fa7a12638cc1c7ae092172a9d03023ab37758ad55467fa"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-protocol/pi-omp-dock-dual-role-pi-ntdNfb/sessions/2026-11-12T16-15-47-104Z_01a1d08b-37a0-73bf-98a1-76a3afadaeb9.jsonl",
+        "sha256": "63c6bb637b85f6c242c78698c8664033cdd45cbf0cbc0040f0d097fc6813e929"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/captures/request-001-_v1_chat_completions.json",
+        "sha256": "8651bc681d49946f40d9f41d115507d2a616c4c8590605808df76a14b73716c4"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/captures/request-002-_v1_chat_completions.json",
+        "sha256": "c55df886f51c896184cc7becd2539d1766584e41b047c7b4de3e5edf0707b8f8"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/captures/request-003-_v1_chat_completions.json",
+        "sha256": "b47898033bd8b8db3d98bc5a61fb5eee9269356d1c72b6ce7979dd169648af0b"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/captures/request-004-_v1_chat_completions.json",
+        "sha256": "704d600029d2898399826b58e9c75e011d31425dc0fe537581b0b9058212fa77"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/captures/request-005-_v1_chat_completions.json",
+        "sha256": "62330537d3ddd1c81c22365595ae095e3bce0f670b3ec55a13661aff6bda1283"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/captures/request-006-_v1_chat_completions.json",
+        "sha256": "1e6c3a4b61ab9ed3e574fd8bb2a5c22eb4b6704e1a253953209131d5988cbb61"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/captures/request-007-_v1_chat_completions.json",
+        "sha256": "b4f5dbff5180babb919fdfa47318dc0eed0b5605acc3fb4f051b169513807589"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/captures/request-008-_v1_chat_completions.json",
+        "sha256": "ccbafdc2518b6de2a304fd68bfc7055b2523e50ab38d3bfd45b14a443a9addd9"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/host.json",
+        "sha256": "53c4a2ecc0b430d7a647d724b44f7d2cc1cd65531104e56a321f6578ffc7a910"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/omp-omp-dock-role-prompt-dual-55giWT/sessions/2026-11-12T16-13-59-627Z_01a1d089-93cb-7445-83a3-b54217823464.jsonl",
+        "sha256": "fd651f36de4e90a6dec952f2851f2b650491e0437b5deeea759e08042a426966"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/captures/request-001-_v1_chat_completions.json",
+        "sha256": "0e60d947a2f29f4daa79cf73a74d766ed33f804781320c6a320c4ad479a5f38e"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/captures/request-002-_v1_chat_completions.json",
+        "sha256": "f61d2a6ad0373c1c7b80eb97e251e1a864a0c45980fcb75f4d918fda6c343a53"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/captures/request-003-_v1_chat_completions.json",
+        "sha256": "25eefefda972589c1ac118bd8196439753dcfcc3f27fc94794bca9fdff2a41a9"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/captures/request-004-_v1_chat_completions.json",
+        "sha256": "466f7eda3d7e5fb5073493ee35d47e8fe24b95000801cae6d13d77a069953fd7"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/captures/request-005-_v1_chat_completions.json",
+        "sha256": "b20970a2759e9a312590e01be6968872eebf63330582abcdb345b916dd319e24"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/captures/request-006-_v1_chat_completions.json",
+        "sha256": "7c2816e7061fa7f6e230003f83681146e249176337e854f098e499bfe7a5daea"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/captures/request-007-_v1_chat_completions.json",
+        "sha256": "bf70e3dc5472ab42d286737ecdb57301be0a0e33d1c17c45fc03deeac70993a2"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/captures/request-008-_v1_chat_completions.json",
+        "sha256": "252a3afe2a6c71631d810271b654b1b093cadeb4d9463902121508cdc65df3fb"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/host.json",
+        "sha256": "d342ac8d551f0866e80b4e445b92e76dc4d85e08adb6b47e854abd9f30085c09"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/green-success/pi-omp-dock-dual-role-pi-dYV5JR/sessions/2026-11-12T16-14-00-837Z_01a1d089-9885-76ae-b6a8-641596ad8cb5.jsonl",
+        "sha256": "abe7021c7a05899372a8febf3cadcca764feda9a20418a69c33c6c6c8394da6d"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/pi-acceptance.before.json",
+        "sha256": "6479849a625899603e467477010329726f9a3978f6440daec0ee5c3eb5eb515c"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/captures/request-001-_v1_chat_completions.json",
+        "sha256": "0262957510b1e255cbd815fc2b43d60c765411f0e48a077ddcd8bd196f2a8252"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/captures/request-002-_v1_chat_completions.json",
+        "sha256": "18c93d48d4742556e4423d9e0adb2066a5281869f0c8b5a6bb9564b6196e0b8a"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/captures/request-003-_v1_chat_completions.json",
+        "sha256": "f047496eb326d617066f06ce62e4d48cb39621cc0e86459aef281e542c8d4f46"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/captures/request-004-_v1_chat_completions.json",
+        "sha256": "866339b29a538d34b266e8146c4eb2d67d44ecd374141ed8b0b7c97231bb08e7"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/captures/request-005-_v1_chat_completions.json",
+        "sha256": "33d7f627077e719e095d2616f981c63bf6adc107cdee5c0867929e2df86b182d"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/captures/request-006-_v1_chat_completions.json",
+        "sha256": "39fe86d079d74851f46f8bdba256a0202adfb6305ad114b4f9d41929351a8bfd"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/captures/request-007-_v1_chat_completions.json",
+        "sha256": "a7f7bcd48cc74fa56ab282e57fab886359671062b3efd9db98b72598e2a7203d"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/captures/request-008-_v1_chat_completions.json",
+        "sha256": "d455f1828ee5fd14426b563c05207e24b35fef05a3b4ac1a95beab7d6cf5c048"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/host.json",
+        "sha256": "c866fb2620ad61bc18e52ebdb86922633fa16c07f68705def82515d9c51f92d7"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-LvG8C7/sessions/2026-11-12T16-15-07-334Z_01a1d08a-9c46-701f-ab29-e1169270dd14.jsonl",
+        "sha256": "5cd176f546b48e124f338f27f707b84ccae8e8c8ab7448553364fbacee7d2b01"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-gaT5cN/captures/request-001-_v1_chat_completions.json",
+        "sha256": "364cfd05b61c9186e3cd29b339a4c24215ec201c5883ac81794ff91616305fb5"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-gaT5cN/captures/request-002-_v1_chat_completions.json",
+        "sha256": "102a3588db80b6dae46b122b2c9e87e1ccad3eb8a7a47d16a70e3f5e947677db"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-gaT5cN/host.json",
+        "sha256": "71481b50ac9dc02192ebd9b34da1b7aa9158ae3c53646a5e7d701c5f038d41e4"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/omp-omp-dock-role-prompt-dual-gaT5cN/sessions/2026-11-12T16-15-09-123Z_01a1d08a-a343-71fc-9df6-b4134da5a6f4.jsonl",
+        "sha256": "b242f99a3a0c672a8814f8e44bca989be8913553b10d871c8bf8206d218ded30"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-JjZurM/captures/request-001-_v1_chat_completions.json",
+        "sha256": "ba1c4291f9d4b093406c75669105bf2c39cfadc2bd5b551a08887b6019d34b9b"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-JjZurM/captures/request-002-_v1_chat_completions.json",
+        "sha256": "53ec72f3a854ca34b29f2d5486276ecf103eab2c1985ace75c5f4f96a2c6d53e"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-JjZurM/host.json",
+        "sha256": "75828ac71d0ac88778c6bd54e818a104cecd900d04f26fb3da51b85a0a6727e4"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-JjZurM/sessions/2026-11-12T16-15-11-558Z_01a1d08a-acc6-76c1-a379-27fb0dfd7c5c.jsonl",
+        "sha256": "9916d58f70076218b5de0a3359360be2329aa853a0dbde67d9407e1587112b6e"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/captures/request-001-_v1_chat_completions.json",
+        "sha256": "a01be7b10aabceadb4cd63d7b7a3a505cbe19ccf7fbcf2af8831c7fdcde599de"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/captures/request-002-_v1_chat_completions.json",
+        "sha256": "ad8fe4cfcabc36d1415046ba46294208bca1070539b1aa9f525aee07ffbec01c"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/captures/request-003-_v1_chat_completions.json",
+        "sha256": "ab3178c422bdd03b2a6e9ecdd5c6897dc365e831554754357e7beb0b56b1cf8e"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/captures/request-004-_v1_chat_completions.json",
+        "sha256": "3d5309295132381df044773f09dce52c366b60cb313513bd9ebc37657eb8ee75"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/captures/request-005-_v1_chat_completions.json",
+        "sha256": "9727ecd38ec0c22a37fa23d6507158530bb210207ba8ebf7d997aeaf4297c800"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/captures/request-006-_v1_chat_completions.json",
+        "sha256": "69cedd7daea69728401ea8d2c3d5f864a4e2fd051e7816a7dc36f4126f9e51b9"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/captures/request-007-_v1_chat_completions.json",
+        "sha256": "e202bb2955491c132309b76465f4b43324271b073be303b4f0819770240a8dc6"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/captures/request-008-_v1_chat_completions.json",
+        "sha256": "74b84fc9a1a83e7cfdd8c11f984a835a43b35e462f59c3f49aa8bd79fd04fe4c"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/host.json",
+        "sha256": "5b4740b263b321926f572e9f9e48577354afcd34493b17b2a751f34e447f706c"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-failure/pi-omp-dock-dual-role-pi-R1RcGp/sessions/2026-11-12T16-15-10-213Z_01a1d08a-a785-71df-b8e9-951ddfec72e6.jsonl",
+        "sha256": "3e0607603ce63d5a4bdcc4a18790222c65b01525f7b94f4a8eed4c40da81cbc7"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-native/omp-omp-dock-role-prompt-dual-ZNqZfm/captures/request-001-_v1_chat_completions.json",
+        "sha256": "1c7596c09fbe1dc389f22f4ef5eb156a2a65750b9a67504b0ec2e08db0334550"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-native/omp-omp-dock-role-prompt-dual-ZNqZfm/captures/request-002-_v1_chat_completions.json",
+        "sha256": "b1d69d34dce9d73b123b3e0650bf56ae157bca3acca2af9edd75b8fce44236ae"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-native/omp-omp-dock-role-prompt-dual-ZNqZfm/host.json",
+        "sha256": "aeb0dc8dedcccd5268d640104b3aa1664aec43f9fe5eb4fd3884ef20e896382f"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-native/omp-omp-dock-role-prompt-dual-ZNqZfm/sessions/2026-11-12T16-13-26-113Z_01a1d089-10e1-7680-95fc-73463c9a1c97.jsonl",
+        "sha256": "ad3666c1ef59f3f6b765c44df5bb60fca223a8bcdf5ef5f517a106af0a1a339d"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-native/pi-omp-dock-dual-role-pi-VcyLqH/captures/request-001-_v1_chat_completions.json",
+        "sha256": "a96d72431ba9e3355bbf8f1aad01edaf2ef732f7b575735e7ffcf4c18133204f"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-native/pi-omp-dock-dual-role-pi-VcyLqH/captures/request-002-_v1_chat_completions.json",
+        "sha256": "956093c9716fe826750807c6600d546177bfef12f84e58ca3df340a1efd893e8"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-native/pi-omp-dock-dual-role-pi-VcyLqH/host.json",
+        "sha256": "87e20d6de1219253d1f36bd729f691d55cef2e9e5f2c268532b01788e3f3a431"
+      },
+      {
+        "path": ".scratch/rust-script-bots/evidence/ticket10/red-native/pi-omp-dock-dual-role-pi-VcyLqH/sessions/2026-11-12T16-13-27-953Z_01a1d089-1810-700a-a11e-885e1f9a2fd6.jsonl",
+        "sha256": "b6905050ddf35f9047b62e1a4ccff99b8f1ab7f50028430c14a96efb0b393c32"
+      },
+      {
+        "path": "tests/harness-dock/manager-script-protocol.test.ts",
+        "sha256": "07267519252b783af61b7891aa4be9be4df6989ac1e6c9123eb037c6696c189f"
+      }
+    ],
+    "sha256": "7206c9556f2a81672e31026228b8a5a78c8d77ffc54054a3fa6abcb1df2dad61"
+  },
+  "finishedLockfiles": [
+    {
+      "path": "bun.lock",
+      "bytes": 11550,
+      "sha256": "28ce4c0d7b7d1d45a44e335a6647b0959c333875af42ca87ba63c87bcf4c2168"
+    }
+  ]
+}

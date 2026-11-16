@@ -1,58 +1,23 @@
-/**
- * model-cost in a headless run of the real harness (P42, P43, P69; S5).
- *
- * The dock materialises the recorded baseline install and drives this repository's own model-cost
- * entrypoint through the harness's real loader with `--no-ui`, which is the one difference from its
- * other model-cost runs: the harness resolves `hasUI: false` for this session's extensions and
- * emits no UI frames of its own, so this run's operator channel is the process's stderr rather than
- * a notification frame on stdout. The session's built-in `deepseek` provider is redirected — through
- * the isolated agent state, before any extension loads — at the dock's capture endpoint, so the
- * model requests, the usage they settle with and the extension's own balance query are all real
- * traffic that never leaves the machine, and the extension's storage root is the shipped
- * `~/cost-archive` resolved against this run's isolated user home.
- *
- * What these runs establish, and where each fact comes from:
- *
- * - **P42**: a headless session observes the same requests, accounts them with the same usage and
- *   saves the same document a UI session does — the amounts below are this file's own arithmetic on
- *   the endpoint's scripted reading and the extension's maintained off-peak flash prices — while
- *   creating no widget and drawing nothing. Its two provider sources are still asked at
- *   initialization, and a settled request still begins the query a failed reading calls for.
- * - **P43**: a provider query that failed, and a consumption baseline that could not be read, are
- *   both on stderr at their own severities, once each; a command's own result and the framework's
- *   refusal of an unrecognized argument are there too; and none of it is hidden by how many
- *   extensions this run loaded.
- * - **P69**: every line this run writes to stdout is one protocol frame the dock parses, no
- *   non-protocol text is interleaved with them, and a business error does not stop the session: the
- *   next request still completes. The session's own log and the outbound request bodies carry none
- *   of the feedback text.
- *
- * What these runs do **not** establish: any real DeepSeek account's balance (the endpoint's answer
- * is this fixture's own document), a real model's usage, or the visual form of the widget — that
- * last one needs a UI, which is exactly what this suite takes away. The permanent, controlled-time
- * cases for the balance TTL and the failure semantics are `tests/model-cost/provider-balance.test.ts`
- * and `tests/model-cost/headless-feedback.test.ts` (S2); what this file adds is that the same
- * behavior holds for real requests of the real harness with no UI anywhere in the process.
- */
+import { type InstalledOmp, resolveInstalledOmp } from "./installed-omp";
+/** Real locally installed OMP coverage, with isolated agent state and controlled provider requests. */
 import { beforeAll, describe, expect, test } from "bun:test";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
-import { type IsolatedHarness, REPO_ROOT, ensureIsolatedHarness, readBaselineRecord } from "./baseline";
+import { REPO_ROOT } from "./baseline";
 import { type CaptureServer, startCaptureServer } from "./capture-server";
 import { writeAgentSettings, writeProviderOverride } from "./agent-config";
 import {
-	CODEX_QUOTA_ESTIMATE_LINE,
-	CODEX_QUOTA_LINE,
-	CODEX_QUOTA_SCRIPT_DIR_ENV,
-	CODEX_QUOTA_TTL_MS_ENV,
-	CODEX_QUOTA_TURN_LINE,
-	recordedAccountQueries,
-	writeAccountAnswer,
+    CODEX_QUOTA_ESTIMATE_LINE,
+    CODEX_QUOTA_LINE,
+    CODEX_QUOTA_SCRIPT_DIR_ENV,
+    CODEX_QUOTA_TTL_MS_ENV,
+    CODEX_QUOTA_TURN_LINE,
+    recordedAccountQueries,
+    writeAccountAnswer,
 } from "./fixtures/codex-quota/entrypoint";
 import { type RunRoot, createRunRoot } from "./run-root";
 import { ControlledSession, type RpcFrame } from "./session";
 
-const record = readBaselineRecord();
 /** The extension's own OMP entrypoint, as the harness's loader discovers it. */
 const MODEL_COST_ENTRYPOINT = path.join(REPO_ROOT, "entrypoints", "omp", "model-cost.ts");
 /** A second extension for the case that asks whether another one's presence hides a notice. */
@@ -84,10 +49,10 @@ const DOCK_CREDENTIAL = "dock-key";
 /** The balance the capture endpoint answers with when a case does not script its own. */
 const BALANCE_TOTAL = "110.00";
 
-let harness: IsolatedHarness;
+let harness: InstalledOmp;
 
 beforeAll(async () => {
-	harness = await ensureIsolatedHarness(record);
+	harness = await resolveInstalledOmp();
 }, 600_000);
 
 /** One session record of the extension's own consumption document. */

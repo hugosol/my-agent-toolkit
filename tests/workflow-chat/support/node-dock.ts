@@ -1,6 +1,7 @@
 import { cpSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { REPO_ROOT, ensureIsolatedHarness } from "../../harness-dock/baseline";
+import { REPO_ROOT } from "../../harness-dock/baseline";
+import { resolveInstalledOmp } from "../../harness-dock/installed-omp";
 import { type CaptureServer, startCaptureServer } from "../../harness-dock/capture-server";
 import { DOCK_CAPTURE_BASE_URL_ENV, DOCK_MODEL_SELECTOR } from "../../harness-dock/fixtures/extension-root/provider";
 import { type RunRoot, createRunRoot } from "../../harness-dock/run-root";
@@ -39,7 +40,7 @@ export async function nodeDock(endpoint: string, params: { body: string; can_com
 	} });
 	let session: ControlledSession | undefined;
 	try {
-		const harness = await ensureIsolatedHarness();
+		const harness = await resolveInstalledOmp();
 		session = await ControlledSession.start({
 			harness, runRoot: root,
 			extensions: [join(REPO_ROOT, "tests/harness-dock/fixtures/extension-root/provider.ts"), join(deployment, "entrypoints/omp-auto/node-chat.ts")],
