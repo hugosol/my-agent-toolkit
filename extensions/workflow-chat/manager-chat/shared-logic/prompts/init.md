@@ -76,11 +76,19 @@
 
 调用 `run action=dispatch`，以 `nodes` 数组显式选择 ready node。
 
-Map 的 `input` 工作文本不变；文件来源由 `input_rule` 数组声明：`{id,type:"file",path}` 或 `{id,type:"node",node_id,output_id}`，输出由 `output_rule: [{id}]` 声明。ID 是节点局部交接标识，不是文件名，每个规则数组内唯一。规则缺省为空；引用的 node/output_id 须已声明。输入引用不隐含 `blocked_by`，仍显式管理依赖。派发冻结规则到 execution 的 `inputRule`/`outputRule`（内部仍 snake_case），实际解析文件另存 `inputs: [{id,path}]`；Map 后续编辑不修改已冻结执行。所需上游 output_id 尚无实际输出时派发报错，不猜路径或启动输入。
+**执行位置**：Map node 的 `zone` 为固定 ID 字符串或 `{"type":"dynamic"}`，Task、脚本和子 Map 均适用。
+
+- 固定节点使用声明的位置，`zoneIds` 只填写本次选中的动态节点。
+- 每次派发，根据上游 report 等本次工作信息，为每个选中的动态节点提交 `zoneIds: {"实际node ID":"已登记的zone ID"}`。动态节点没有默认位置；信息不足以确定位置时，说明缺失依据并请求补充，暂不派发该节点。
+- 动态节点缺少位置、zone 未登记或目录无效时，后端拒绝；不自动创建 zone，也不回退 manager zone。
+
+本次执行的位置由后端解析并冻结，后续改绑不改变已有执行。子 Map 的选定位置只用作子 manager zone，内部节点仍按各自声明选择位置。
+
+Map 的 `input` 工作文本不变；文件来源由 `input_rule` 数组声明：`{id,type:"file",path}`（可选 `zone_id`）或 `{id,type:"node",node_id,output_id}`。`type:file` 的相对路径以显式 `zone_id` 对应目录为基准，省略时以 manager zone 为基准，与动态节点的执行位置无关；上游报告文件按实际绝对路径交接。输出由 `output_rule: [{id}]` 声明。ID 是节点局部交接标识，不是文件名，每个规则数组内唯一。规则缺省为空；引用的 node/output_id 须已声明。输入引用不隐含 `blocked_by`，仍显式管理依赖。派发冻结规则到 execution 的 `inputRule`/`outputRule`（内部仍 snake_case），实际解析文件另存 `inputs: [{id,path}]`；Map 后续编辑不修改已冻结执行。所需上游 output_id 尚无实际输出时派发报错，不猜路径或启动输入。
 
 报告 `outputs: [{id,path}]` 只登记冻结声明中的实际成果，ID 不是文件名；重复 ID 整份拒绝，路径绝对且无 NUL。当前执行按 ID 累积、保留省略项并按新增 ID 顺序追加；新执行不继承旧输出。缺少声明中的部分输出不增加 complete 门禁，仍按现有 canComplete 判断。报告 `from`/`to` 为后端归属，不得在请求中指定。
 
-逐项检查 `results` 中的 running / rejected / failed、`failure.stage`、`effects`，以及 `snapshot` 中可得的执行关联。一个目标失败不表示其他目标未启动；成功项以实际返回为准，不要求后端未提供的冗余 Chat 字段。
+逐项检查 `results` 中的 running / rejected / failed、`failure.stage`、`effects`，以及 `snapshot` 中可得的执行关联。一个目标失败不表示其他目标未启动；成功项以实际返回为准，execution 的 `zoneId` 与 `zone` 分别记录本次 zone ID 与实际目录；不要求后端未提供的冗余 Chat 字段。
 
 ## 等待
 
@@ -118,8 +126,8 @@ Map 的 `input` 工作文本不变；文件来源由 `input_rule` 数组声明�
 
 | 动作 | 前提 | 效果与边界 |
 | --- | --- | --- |
-| `recover` | Task/Map 执行，人工修复并确认原 Chat 可继续。 | 保留原执行和 Chat，只恢复跟踪；不启动或 Resume 进程、不补发输入。paused 时也可使用；已结束脚本不适用。 |
-| `retry` | 确需独立重做，人工已检查部分产物和旧副作用；Task/Map 还须检查原 Chat。 | Task/Map 启动新执行和新 Chat；脚本只启动新执行、没有 Chat。均保留旧历史与副作用。paused 时被拒绝，须先显式 resume。 |
+| `recover` | Task/Map 执行，人工修复并确认原 Chat 可继续。 | 保留原执行、位置和 Chat，只恢复跟踪；不启动或 Resume 进程、不补发输入。paused 时也可使用；已结束脚本不适用。 |
+| `retry` | 确需独立重做，人工已检查部分产物和旧副作用；Task/Map 还须检查原 Chat。动态 zone 节点按“执行位置”确定本次位置，显式提交 `zoneId`，不沿用上次绑定；固定 zone 节点省略该字段。 | Task/Map 启动新执行和新 Chat；脚本只启动新执行、没有 Chat。均保留旧历史与副作用。paused 时被拒绝，须先显式 resume。 |
 
 retry 的单项 `result` 同样须检查失败阶段、`effects` 和可得关联；Task/Map 的失败不代表没有新 Chat，脚本则核对真实新执行与业务效果，不寻找 Chat。
 
