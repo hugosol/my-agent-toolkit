@@ -10,7 +10,7 @@
 
 ## 本次执行的文件规则
 
-Map 的 `input` 工作文本保持原样。`input_rule` 数组声明文件来源：`{id,type:"file",path}` 或 `{id,type:"node",node_id,output_id}`；`output_rule` 数组只声明 `{id}`。两种规则分别要求 ID 唯一；无文件交接时为空。派发会冻结规则，API execution 使用 `inputRule`/`outputRule`（规则内部仍为 snake_case）；实际解析到的文件是 execution 的 `inputs: [{id,path}]`，不是规则。以本次派发的实际输入和冻结输出声明执行；之后修改 Map 不改变本次执行。上游没有登记所需 output_id 时派发失败，不猜路径、不自行启动替代工作。输入引用不替代 `blocked_by`。报告的 `from`/`to` 由后端决定，调用不得提供。
+`input_rule` 数组声明文件来源：`{id,type:"file",path}` 或 `{id,type:"node",node_id,output_id}`；`output_rule` 数组只声明 `{id}`。两种规则分别要求 ID 唯一；无文件交接时为空。派发会冻结规则，API execution 使用 `inputRule`/`outputRule`（规则内部仍为 snake_case）；实际解析到的文件是 execution 的 `inputs: [{id,path}]`，不是规则。以本次派发的实际输入和冻结输出声明执行；之后修改 Map 不改变本次执行。上游没有登记所需 output_id 时派发失败，不猜路径、不自行启动替代工作。输入引用不替代 `blocked_by`。报告的 `from`/`to` 由后端决定，调用不得提供。
 
 ## 交接流程
 

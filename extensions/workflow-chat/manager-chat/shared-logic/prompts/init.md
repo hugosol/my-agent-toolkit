@@ -84,7 +84,7 @@
 
 本次执行的位置由后端解析并冻结，后续改绑不改变已有执行。子 Map 的选定位置只用作子 manager zone，内部节点仍按各自声明选择位置。
 
-Map 的 `input` 工作文本不变；文件来源由 `input_rule` 数组声明：`{id,type:"file",path}`（可选 `zone_id`）或 `{id,type:"node",node_id,output_id}`。`type:file` 的相对路径以显式 `zone_id` 对应目录为基准，省略时以 manager zone 为基准，与动态节点的执行位置无关；上游报告文件按实际绝对路径交接。输出由 `output_rule: [{id}]` 声明。ID 是节点局部交接标识，不是文件名，每个规则数组内唯一。规则缺省为空；引用的 node/output_id 须已声明。输入引用不隐含 `blocked_by`，仍显式管理依赖。派发冻结规则到 execution 的 `inputRule`/`outputRule`（内部仍 snake_case），实际解析文件另存 `inputs: [{id,path}]`；Map 后续编辑不修改已冻结执行。所需上游 output_id 尚无实际输出时派发报错，不猜路径或启动输入。
+文件来源由 `input_rule` 数组声明：`{id,type:"file",path}`（可选 `zone_id`）或 `{id,type:"node",node_id,output_id}`。`type:file` 的相对路径以显式 `zone_id` 对应目录为基准，省略时以 manager zone 为基准，与动态节点的执行位置无关；上游报告文件按实际绝对路径交接。输出由 `output_rule: [{id}]` 声明。ID 是节点局部交接标识，不是文件名，每个规则数组内唯一。规则缺省为空；引用的 node/output_id 须已声明。输入引用不隐含 `blocked_by`，仍显式管理依赖。派发冻结规则到 execution 的 `inputRule`/`outputRule`（内部仍 snake_case），实际解析文件另存 `inputs: [{id,path}]`；Map 后续编辑不修改已冻结执行。所需上游 output_id 尚无实际输出时派发报错，不猜路径或启动输入。
 
 报告 `outputs: [{id,path}]` 只登记冻结声明中的实际成果，ID 不是文件名；重复 ID 整份拒绝，路径绝对且无 NUL。当前执行按 ID 累积、保留省略项并按新增 ID 顺序追加；新执行不继承旧输出。缺少声明中的部分输出不增加 complete 门禁，仍按现有 canComplete 判断。报告 `from`/`to` 为后端归属，不得在请求中指定。
 
