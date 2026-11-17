@@ -21,8 +21,10 @@ test("P10/P11/P13 explicit complete preserves first handoff and only unlocks sat
 		expect(dependencyDenied.results[0].reasons.join(" ")).toContain("B");
 		const pending = await scene.dock.call({ action: "complete", nodeId: "C", reason: "不应跳过待执行工作" });
 		expect(pending).toMatchObject({ code: "node-not-completable", changed: false });
-		await scene.dispatch("A"); await scene.dispatch("B");
-		await scene.report("node-native-A", "alpha 可交接；原 Chat 仍收尾。", true);
+		const a = await scene.dispatch("A"); const b = await scene.dispatch("B");
+		await scene.approve("node-native-A", a.snapshot.nodes.A.execution.id);
+		await scene.approve("node-native-B", b.snapshot.nodes.B.execution.id);
+		await scene.report("node-native-A", "alpha 可交接；原 Chat 仍收尾。", true, [scene.handoff]);
 		await scene.report("node-native-B", "beta 可交接。", true);
 		const calls = readFileSync(join(scene.backend.root.path, "calls.jsonl"), "utf8");
 		expect(await scene.dock.call({ action: "complete", nodeId: "A", reason: "   " })).toMatchObject({ code: "completion-reason-required", changed: false });
@@ -55,7 +57,7 @@ test("P10/P11/P13 pause leaves existing execution alive and rejects new dispatch
 	const scene = await managerScenario();
 	try {
 		const running = await scene.dispatch("A");
-		await scene.report("node-native-A", "暂停前已可交接，后续暂停不撤回声明。", true);
+		await scene.report("node-native-A", "暂停前已可交接，后续暂停不撤回声明。", true, [scene.handoff]);
 		const before = readFileSync(join(scene.backend.root.path, "calls.jsonl"), "utf8");
 		const paused = await scene.dock.call({ action: "pause" });
 		expect(paused).toMatchObject({ changed: true, snapshot: { status: "paused", nodes: { A: running.snapshot.nodes.A, B: { status: "pending" } } }, ready: [], canFinish: false });
@@ -64,6 +66,7 @@ test("P10/P11/P13 pause leaves existing execution alive and rejects new dispatch
 		const denied = await scene.dispatch("B");
 		expect(denied.results[0].status).toBe("rejected");
 		expect(denied.results[0].reasons.join(" ")).toContain("paused");
+		await scene.approve("node-native-A", running.snapshot.nodes.A.execution.id);
 		const completed = await scene.dock.call({ action: "complete", nodeId: "A", reason: "暂停期间交接，E:/alpha.txt 可用。" });
 		expect(completed.snapshot.nodes.A.status).toBe("completed");
 		expect(completed.snapshot.status).toBe("paused");
@@ -94,12 +97,13 @@ test("P10/P11/P13 fail preserves original execution and first reason without ext
 		expect(readFileSync(join(scene.backend.root.path, "calls.jsonl"), "utf8")).toBe(before);
 		expect((await scene.detail()).run).toEqual(failed.snapshot);
 		expect(await scene.dock.call({ action: "complete", nodeId: "A", reason: "人工补齐也不能绕过节点声明。" })).toMatchObject({ changed: false, snapshot: { nodes: { A: { status: "failed" } } } });
-		const report = await scene.report("node-native-A", "人工补齐后本执行已可交接；限制：非生产样本。", true);
+		await scene.approve("node-native-A", execution.id);
+		const report = await scene.report("node-native-A", "人工补齐后本执行已可交接；限制：非生产样本。", true, [scene.handoff]);
 		const afterReport = readFileSync(join(scene.backend.root.path, "calls.jsonl"), "utf8");
 		const handoff = await scene.dock.call({ action: "complete", nodeId: "A", reason: "根据本执行最新 true 报告显式交接。" });
 		expect(handoff.snapshot.nodes.A.status).toBe("completed");
 		expect(handoff.reports).toEqual([report.report]);
-		expect(handoff.snapshot.nodes.A.execution).toEqual(execution);
+		expect(handoff.snapshot.nodes.A.execution).toMatchObject({ id: execution.id, chat: execution.chat, approved: true, approvalSource: "auto" });
 		expect(scene.calls.map(call => call.path)).toEqual(["fail", "fail", "fail", "complete", "complete"].map(action => `/api/workflow/manager/${action}`));
 		expect(readFileSync(join(scene.backend.root.path, "calls.jsonl"), "utf8")).toBe(afterReport);
 	} finally { await scene.close(); }

@@ -3,26 +3,31 @@
   "scopes": {
     "workflow-chat": {
       "schemaVersion": 1,
+      "harness": "pi",
       "scope": "workflow-chat",
-      "startedAt": "2026-11-12T20:20:51.384Z",
+      "startedAt": "2026-11-17T08:20:56.125Z",
       "cli": {
         "command": [
           "D:/Users/hugos/AppData/Local/nvm/v22.19.0/node.exe",
-          "D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js"
+          "D:\\nvm4w\\nodejs\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js"
         ],
-        "path": "D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js",
-        "source": "node script"
+        "path": "D:\\nvm4w\\nodejs\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js",
+        "source": "the shim D:/nvm4w/nodejs/pi.cmd (run through node: a shell shim cannot be spawned without a shell)"
       },
       "source": {
-        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-9Z2J1e",
-        "head": "208453735f37678bdc9228b20b733f0c3578ac2c",
+        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-CsKI1V",
+        "head": "374ac327183fa9d66bd0253db5766bc09b942c9f",
         "status": [
-          " M docs/agents/testing.md",
-          " M tests/harness-dock/capture-server.ts"
+          " M .gitignore",
+          " M tests/harness-dock/manager-collect-pending.test.ts",
+          " M tests/harness-dock/manager-resume-finish.test.ts",
+          " M tests/harness-dock/manager-state-actions.test.ts",
+          " M tests/harness-dock/uncertain-effects.test.ts",
+          " M tests/workflow-chat/support/manager-scenario.ts"
         ],
-        "diffSha256": "7585d910381a349968bd2ce5fb7a63ed172f5f79b9539c972c5417ae3621db60",
+        "diffSha256": "81eb37f4520d3fe91468449539a8bfb7f85a3b3b088bc6549df790bcd2686f07",
         "untrackedFiles": [],
-        "sha256": "a4893fee10d4dde64e7862e6e7a5b62dfeba15cd71e992398d692b444be7c589"
+        "sha256": "fee80d6887909a15b2fe0025eb03f4b43930963c1a23df682b5281954fd1a0ab"
       },
       "lockfiles": [
         {
@@ -43,13 +48,14 @@
           "bun": null
         },
         "artifact": {
-          "path": "D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js",
+          "path": "D:\\nvm4w\\nodejs\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js",
           "bytes": 160,
           "sha256": "e79626f2dd6f94aa45d30f3fa63cd84319a6eefcd150b353cfaf274366926774"
         },
         "platform": "win32",
         "arch": "x64"
       },
+      "reportedVersion": "1.5.2",
       "version": "1.5.2",
       "status": "passed",
       "checks": [
@@ -59,17 +65,21 @@
         "Pi tool AbortSignal releases transport, switch preserves auto startup, and shutdown releases active collect"
       ],
       "complete": true,
-      "finishedAt": "2026-11-12T20:20:59.544Z",
+      "finishedAt": "2026-11-17T08:21:06.297Z",
       "finishedSource": {
-        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-9Z2J1e",
-        "head": "208453735f37678bdc9228b20b733f0c3578ac2c",
+        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-CsKI1V",
+        "head": "374ac327183fa9d66bd0253db5766bc09b942c9f",
         "status": [
-          " M docs/agents/testing.md",
-          " M tests/harness-dock/capture-server.ts"
+          " M .gitignore",
+          " M tests/harness-dock/manager-collect-pending.test.ts",
+          " M tests/harness-dock/manager-resume-finish.test.ts",
+          " M tests/harness-dock/manager-state-actions.test.ts",
+          " M tests/harness-dock/uncertain-effects.test.ts",
+          " M tests/workflow-chat/support/manager-scenario.ts"
         ],
-        "diffSha256": "7585d910381a349968bd2ce5fb7a63ed172f5f79b9539c972c5417ae3621db60",
+        "diffSha256": "81eb37f4520d3fe91468449539a8bfb7f85a3b3b088bc6549df790bcd2686f07",
         "untrackedFiles": [],
-        "sha256": "a4893fee10d4dde64e7862e6e7a5b62dfeba15cd71e992398d692b444be7c589"
+        "sha256": "fee80d6887909a15b2fe0025eb03f4b43930963c1a23df682b5281954fd1a0ab"
       },
       "finishedLockfiles": [
         {
@@ -78,7 +88,7 @@
           "sha256": "28ce4c0d7b7d1d45a44e335a6647b0959c333875af42ca87ba63c87bcf4c2168"
         }
       ],
-      "acceptedAt": "2026-11-12T20:20:59.544Z"
+      "acceptedAt": "2026-11-17T08:21:06.297Z"
     },
     "close-out": {
       "schemaVersion": 1,

@@ -13,6 +13,8 @@ export async function managerScenario(budgets: { requestTimeoutMs?: number; coll
 	try {
 		dock = await managerDock(selectEndpoint ? selectEndpoint(backend.endpoint) : transport.endpoint, budgets);
 		const managerId = await dock.nativeId();
+		const handoff = { id: "handoff", path: join(backend.root.path, "alpha.txt") };
+		writeFileSync(handoff.path, "Independent alpha handoff fixture; UTF-8; test only.");
 		await backend.post("/api/zones", { id: "test/manager", path: backend.root.path });
 		const tasks: Record<string, string> = {};
 		for (const role of ["manager", "node"]) {
@@ -28,14 +30,17 @@ export async function managerScenario(budgets: { requestTimeoutMs?: number; coll
 		backend.behavior(managerId, backend.root.path);
 		const started = await backend.post("/api/scheduler/maps/fan-in.json/runs", { managerTaskId: tasks.manager, zone: "test/manager", userInput: "Independent A B C handoff acceptance" });
 		await backend.post("/api/workflow/manager/prepare_inputs", { sessionId: managerId, fileInputs: [], confirmed: true, reason: "已审阅本场景文本输入，无文件要求" });
-		return { backend, dock, transport, calls, managerId, runId: started.id,
+		return { backend, dock, transport, calls, managerId, handoff, runId: started.id,
 			async dispatch(nodeId: string) {
 				backend.behavior(`node-native-${nodeId}`, backend.root.path);
 				return backend.post("/api/workflow/manager/dispatch", { sessionId: managerId, nodes: [nodeId] });
 			},
-			async report(sessionId: string, body: string, can_complete: boolean) {
+			async approve(sessionId: string, executionId: string) {
+				return backend.post("/api/workflow/node/approve", { sessionId, executionId, source: "auto" });
+			},
+			async report(sessionId: string, body: string, can_complete: boolean, outputs?: { id: string; path: string }[]) {
 				backend.behavior(sessionId, backend.root.path, true);
-				return backend.post("/api/workflow/node/report", { sessionId, body, canComplete: can_complete });
+				return backend.post("/api/workflow/node/report", { sessionId, body, canComplete: can_complete, ...(outputs ? { outputs } : {}) });
 			},
 			async detail() { return fetch(`${backend.endpoint}/api/workflow/runs/${started.id}`).then(response => response.json()); },
 			async close() { try { await dock!.close(); } finally { await transport.close(); await backend.close(); } },
