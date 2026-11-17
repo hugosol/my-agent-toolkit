@@ -74,6 +74,8 @@ test("P26 injected guidance supports notification failure, original recovery, in
 		expect(blockedReport).toMatchObject({ saved: true, report: { canComplete: false, executionId: retried.snapshot.nodes.A.execution.id } });
 		expect((await scene.dock.collect()).reason).toBe("notification");
 		expect(await action({ action: "complete", nodeId: "A", reason: "最新 false 报告不得完成" })).toMatchObject({ changed: false, snapshot: { nodes: { A: { status: "running" } } } });
+		// This rehearsal owns report readiness, not native approval UI; satisfy the independent backend gate.
+		await scene.backend.post("/api/workflow/node/approve", { sessionId: freshState.data.sessionId, executionId: retried.snapshot.nodes.A.execution.id, source: "auto" });
 		const waiting = await scene.dock.collect();
 		expect(waiting.reason).toBe("timeout");
 		expect(waiting.pendingReports).toEqual({ A: blockedReport.report.id });

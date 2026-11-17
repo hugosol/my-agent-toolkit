@@ -30,10 +30,20 @@ for (const host of ["omp", "pi"] as const) {
 				if (!tool || typeof tool !== "object" || !tool.function || typeof tool.function.name !== "string") throw new Error("Invalid native tool");
 				return tool.function.name;
 			});
-			for (const tool of ["run", "collect", "report"]) expect(tools.filter(name => name === tool)).toHaveLength(1);
+			for (const tool of ["run", "collect", "report", "approve"]) expect(tools.filter(name => name === tool)).toHaveLength(1);
 			const manager = roleGuidance(first, "manager");
 			const node = roleGuidance(first, "node");
 			expect(manager).not.toBe(node);
+			// P38: both actually injected role guides describe result approval, not report sending approval.
+			for (const guide of [manager, node]) {
+				expect(guide).toContain("approve {}");
+				expect(guide).toContain("进度");
+				expect(guide).not.toContain("report_policy");
+			}
+			expect(node).toContain("当前会话的成果是否已达到预期，可以交接并推进后续流程？");
+			expect(node).toContain("结束节点没有 node 批准职责");
+			expect(manager).toContain("批准不免除报告和其他门禁");
+			expect(manager).toContain("每次原生工具展示完整载荷");
 			const last = dock.capture.requests()[dock.capture.requests().length - 1]!;
 			for (const guide of [manager, node]) expect(providerMessages(last).filter(message => message.content === guide)).toHaveLength(1);
 			const history = (await dock.history()).split("\n").filter(Boolean).map(line => JSON.parse(line));

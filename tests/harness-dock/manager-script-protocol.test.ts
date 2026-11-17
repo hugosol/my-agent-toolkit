@@ -17,7 +17,7 @@ for (const host of ["omp", "pi"] as const) {
 			const execution = {
 				id: "exec-create-1", kind: "rust_script", rustScript: "create_blank_bot",
 				zone: dock.root.workDir, inputRule: [], outputRule: [{ id: "baseline" }, { id: "handoff" }],
-				inputs: [], reportPolicy: "auto", autoClose: false,
+				inputs: [], autoApproved: true, approved: false, approvalSource: null, autoClose: false,
 				lifecycle: { status: "running", startedAt: 1794480000000 },
 			};
 			const dispatched = {
@@ -89,7 +89,7 @@ for (const host of ["omp", "pi"] as const) {
 			};
 			const execution = { id: "exec-save-old", kind: "rust_script", rustScript: "save_bot_guides",
 				zone: dock.root.workDir, inputRule: [], outputRule: [{ id: "saved" }, { id: "handoff" }], inputs: [],
-				reportPolicy: "auto", autoClose: false,
+				autoApproved: true, approved: false, approvalSource: null, autoClose: false,
 				lifecycle: { status: "failed", startedAt: 1794480000000, endedAt: 1794480000010, failure },
 			};
 			const failedWork = { reason: "notification", pendingReports: { save: "report-save-failed" },

@@ -92,7 +92,9 @@ for (const host of ["omp", "pi"] as const) for (const chiefDelegated of [false, 
 		expect(early).toMatchObject({ isError: true, body: { code: "child-run-not-finished" } });
 		expect((await detail(outer.id)).reports).toEqual([]);
 		await call("report", { body: "Progress only", can_complete: false });
-		expect(await parentAction(409)).toMatchObject({ code: "report-not-completable" });
+		// Result approval is an independent prerequisite; latest-report refusal is
+		// still exercised below after the parent has actually been approved.
+		expect(await parentAction(409)).toMatchObject({ code: "node-not-approved" });
 		expect(status.body.snapshot.inputsReady).toBe(false);
 		const prepared = await call("run", { action: "prepare_inputs", fileInputs: [], confirmed: true, reason: "已审阅内部文本输入，无文件要求" });
 		expect(prepared.body).toMatchObject({ snapshot: { id: childId, inputsReady: true } });
@@ -103,6 +105,7 @@ for (const host of ["omp", "pi"] as const) for (const chiefDelegated of [false, 
 		const internal = await call("run", { action: "dispatch", nodes: ["inside"] });
 		expect(internal.body.snapshot.id).toBe(childId);
 		expect(internal.body.snapshot.nodes.inside.status).toBe("running");
+		await backend.post("/api/workflow/node/approve", { sessionId: "internal-worker", executionId: internal.body.snapshot.nodes.inside.execution.id, source: "auto" });
 		await backend.post("/api/workflow/node/report", { sessionId: "internal-worker", body: "Internal done", canComplete: true });
 		const collected = await call("collect", {});
 		const child = await detail(childId);
@@ -118,6 +121,8 @@ for (const host of ["omp", "pi"] as const) for (const chiefDelegated of [false, 
 		expect(await detail(outer.id)).toEqual(parentBeforeFinish);
 		const resultPath = join(dock.root.workDir, "result.txt");
 		writeFileSync(resultPath, "NESTED-NATIVE-829\n");
+		const approved = await call("approve", {});
+		expect(approved).toMatchObject({ isError: false, body: { executionId: execution.id, approved: true } });
 		const ready = await call("report", { body: "Finished handoff", can_complete: true, outputs: [{ id: "result", path: resultPath }] });
 		expect(ready.body).toMatchObject({ saved: true, report: { runId: outer.id, nodeId: "call", executionId: execution.id,
 			from: { sessionId: nativeId }, to: { sessionId: "outer-manager" }, canComplete: true, outputs: [{ id: "result", path: resultPath }] } });

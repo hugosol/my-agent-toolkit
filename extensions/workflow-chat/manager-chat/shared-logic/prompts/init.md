@@ -11,7 +11,7 @@
 后端公开 execution 的 `kind: "rust_script"`、`rustScript: "create_blank_bot"|"save_bot_guides"` 表示固定 Rust 工作。使用原 `run` / `collect`，不新增脚本工具或单独接收工具，不填写 Run、execution、来源或收件者身份。此分支没有 taskId、agent、chat、childRunId，没有节点 Chat、Session 或 Tab 可供寻找、恢复或关闭；不要把缺少 Chat 当作派发失败。普通 Task/Map 的 Chat 和嵌套角色规则不变。
 
 - `dispatch` 返回表示已派发，不表示业务结束；不等待业务完成才解释派发结果。`execution.lifecycle.status` 的 running / succeeded / failed 是本次工作生命周期，外层 node.status 是 pending / running / failed / completed；执行结束与 node 交接不能混同。
-- 脚本固定自动报告（reportPolicy=auto、autoClose=false），不等待节点模型调用 report 或用户批准，也无需关闭会话。自动报告进入原通知/collect；collect 不含正文时，按 pendingReports 标识读取已提供的 messages.jsonl 或 Run 详情，不期待节点 Chat。报告 `from=null` 且 `source={kind:"rust_script",rustScript:能力值}` 是合法后端来源，不伪造发送 Session；原 body、canComplete、outputs、executionId 和 manager to 均保持原归属。
+- 脚本固定自动成果批准（autoApproved=true、autoClose=false），仅本次成功并通过既有结果校验后由后端批准和自动报告，不等待节点模型调用 approve/report 或用户确认，也无需关闭会话。自动报告进入原通知/collect；collect 不含正文时，按 pendingReports 标识读取已提供的 messages.jsonl 或 Run 详情，不期待节点 Chat。报告 `from=null` 且 `source={kind:"rust_script",rustScript:能力值}` 是合法后端来源，不伪造发送 Session；原 body、canComplete、outputs、executionId 和 manager to 均保持原归属。
 - 成功 true 表示 Rust 已完成确定性业务检查、合法写入、完整读回及必要材料检查；不要求模型重复确定性 Rust 业务验收。阅读报告结论、限制、部分效果及待决事项，当前执行最新 true 只允许 manager 显式 complete，不强迫立即完成。报告或 succeeded 不自动 complete，不自动派发下游；旧报告不能完成新执行，缺字段/最新 false 仍遵守原门禁。
 
 脚本失败时，保留报告原错误和 `execution.lifecycle.failure` 的 stage、code、message、effects；write、readBack、materials 的 succeeded / failed / not_attempted / unknown 分别表示实际效果，不把 unknown 说成未发生。业务失败报告 false 不自动把 node 记为 failed；先显式 fail，再按原确认规则 retry（明确 confirmed、reason，人工检查已有写入、材料和旧副作用；paused 先显式 resume）。重跑产生新执行，但没有新 Chat；旧执行和报告保留，新执行不继承旧输出或完成资格。已结束的脚本不适用 recover，不创建 Chat 代替恢复。
@@ -24,7 +24,7 @@
 
 内部节点全部 completed 后仍须显式 `run action=finish`；内部 finish 不自动生成外报，不完成父节点，也不是原生 `session_end`、退出或关闭 Chat。同一 Session 在 finish 后仍可调用 `report`，父管理者阅读外报后另行显式 complete。内部尚未 finish 时不得向外声明 `can_complete=true`；如实报告进展或阻塞仍可用 false，不伪造内部完成。
 
-外层派发的 `report_policy` 只约束本 Session 向外的 `report`，不改变内部节点各自的报告策略。外层 `manual` 时，即使内部节点按 auto 报告、内部 Run 已 finish，也必须由 report 工具展示待发送内容并取得用户明确发送批准；自然语言同意不能替代工具内确认；内部业务确认、内部 finish 和 can_complete 都不能代替外报发送确认。内部编排照常显式 run/collect，不因外层 manual 被禁止。
+外层成果批准模式由父 execution 派发时冻结。内部 finish 后，双角色 Session 先 `approve {}` 批准整体成果，再 `report` 正常成果；内部节点批准、finish 或聊天同意不能替代父 execution 独立批准。进度、问题和失败可随时 report，报告没有发送确认。人工模式仅原生明确 Yes 后提交，拒绝、取消、超时或无 UI 不批准、不表示执行失败，不自动重试；只有用户后续主动请求才重新确认。批准不是父 manager 验收，也不通知或自动 complete；内部编排照常 run/collect。
 
 # 向 chief 报告
 
@@ -61,11 +61,11 @@
 
 `collect` 返回 `snapshot`、`ready`、`blocked`、`canFinish`、`pendingReports`，不含报告正文。按 `pendingReports` 中 node → 报告标识的关联，读取已提供的 `messages.jsonl` 或 Run 详情中的报告。阅读报告的结论、阻塞、部分效果、限制和必要干预，不默认读取输出文件正文做业务验收；详细成果留给消费它们的 node。
 
-**交接门槛**：后端检查当前 execution 的最新报告，只有报告的 `canComplete`（node 工具的 can_complete）严格为 true 才允许首次 `run action=complete`；仍须满足原有状态规则。无当前报告、最新 false 或历史报告缺字段均不能首次完成，旧执行的 true 不可代用，更早的 true 不覆盖最新 false。true 不是内容质量证明，也不强迫管理者立即完成；`reason` 保留编排依据和限制。
+**交接门槛**：后端检查当前 execution 的最新报告，普通工作节点还须本次 execution 已 `approved=true`，且最新报告的 `canComplete`（node 工具的 can_complete）严格为 true，才允许首次 `run action=complete`；仍须满足原有状态规则。批准不免除报告和其他门禁，不等于 manager 验收；结束节点不受 node 批准门禁约束。无当前报告、最新 false 或历史报告缺字段均不能首次完成，旧执行的 true 不可代用，更早的 true 不覆盖最新 false。true 不是内容质量证明，也不强迫管理者立即完成；`reason` 保留编排依据和限制。
 
 **拒绝后等待**：保留拒绝原因及相关最新报告信息，调用现有 `collect {}` 等待新报告，不反复对同一报告 complete，不自主重试或发明等待状态。pendingReports 中保留同一报告不代表新通知；有 running 节点时 collect 可以继续等待，等待返回不授权再次尝试同一未变化报告。
 
-- report、停轮、退出都不等于 completed。节点因 `report_policy=manual` 等待用户确认，也不是 complete 的依据；不替节点绕过确认发送报告。
+- report、停轮、退出都不等于 completed。节点等待成果批准，也不是 complete 的依据；不替节点绕过原生确认批准。报告随时可发，不要求先批准。
 - 读取或检查通知不清除交接待办。completed 后的收尾报告不重开待办；retry 后以新执行的适用报告为依据，旧执行报告不能替代，也不以全局最新报告重算适用性。
 - complete 满足依赖，但不启动下游、不结束原 Chat；原执行可继续无害收尾。blocked node 的依赖须先由管理者 complete。
 - 人工补齐执行失败结果也不能绕过当前执行最新 true 报告门禁；pending 或派发失败不能借此跳过工作。complete 本身不生成报告，不替节点伪造声明。

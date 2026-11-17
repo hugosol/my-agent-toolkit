@@ -20,10 +20,6 @@ test("P3 overlapping native role Sessions cancel independently and both accept s
 	const managerReply = { acceptance: "independent-manager-response" };
 	const nodeReply = { saved: true, report: { id: "independent-report-3" }, notification: { status: "submitted" } };
 	const server = createServer(async (request, response) => {
-		if (request.url === "/api/workflow/node/context") {
-			request.resume(); response.writeHead(200, { "content-type": "application/json" });
-			response.end(JSON.stringify({ reportPolicy: "auto" })); return;
-		}
 		const chunks: Buffer[] = [];
 		for await (const chunk of request) chunks.push(Buffer.from(chunk));
 		const path = request.url!;

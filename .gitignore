@@ -9,6 +9,8 @@ framework/.runtime/
 /.scratch/chief-bot/evidence/
 /.scratch/rust-script-bots/evidence/
 /.scratch/pi-version-acceptance/
+/.scratch/omp-version-acceptance/evidence/
+/.scratch/node-result-approval/evidence/
 /.scratch/pi-suite/evidence/
 /.scratch/rust-script-bots/evidence/
 *.log

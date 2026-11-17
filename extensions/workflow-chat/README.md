@@ -65,7 +65,7 @@ body 必须完整包含非空 `background`、`execution`、`summary`，`result: 
 
 跨仓恢复矩阵由参与的 herdr-bot worktree 中 `python scripts/accept-chief-recovery.py --herdr-bot-worktree "$HERDR_BOT_WT" --toolkit-worktree "$TOOLKIT_WT" --backend "$HERDR_BOT_BINARY" --hosts omp,pi --paths-file "$ISOLATED_PATHS" --model-config "$GPT6_LUNA_CONFIG" --evidence-dir "$NEW_EVIDENCE_DIR"` 执行。显式绝对路径、当前源码产物、独占定义／存储／原生进程／Herdr／HOME／APPDATA／XDG 和全新证据目录；实际 GPT-6-luna 再次原生批准／拒绝原报告、接收后呈现前终止进程、新 chief 明确查看、并发／丢失回执／后端重启去重，以及独立 Chat／直接 manager 新进程恢复分别留证。每次无自动行为窗口46秒，覆盖45秒服务就绪与10＋30＋5秒维护上界、30秒请求／原生启动、20秒确认，不添加产品等待／重投策略。受控故障只证明机制；缺任一宿主、实际模型返回身份或进程退出证据均非零，不以本仓 dock 通过代替矩阵。模型配置、验收专用通知故障代理构建与独立只读授权 Codex 传输见配对 Herdr 的现有测试说明；正常服务／用户 Chat／认证不作为可变夹具。
 
-全链路人工恢复/崩溃/无自动行为和旧 chief 跨宿主失权须使用对应真实模型专项，不从这些协议检查推断。已有节点兼容检查仍由 `native-report-confirmation.test.ts`、`node-report-contract.test.ts`、`nested-role-completion.test.ts` 维护。
+全链路人工恢复/崩溃/无自动行为和旧 chief 跨宿主失权须使用对应真实模型专项，不从这些协议检查推断。已有节点兼容检查仍由 `native-node-report.test.ts`、`node-report-contract.test.ts`、`nested-role-completion.test.ts` 维护。
 
 ### 原生确认式委派
 
@@ -94,7 +94,7 @@ Task 的 HTTP 202/`stage:starting` 仅表示启动请求已接受；Map 的 HTTP
 
 独立交付入口仅提供 auto 模式：
 
-| 宿主 | manager-chat（`run` / `collect`） | node-chat（`report`） |
+| 宿主 | manager-chat（`run` / `collect`） | node-chat（`approve` / `report`） |
 | --- | --- | --- |
 | OMP | [`entrypoints/omp-auto/manager-chat.ts`](../../entrypoints/omp-auto/manager-chat.ts) | [`entrypoints/omp-auto/node-chat.ts`](../../entrypoints/omp-auto/node-chat.ts) |
 | Pi | [`entrypoints/pi-auto/manager-chat.ts`](../../entrypoints/pi-auto/manager-chat.ts) | [`entrypoints/pi-auto/node-chat.ts`](../../entrypoints/pi-auto/node-chat.ts) |
@@ -123,7 +123,7 @@ pi -e /absolute/my-agent-toolkit/entrypoints/pi-auto/manager-chat.ts -e /absolut
 
 `run`／`collect` 定位内部 Run，`report` 定位外层对应父 execution。所有调用只提供各工具现有的业务参数；公共原生 Session observation 提供同一真实身份，后端以明确关联决定授权和层级。工具存在不证明关联合法，不能添加 session、Run、execution、from/to 或接收者字段绕过拒绝。普通单角色继续只加载自己的入口。
 
-两独立实例各有 `manager-chat:tools`／`node-chat:tools` 首次指引身份，均追加到原生历史，不覆盖对方；普通轮次与恢复原 Session 不重复注入。内部 `finish` 不是 `session_end`：不关闭 Chat、不自动生成外报或完成父节点，随后仍可独立 report。外层 `report_policy=manual` 只约束本 Session 的外报，每次仍须由 report 工具在当前 Chat 展示待发送内容并取得用户明确发送批准；内部 auto 报告、内部 finish 或业务确认均不替代外报发送确认，也不改变内部节点自己的策略。
+两独立实例各有 `manager-chat:tools`／`node-chat:tools` 首次指引身份，均追加到原生历史，不覆盖对方；普通轮次与恢复原 Session 不重复注入。内部 `finish` 不是 `session_end`：不关闭 Chat、不自动生成外报或完成父节点，随后仍可独立 report。外层成果批准采用父 execution 冻结模式；内部 finish 后须先独立 approve 父成果，再 report 正常成果，父 manager 另行验收并 complete。内部批准、finish 或聊天同意不能替代父成果批准，进度／问题／失败可随时 report，无报告发送确认。
 
 可复现的同载机制检查、原始材料保存方式及证据边界见 [运行手册的双角色原生 dock](OPERATIONS.md#双角色原生-dock机制验证)。这不是后端授权、真实模型遵从或完整嵌套承诺已通过的声明。
 
@@ -235,7 +235,7 @@ collectTimeoutMs: 5460000
 
 manager 使用原 `run`／`collect` 和自动公共 Session 身份；不新增脚本执行或接收工具，不让模型填写 Run、execution、来源或接收者。后端继续检查真实 manager 归属；chief 入口及权限不变。
 
-后端在原 `snapshot.nodes[nodeId].execution` 返回 `kind:"rust_script"`、`rustScript:"create_blank_bot"|"save_bot_guides"`、独立 `id`、真实 `zone`、冻结 `inputRule`／`outputRule`／`inputs`、`reportPolicy:"auto"`、`autoClose:false`。该分支**没有** taskId、agent、chat、childRunId，不补 null 或假身份，也没有节点 Session、Tab 或 Chat 可寻找或关闭。普通 Task/Map execution 仍保留原 Chat、recover、嵌套角色和 auto/manual 报告确认语义；不要把所有 retry 改成无 Chat。
+后端在原 `snapshot.nodes[nodeId].execution` 返回 `kind:"rust_script"`、`rustScript:"create_blank_bot"|"save_bot_guides"`、独立 `id`、真实 `zone`、冻结 `inputRule`／`outputRule`／`inputs`、`autoApproved:true`、`autoClose:false`。该分支**没有** taskId、agent、chat、childRunId，不补 null 或假身份，也没有节点 Session、Tab 或 Chat 可寻找或关闭。普通 Task/Map execution 仍保留原 Chat、recover、嵌套角色和 自动／人工成果批准语义；不要把所有 retry 改成无 Chat。
 
 - `dispatch` 返回只表示已派发，不表示业务已结束。`execution.lifecycle` 的 running／succeeded／failed 与外层 node 的 pending／running／failed／completed 分开解释；生命周期结束不修改节点交接状态。逐项保留原结果、拒绝与实际效果，不因没有 Chat 判失败。
 - 脚本由后端自动报告，进入原通知与 collect；无需节点模型 report 或 manual 发送确认。collect 不含正文时按 pendingReports 的报告 ID 读取已给定 messages.jsonl 或 Run 详情，不寻找脚本 Chat。报告保留原 id、type、at、runId、nodeId、executionId、body、canComplete、outputs、真实 manager to；`from:null` 加必需 `source:{kind:"rust_script",rustScript:能力值}` 表示后端来源，不是缺少待补的发送身份。普通 Task/Map 报告仍使用原真实 Chat from，不要求新增 source。
@@ -347,18 +347,21 @@ Map node 的 `input` 工作文本保持原样；文件交接使用 `input_rule` 
 
 工具文本为后端 JSON；HTTP 状态及原始解析结果也保留于工具 details。辅助通知或诊断失败不会把已保存报告标成工具提交失败。每次显式 report 都可能追加独立报告，不是客户端幂等更新；有新结果或需更正正文时才明确再次提交。
 
-`report` 在校验参数后，先以公共原生 Session 请求只读 `POST /api/workflow/node/context`，从后端取得对应执行冻结的 `reportPolicy`；当前或保留的旧执行、嵌套双角色均沿用后端报告身份解析。后端历史记录缺策略时默认 `auto`；查询失败、响应缺策略或策略未知则不发送，不从提示词、当前 Map 或模型参数推断。部署须同步升级提供该接口的 herdr-bot。
+## approve 成果批准
 
-- `auto`：直接提交报告，不打开确认界面。
-- `manual`：调用工具后，在当前宿主原生确认界面展示本次完整 `body`、`can_complete` 和 `outputs`。只有用户明确选择“是”才发送；自然语言同意、业务批准、内部 finish 和可交接声明都不构成发送批准。
-- 批准仅适用于本次展示的内容和本次调用；待发送内容在等待前固定，完整 HTTP JSON 预览包含实际 `sessionId`、`body`、`canComplete` 与显式提供的 `outputs`（省略仍保持省略）。批准不重新读取身份或调用参数；补充、更正或再次调用均重新确认，不复用批准。
-- 拒绝、关闭、取消、超时、会话结束、无交互能力或交互异常均返回 `sent=false`、`saved=false`，不触发报告请求；迟到批准无效。不自动重试、补发或反复询问，模型应结束本轮等待用户重新要求发送。不增加跨调用锁定机制。对 chief 原报告的人工重发同样如此：前次拒绝只终结那次调用，用户下一条明确重发请求是新的用户决定，应重新进入工具的完整原文预览与原生确认；不是客户端自主重试，也不复用旧批准。
-- 确认等待使用 toolkit 配置 `reportConfirmationTimeoutMs`，随部署提供的值为 20000 毫秒。与 HTTP 预算独立，模型不能修改；从调用原生确认界面开始计时。RPC 客户端须实际实现宿主确认请求/响应；没有响应即超时拒绝，无 UI 的模式不发送 manual 报告。
-- 一旦报告请求已发出，取消或传输错误仍可能意味着后端已保存，沿用下述不确定结果处理，不能报告为“未发送”。
+两宿主提供无参数 `approve {}`，模型不提交身份、报告引用、说明、产物或摘要。正常成果先 approve 再 report；进度、问题和失败可先报告，report 不查询批准模式、不打开发送确认，也不改变批准事实。
 
-该门禁保证 `report` 工具自身未经批准不发送，不增加后端批准凭证，也不防止其他工具直接调用 HTTP。报告后可继续无害收尾；已有 Chat 的持久化指引不热更新，应在升级后创建新 Chat。
+工具使用公共 Session 请求 `POST /api/workflow/node/context {sessionId}`，读取后端真实角色对应 execution 冻结的 `executionId`、boolean `autoApproved`、`approved` 和 `approvalSource`。查询或协议错误原样保留，不推定自动、不从当前 Map 或提示词猜模式。工具在等待之前绑定该 execution，之后不重新解析身份目标。
 
-**report、停轮、退出都不等于 node completed。** 管理者须阅读报告作编排判断并显式 complete，不默认验收输出正文；true 不自动完成或派发下游。节点等待用户确认本身不能作为 complete 依据，不由管理者替节点绕过确认发送报告。人工补齐执行失败结果后也须当前执行最新 true 报告，不保留无报告人工完成旁路。暂停新派发不撤回既有工作。旧执行的补充报告只保留其原执行事实，不替代新执行结果。
+- `autoApproved=true`：直接 `POST /api/workflow/node/approve {sessionId,executionId,source:"auto"}`。
+- `autoApproved=false`：原生确认只问“当前会话的成果是否已达到预期，可以交接并推进后续流程？”，不要求说明或展示报告。仅显式 Yes 才以 `source:"manual"` 提交原 execution。
+- 拒绝、取消、超时、会话结束或无 UI 返回未批准，不将执行标为 failed；可继续工作或 report，不自动重试。仅用户后续主动请求才重新确认。确认使用原 `reportConfirmationTimeoutMs` 配置（默认 20000ms），与 HTTP 预算独立，等待期间没有后端请求或 Run 锁。
+- 后端仍检查真实身份、执行新旧及冻结模式，retry 期间迟到的 Yes 不得批准新执行；原拒绝和持久化错误保留。成功回执须含原 `executionId`、`approved:true` 和匹配的 `approvalSource`；异常回执结果不确定，不声称成功或回滚。
+- 批准不制造报告或主动通知，不自动 complete、dispatch 或 finish，也不等于 manager 验收。不需要报告或输出才能批准；批准后材料修改和追加报告不自动撤销批准。新 retry 不继承旧批准。结束节点无 node 批准职责。
+
+已有 Chat 的持久指引不热更新；配套升级 toolkit/herdr-bot 后使用新 Chat/Run，不迁移、猜测或补写旧 Run 批准状态。chief 委派、chief 报告及原报告重发仍保留完整载荷预览和独立原生确认。
+
+**report、停轮、退出都不等于 node completed。** 管理者须阅读报告作编排判断并显式 complete，不默认验收输出正文；普通工作节点还须本 execution 已批准；true 不自动完成或派发下游。节点等待用户确认本身不能作为 complete 依据，不由管理者替节点绕过原生确认批准，report 本身随时可发。人工补齐执行失败结果后也须当前执行最新 true 报告，不保留无报告人工完成旁路。暂停新派发不撤回既有工作。旧执行的补充报告只保留其原执行事实，不替代新执行结果。
 
 ## 故障、取消与信任边界
 
@@ -378,7 +381,7 @@ Map node 的 `input` 工作文本保持原样；文件交接使用 `input_rule` 
 ```text
 bun test tests/workflow-chat
 bun test tests/harness-dock/node-report.test.ts
-bun test tests/harness-dock/native-report-confirmation.test.ts
+bun test tests/harness-dock/native-node-report.test.ts
 bun test tests/framework/tool-confirmation-adapters.test.ts
 bun test tests/harness-dock/manager-state-actions.test.ts tests/harness-dock/manager-resume-finish.test.ts
 bun test tests/harness-dock/manager-collect-budget.test.ts tests/harness-dock/manager-collect-pending.test.ts
@@ -395,7 +398,7 @@ Prompt 检查直接捕获真实 omp 发给 provider 的文本，并读取其持�
 
 指引故障演练实际执行“已保存但通知失败→collect 并读取报告”“原执行修复→recover”“核实旧副作用后→retry”“人工补齐→新执行 false 报告拒绝完成→collect 等待→最新 true 报告→显式 complete”。执行前可将 `WORKFLOW_PROMPT_EVIDENCE_DIR` 设为 `.scratch/manager-node-chat/evidence/` 下本次运行专用目录的绝对路径：Prompt dock 保留原始请求与 Session JSONL，演练保留 `guidance-rehearsal.json`（实际注入全文、工具结果、HTTP 和外部 CLI 调用）。产物和决策均由验收 Agent/测试控制，不能当成真实模型工作结果；这些是 P26 技术证据，不是 H1 通过，H1 的唯一整体使用判断仍须独立汇总与用户确认。
 
-`native-report-confirmation.test.ts` 在 OMP/Pi 的实际自动入口验证完整 wire 预览、原生批准/拒绝、取消、超时后的迟到批准、Session 结束，以及原生无 UI 模式（OMP `--no-ui`；Pi JSON print）。HTTP 已接收后的取消、响应丢失、非法 JSON/回执保持不确定。确认预算为隔离配置 2000ms，每次结果后的无重试观察为 2100ms，跨过该确认预算；Session/进程由 driver 关闭并等待退出，不证明无限期或真实模型自主行为。`tool-confirmation-adapters.test.ts` 补充两宿主的 UI 异常、非 boolean 答案及阻塞事件循环后迟到批准的机制验证。所有资源使用测试独占 HOME/APPDATA/XDG、Session 和动态回环端口；受控 provider 不使用真实模型或用户凭据。
+`native-node-report.test.ts` 在 OMP/Pi 实际自动入口验证 report 无发送确认、无 UI 仍可发送，以及 HTTP 已接收后取消、响应丢失、非法 JSON/回执保留不确定性且不重试。`node-approval.test.ts` 是工具/受控 adapter 开发回归，不证明原生批准 UI、真实持久化或真实模型交接顺序；这些须双宿主原生专项独立验收。
 
 测试通过真实隔离 omp 18.5.0 加载交付入口；受控 provider 仅发出预先指定的工具调用，不冒充真实模型自主工作。受控 HTTP 分别验证保存失败、已保存但通知失败、诊断失败以及空正文不被客户端拒绝；150ms 有界窗口内观察无额外请求，不证明无限期无动作。
 
