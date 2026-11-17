@@ -18,7 +18,12 @@ const config = JSON.parse(readFileSync(resolve(configPath), "utf8")) as {
 };
 if (config.host !== "omp" && config.host !== "pi") throw new Error("Unknown installed host");
 mkdirSync(config.evidence, { recursive: false });
-const root = createRunRoot("ticket10-concurrent");
+const ownedRoot = createRunRoot("ticket10-concurrent");
+const header = readFileSync(config.session, "utf8").split(/\r?\n/).filter(Boolean).map(line => JSON.parse(line) as { type?: string; cwd?: string }).find(entry => entry.type === "session");
+if (!header?.cwd || !existsSync(header.cwd)) throw new Error("Owned native history has no existing working directory");
+// OMP RPC refuses a cross-cwd switch without an interactive cwd decision.
+// Start in the actual owned session cwd instead of manufacturing another identity.
+const root = { ...ownedRoot, workDir: header.cwd };
 const env = Object.fromEntries(["HOME", "USERPROFILE", "APPDATA", "LOCALAPPDATA", "XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_STATE_HOME", "XDG_CACHE_HOME"].map(name => [name, root.path]));
 env.OMP_CODING_AGENT_DIR = root.agentDir;
 for (const name of ["models.json", "models.yml", "settings.json", "config.yml"]) {
@@ -34,7 +39,8 @@ try {
 	session = config.host === "omp"
 		? await ControlledSession.start({ harness: await resolveInstalledOmp(), runRoot: root, extensions: [entry], model: "ticket10/mechanical", env })
 		: await PiSession.start({ cli: resolvePiCli(), runRoot: root, entrypoint: entry, selector: "ticket10/mechanical", env });
-	await session.request({ type: "switch_session", sessionPath: config.session });
+	const switched = await session.request({ type: "switch_session", sessionPath: config.session });
+	if (!switched.success || (switched.data as { cancelled?: boolean } | undefined)?.cancelled) throw new Error(`Native session switch refused: ${JSON.stringify(switched)}`);
 	const state = await session.request({ type: "get_state" });
 	const nativeId = (state.data as { sessionId?: unknown } | undefined)?.sessionId;
 	if (nativeId !== config.sessionId) throw new Error(`Actual recovered Session identity differs: ${JSON.stringify(state)}`);
