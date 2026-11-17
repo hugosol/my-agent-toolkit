@@ -310,7 +310,7 @@
       "schemaVersion": 1,
       "harness": "omp",
       "scope": "full-repository",
-      "startedAt": "2026-11-17T13:21:40.440Z",
+      "startedAt": "2026-11-17T15:01:39.364Z",
       "cli": {
         "path": "D:\\nvm4w\\nodejs\\node_modules\\@oh-my-pi\\pi-coding-agent\\dist\\cli.js",
         "command": [
@@ -320,12 +320,12 @@
         "source": "locally selected installed OMP"
       },
       "source": {
-        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-fqAs0f",
-        "head": "2aacbba40184d47dd8823b09b9a92e049b122bfc",
+        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-vKQMgq",
+        "head": "15b11cfe6827398e597606efa508120a6e1e3458",
         "status": [],
         "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "untrackedFiles": [],
-        "sha256": "96da11e8c2f41dd4d6d3a9f242b75f33cf126f7e1a0c9dddbde76a40744af291"
+        "sha256": "a2d775ac665d2813afd96a07f8821f2782d14d6c607a6c3d8216f213e2341d5c"
       },
       "lockfiles": [
         {
@@ -361,14 +361,14 @@
         "test --parallel=4"
       ],
       "detail": "Suite exit 0. JUnit confirms nonempty, unskipped execution of every expected file.",
-      "finishedAt": "2026-11-17T13:27:26.780Z",
+      "finishedAt": "2026-11-17T15:07:13.414Z",
       "finishedSource": {
-        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-fqAs0f",
-        "head": "2aacbba40184d47dd8823b09b9a92e049b122bfc",
+        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-vKQMgq",
+        "head": "15b11cfe6827398e597606efa508120a6e1e3458",
         "status": [],
         "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "untrackedFiles": [],
-        "sha256": "96da11e8c2f41dd4d6d3a9f242b75f33cf126f7e1a0c9dddbde76a40744af291"
+        "sha256": "a2d775ac665d2813afd96a07f8821f2782d14d6c607a6c3d8216f213e2341d5c"
       },
       "finishedLockfiles": [
         {
@@ -377,7 +377,7 @@
           "sha256": "28ce4c0d7b7d1d45a44e335a6647b0959c333875af42ca87ba63c87bcf4c2168"
         }
       ],
-      "acceptedAt": "2026-11-17T13:27:26.780Z"
+      "acceptedAt": "2026-11-17T15:07:13.414Z"
     }
   }
 }
