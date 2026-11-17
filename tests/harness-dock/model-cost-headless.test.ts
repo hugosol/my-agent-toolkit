@@ -424,7 +424,9 @@ describe("a headless session's other business notices reach stderr, once, at the
 		// Two extensions in one process, each with its own module graph: the error is the session's, not
 		// a function of how many extensions were loaded beside this one.
 		const run = await startHeadlessRun("model-cost-headless-two-extensions", {
-			balance: { total: "0.00", failureStatus: 503 },
+			// Refuse only initialization; hold later queries so each real refusal cannot
+			// legitimately emit another notice before the once-only assertion.
+			balance: { total: "0.00", failureStatus: 503, holdFrom: 2 },
 			extensions: [MODEL_COST_ENTRYPOINT, SECOND_EXTENSION],
 		});
 		try {
