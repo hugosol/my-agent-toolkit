@@ -54,7 +54,7 @@ test("P1/P2/P6 independent automatic roles use native identity and preserve real
 		const unassociatedNode = await call(node, "report", { body: "not associated yet", can_complete: false });
 		expect(unassociatedManager).toMatchObject({ isError: true, details: { httpStatus: 403 }, body: { code: "manager-unassociated", message: "当前原生身份没有唯一的管理者归属。" } });
 		expect(unassociatedNode).toMatchObject({ isError: true, details: { httpStatus: 403 }, body: { code: "node-unassociated", message: "当前原生身份没有唯一的当前节点执行归属。" } });
-		for (const [dock, role, owned, absent] of [[manager, "manager", ["run", "collect"], ["report"]], [node, "node", ["report"], ["run", "collect"]]] as const) {
+		for (const [dock, role, owned, absent] of [[manager, "manager", ["run", "collect"], ["report", "approve"]], [node, "node", ["report", "approve"], ["run", "collect"]]] as const) {
 			const request = dock.capture.requests()[0]!.json as { tools: { function: { name: string; parameters: unknown } }[] };
 			const names = request.tools.map(tool => tool.function.name);
 			for (const name of owned) expect(names).toContain(name);
@@ -124,8 +124,8 @@ test("P1/P2/P6 independent automatic roles use native identity and preserve real
 		// P2 constrains external connections: observe ALL role HTTP paths, including any
 		// accidental connect-bot registration, heartbeat, or websocket upgrade attempt.
 		expect(transport.calls.map(call => call.path)).toEqual([
-			"/api/workflow/manager/status", "/api/workflow/node/context", "/api/workflow/manager/status", "/api/workflow/manager/dispatch",
-			"/api/workflow/node/context", "/api/workflow/node/report", "/api/workflow/manager/collect", "/api/workflow/node/context", "/api/workflow/node/context", "/api/workflow/manager/status",
+			"/api/workflow/manager/status", "/api/workflow/node/report", "/api/workflow/manager/status", "/api/workflow/manager/dispatch",
+			"/api/workflow/node/report", "/api/workflow/manager/collect", "/api/workflow/node/report", "/api/workflow/node/report", "/api/workflow/manager/status",
 		]);
 		// One explicitly test-owned SSE reader checks the actual panel registry.
 		// Neither role registered a connect-bot reporting Session as a side effect.

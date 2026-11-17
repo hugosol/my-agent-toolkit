@@ -25,6 +25,13 @@ export const NODE_TOOLS: readonly ToolDeclaration<NodeToolState>[] = [{
 		required: ["body", "can_complete"], additionalProperties: false,
 	},
 	async execute(state, params, delivery) {
-		return workflowToolResult(await state.operations.report(delivery.sessionId, params, delivery.signal, delivery.confirm));
+		return workflowToolResult(await state.operations.report(delivery.sessionId, params, delivery.signal));
+	},
+}, {
+	name: "approve", label: "Approve",
+	description: "批准当前会话对应执行的成果。无参数；自动模式直接提交，人工模式仅原生明确 Yes 后提交。批准不发送报告、不通知、不完成或推进。正常成果先 approve 再 report；进度、失败和问题可随时 report。",
+	parameters: { type: "object", properties: {}, additionalProperties: false },
+	async execute(state, params, delivery) {
+		return workflowToolResult(await state.operations.approve(delivery.sessionId, params, delivery.signal, delivery.confirm));
 	},
 }];

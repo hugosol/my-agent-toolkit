@@ -56,11 +56,11 @@ pi -e D:/service/my-agent-toolkit/entrypoints/pi-auto/manager-chat.ts
 pi -e D:/service/my-agent-toolkit/entrypoints/pi-auto/node-chat.ts
 ```
 
-升级已有 herdr-bot Run 存储时，节点执行新增必填 `agent` 字段；先停服、备份，再按后端长期运行说明的“执行宿主字段与旧 Run 升级”执行 `scripts/migrate-execution-agents.py`。它只为旧版 OMP 执行补明确宿主，保留原字节备份及追加历史；不要让新服务自动猜测，也不要直接编辑活动 Run。实际部署切换与整体模型协作验收由人工完成。
+成果批准协议与旧 Run 不兼容。停服备份后配套升级两仓，创建全新 Run/Chat；不要改写历史、映射旧报告策略或补写批准事实。原生与真实模型专项须按各自范围独立留证，受控 provider 不代表真实模型验收。
 
 ## 2. 上线核对与预算
 
-- 在合法关联的管理者 Session 显式 `run {"action":"status"}`，核对 Run 现场和角色；节点遵守本次派发的 report_policy：auto 在材料可交接或需报告阻塞时显式 report，如实填写 can_complete，manual 调用 report 后由工具展示完整待发送内容并取得用户明确发送批准，拒绝、取消、超时或无法交互不发送；旧派发缺字段按 auto。模型只传业务参数，真实 `sessionId` 由公共 Session 加入；完整协议以 [run](README.md#run-基础状态动作)、[collect](README.md#collect-长等待与报告待办)、[report](README.md#report-协议与交接) 为准。
+- 在合法管理者 Session 显式 `run {"action":"status"}` 核对现场。节点正常成果先 `approve {}` 再 report；进度、失败、问题可随时 report，不要求报告发送确认。人工成果仅原生 Yes 后提交，自动模式也须主动调用；context 查询失败不默认自动。公共 Session 提供真实身份，后台冻结模式及门禁唯一权威；详见 [成果批准](README.md#approve-成果批准) 与 [报告](README.md#report-协议与交接)。
 - 普通预算覆盖请求至完整正文，不只是连通或响应头。普通预算默认 30000ms；collect 独立默认 5460000ms，覆盖后端默认 5400 秒再留 60 秒余量。不要为了普通 report 调短 collect，也不要把所有普通调用都改为 91 分钟。后端改期时人工核对客户端预算，无自动握手。
 - collect 的正常 `reason: "timeout"` 不是错误，也不修改状态；客户端 `error.kind: "timeout"` 是完整传输预算耗尽。paused/completed/notification/no-running 的处理和待办查阅见 README。collect 不返回报告正文；按 pendingReports 的标识读取 messages.jsonl 或已有 Run 详情，阅读报告结论、阻塞、部分效果及必要干预；不默认读取输出正文验收。
 - 取消、网络/正文失败或非 2xx 不是回滚保证。保留整个错误正文、已发生 effects、逐项结果、historyError/stateCommitted；HTTP 200 也不能概括整批成功。故障分类与 Session 结束语义见 [故障、取消与信任边界](README.md#故障取消与信任边界)。
@@ -130,22 +130,21 @@ python scripts/accept-workflow-nesting-roles.py `
   --evidence-dir $NEW_EXCLUSIVE_EVIDENCE
 ```
 
-两宿主各执行两套 manager／zone／原始业务字面样例、重复 Map 调用和保留旧 execution；真实原生 Session 自动注入身份，模型使用正常 run／collect／report，后端实际决定子 Run／父 execution 授权。逐阶段观察 unfinished 拒绝、显式 finish、继续报告、manual 独立发送确认、父层最新报告验收与 complete、真实 Tab 精确关闭和内部保留；受控 dock 不能替代这些证据。`--hosts declared` 另执行入口中固定业务夹具的混合宿主声明，保留 parent／child／worker 各自 OMP/Pi，不表示生产业务已验收，也不代替双宿主完整矩阵。
+两宿主各执行两套 manager／zone／原始业务字面样例、重复 Map 调用和保留旧 execution；真实原生 Session 自动注入身份，模型使用正常 run／collect／report，后端实际决定子 Run／父 execution 授权。逐阶段观察 unfinished 拒绝、显式 finish、继续报告、父 execution 人工成果独立批准、父层最新报告验收与 complete、真实 Tab 精确关闭和内部保留；受控 dock 不能替代这些证据。`--hosts declared` 另执行入口中固定业务夹具的混合宿主声明，保留 parent／child／worker 各自 OMP/Pi，不表示生产业务已验收，也不代替双宿主完整矩阵。
 
 依赖、实际模型和隔离／清理任一不可用均非零，不重试业务决策、跳过宿主或读取用户认证。保留的独占证据包含两仓源码／锁文件身份、安装入口／OS 进程、模型／工具／HTTP、原始用户批准、原生历史与文件字节；实际执行结果才决定是否通过。本节仅说明可复跑入口，不宣称当前环境的验收结果；普通 `bun test tests/workflow-chat`、同载 dock、typecheck 和 canonical 全仓检查仍须分别运行并报告。
 
-### report_policy 真实模型冒烟（OMP 与 Pi 分别执行）
+### 成果批准运维核对（OMP 与 Pi 分别执行）
 
-使用上节对应宿主的自动入口和合法后端派发，不在任意独立启动的无关联 Session 中伪造身份。升级共享定义后创建新 node Chat；已有 Chat 的持久化指引不热更新。
+使用合法后端派发与对应宿主正常自动入口，升级后创建新 Chat/Run，不使用用户历史，不补写旧 Run。
 
-1. 在 Map 中给一个可独立交付的小任务设置 `report_policy: manual`，由 manager 正常 dispatch。任务示例：在指定绝对目录写一份 UTF-8 文本，正文为 `report-policy-smoke`，交付地址、读取方法和限制。核对实际派发输入有独立 `report_policy: manual` 控制段。
-2. 等模型调用 report：原生确认界面应显示本次完整 body、can_complete 和 outputs；批准前不得出现 `/api/workflow/node/report` 请求或新增报告（只读 context 查询允许）。manager 不得仅凭等待确认就 complete。
-3. 分别选择“否”、关闭/取消、等待配置的确认超时，核对无报告请求、工具返回未发送、无自动补发。超时后迟到选择不能补发；无 UI 模式也不能发送 manual 报告。默认 20 秒，可在 toolkit 的 `reportConfirmationTimeoutMs` 中修改后重启；使用独立于 HTTP 的预算。
-4. 明确要求修改正文为 `report-policy-smoke-revised` 后重新调用 report，确认界面须展示修改后的实际内容，旧批准不可复用。在界面明确选择“是”后，核对恰一份报告及其 body、canComplete、outputs 与展示内容一致。自然语言业务批准不是发送批准。
-5. 补充、更正或再次发送均须新确认；已保存但辅助通知失败不应重报。报告请求发出后发生网络错误须保留保存状态不明，不能宣称未发送。
-6. 用新执行验证 `auto` 不弹窗直接报告；历史执行缺策略由后端读作 auto。修改当前 Map 不改变已派发执行的冻结策略；嵌套双角色外报读取父 execution 的策略，不读取内部 Run 的策略。
+1. 以 `auto_approved:false` 的普通工作节点验证：模型正常成果先调用无参数 approve；原生确认严格询问“当前会话的成果是否已达到预期，可以交接并推进后续流程？”。只在明确 Yes 后提交后端批准；聊天同意不能代替。
+2. 分别核对拒绝、取消、超时、无 UI 均未批准且执行不变 failed，可继续工作和 report，无自动新确认。只有后续用户主动请求才再次确认。原配置 `reportConfirmationTimeoutMs` 默认 20 秒；RPC 客户端须处理原生确认请求/响应。
+3. 等确认期间公开查询、报告和无依赖分支仍可继续；如发生 retry，旧 Yes 只能提交捕获的旧 execution，不能批准新执行。保留后端真实拒绝。
+4. `auto_approved:true` 必须仍由工具主动 approve，派发本身不批准。核对后端 `autoApproved` 冻结模式、`approved` 事实与 `approvalSource`；持久失败不得声称成功。
+5. 两种模式的 report 随时可发，不再确认；批准不生成报告、通知或推进。正常成果 approve 后 report，进度／失败／问题可先 report，批准不等于 manager 验收。chief 委派／报告确认不变。
 
-OMP/Pi 分别验证实际交互，保留界面、用户选择、实际 HTTP 与报告标识。受控模型只能证明工具门禁机制，不证明真实模型业务职责遵从。RPC 必须有实现确认请求/响应的客户端；无响应按超时处理。toolkit 与 herdr-bot 须配套升级，后端提供只读 `/api/workflow/node/context`；查询失败不默认 auto。门禁仅约束 report 工具，不增加后端审批状态或直接 HTTP 防绕过保证。can_complete 不代替发送批准；人工补齐仍须当前执行最新 true 报告，不存在无报告人工完成旁路。
+`bun test tests/workflow-chat/node-approval.test.ts tests/workflow-chat/free-report.test.ts` 仅是工具协议/受控 adapter 机制检查。`bun test tests/harness-dock/native-node-report.test.ts` 验证真实宿主自由报告及不确定结果处理，不代替双宿主原生批准、真实持久门禁或真实模型职责验收。配对安全后端和隔离数据必须显式选择，不使用生产后端进行关机检查。
 
 ### 文件交接跨仓自动验收
 

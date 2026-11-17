@@ -58,10 +58,6 @@ async function dock(role: "manager" | "node") {
 	let cancelled: (() => void) | undefined;
 	const sockets = new Set<Socket>();
 	const backend = createServer(async (request, response) => {
-		if (request.url === "/api/workflow/node/context") {
-			request.resume(); response.writeHead(200, { "content-type": "application/json" });
-			response.end(JSON.stringify({ reportPolicy: "auto" })); return;
-		}
 		const chunks: Buffer[] = [];
 		for await (const chunk of request) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
 		calls.push({ path: request.url ?? "/", body: JSON.parse(Buffer.concat(chunks).toString("utf8")) });

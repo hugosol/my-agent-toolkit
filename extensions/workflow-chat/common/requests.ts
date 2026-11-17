@@ -54,6 +54,8 @@ export class WorkflowRequests {
 	async postConfirmed(sessionId: string, route: string, params: Readonly<Record<string, unknown>>, preview: {
 		readonly title: string;
 		readonly message: string;
+		/** Result approval asks only the business question; chief previews retain full wire payload. */
+		readonly includePayload?: boolean;
 	}, signal?: AbortSignal, confirm?: ToolExecutionDelivery["confirm"]): Promise<WorkflowResponse> {
 		const prepared = this.#prepare(sessionId, params, signal);
 		const notSent = (reason: string): WorkflowResponse => ({ isError: false, notSent: true, body: {
@@ -65,7 +67,7 @@ export class WorkflowRequests {
 		try {
 			approved = await confirm({
 				...preview,
-				message: `${preview.message}\n\n完整 HTTP JSON 载荷：\n${JSON.stringify(JSON.parse(prepared.body), null, 2)}\n\n只有明确选择“是”才会发送。`,
+				message: preview.includePayload === false ? preview.message : `${preview.message}\n\n完整 HTTP JSON 载荷：\n${JSON.stringify(JSON.parse(prepared.body), null, 2)}\n\n只有明确选择“是”才会发送。`,
 				timeoutMs: this.reportConfirmationTimeoutMs,
 				signal: prepared.signal,
 			}) === true;

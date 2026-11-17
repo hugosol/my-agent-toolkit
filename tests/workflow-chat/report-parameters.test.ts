@@ -11,7 +11,6 @@ test("report forwards explicit handoff declarations and rejects malformed model 
 	const calls: unknown[] = [];
 	const saved = { saved: true, notification: { status: "not-attempted" } };
 	const server = Bun.serve({ hostname: "127.0.0.1", port: 0, async fetch(request) {
-		if (new URL(request.url).pathname === "/api/workflow/node/context") return Response.json({ reportPolicy: "auto" });
 		calls.push(await request.json());
 		return Response.json(saved);
 	} });

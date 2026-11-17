@@ -23,10 +23,6 @@ test("P7 both automatic roles select deployment endpoint and budgets despite two
 	// Successful report responses carry an explicit save fact, unlike manager status.
 	const reportReply = { independent: "explicit-deployment-endpoint", saved: true };
 	const server = createServer(async (request, response) => {
-		if (request.url === "/api/workflow/node/context") {
-			request.resume(); response.writeHead(200, { "content-type": "application/json" });
-			response.end(JSON.stringify({ reportPolicy: "auto" })); return;
-		}
 		const chunks: Buffer[] = []; for await (const chunk of request) chunks.push(Buffer.from(chunk));
 		const call = { path: request.url!, body: JSON.parse(Buffer.concat(chunks).toString()), elapsedMs: undefined as number | undefined };
 		calls.push(call);
