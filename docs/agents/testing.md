@@ -6,7 +6,10 @@ Run repository checks with Bun **1.4.4**, selected by `packageManager` in the ro
 `package.json`. The dock checks the executing Bun against that declaration.
 `framework/docs/harness-baseline.json` retains the historical acceptance environment
 (Bun 1.4.2); it is not the current test-runtime selector. Changing the test runtime
-does not promote a new harness/provider support combination.
+does not promote a new harness/provider support combination. If TypeScript 7
+reports its platform package missing despite an existing install, restore the
+lockfile-pinned optional dependency with `bun install --frozen-lockfile --force`;
+do not substitute another compiler or change the typecheck entrypoint.
 
 Use the smallest relevant scope while iterating; broaden it at ticket completion and final integration. Explicit task acceptance requirements take precedence over these defaults. Tests supplement, rather than replace, exercising the changed behavior through its smoke or real-host observation seam.
 
@@ -106,8 +109,10 @@ docks; paired regression uses the current safe shutdown shell and
 `scripts/node-approval-concurrent.ts` is an acceptance-only caller, not a product
 CLI: the paired runner supplies its owned JSON configuration. It uses the
 installed host's public `switch_session` on an exact copy of that invocation's
-native history, verifies the recovered public Session identity, then calls the
-shipped zero-argument approve concurrently with the original native process. A
+native history, starts in that history's actual owned cwd (OMP RPC refuses a
+cross-cwd switch), verifies the switch was not cancelled and the recovered public
+Session identity, then calls the shipped zero-argument approve concurrently with
+the original native process. A
 transparent HTTP arrival gate forwards both requests to the actual backend;
 serial repetition cannot pass. Both actual histories, RPC frames, receipt/error,
 external effects and process exits are retained. No host is installed, no
