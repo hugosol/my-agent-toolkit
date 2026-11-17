@@ -91,6 +91,30 @@ Set `WORKFLOW_PROMPT_EVIDENCE_DIR`, `WORKFLOW_DUAL_EVIDENCE_DIR` and `CHIEF_REPO
 
 `bun test tests/harness-dock/chief-map-unavailable.test.ts` exercises both installed hosts' actual no-UI modes with a complete Map preview, explicit manager, separate internal zone and named material. The provider and HTTP peer are controlled mechanical conditions: the test proves no commit without native confirmation, not GPT-6-luna routing, backend authorization or a real Run. Each invocation owns its peer, host session and deployment; the helper awaits host exit before the 2.1-second platform-clock observation (native request/confirmation budgets are 2 seconds). `CHIEF_MAP_UNAVAILABLE_HOST=omp` or `pi` selects a diagnostic subset, not complete two-host acceptance. The cross-repository business entry is the participating Herdr checkout's `scripts/accept-chief-map.py`; no other acceptance result substitutes for its Map/capability scenarios. That entry supplies `CHIEF_MAP_UNAVAILABLE_OMP_PACKAGE` so the mechanical case uses the same declared installed OMP package as the business cases, rather than silently substituting the frozen dock version. Without that explicit override the existing OMP dock path is unchanged. `WORKFLOW_PROMPT_EVIDENCE_DIR` retains actual native sessions/captures; the shared print-mode helper also retains stdout/stderr, CLI identity, PID and awaited exit, with original and cleanup errors separately recorded.
 
+## Native node approval/report acceptance
+
+The paired Herdr worktree's `scripts/accept-node-approval-report.py` owns the
+isolated dual-host mechanical approval/report acceptance. Supply both worktrees,
+that Herdr worktree's production backend, explicit installation paths, a new
+evidence directory, and the explicit model configuration
+`{"mode":"controlled","scope":"ticket-10-native-mechanics"}`. Controlled choices
+exercise the installed hosts and shipped tools, not real-model business judgment.
+The runner also executes the existing chief delegation/report and free node-report
+docks; paired regression uses the current safe shutdown shell and
+`HERDR_BOT_METADATA` names the worktree's `meta-data/task-options.toml`.
+
+`scripts/node-approval-concurrent.ts` is an acceptance-only caller, not a product
+CLI: the paired runner supplies its owned JSON configuration. It uses the
+installed host's public `switch_session` on an exact copy of that invocation's
+native history, verifies the recovered public Session identity, then calls the
+shipped zero-argument approve concurrently with the original native process. A
+transparent HTTP arrival gate forwards both requests to the actual backend;
+serial repetition cannot pass. Both actual histories, RPC frames, receipt/error,
+external effects and process exits are retained. No host is installed, no
+identity is fabricated and no backend response is substituted. Native TUI Yes
+selection and the exact node question remain separately observed in both hosts.
+Keep the existing quiet-window policy for this cross-repository runner as well.
+
 ## Store disposable results
 
 Save run-specific evidence, acceptance results, rehearsal records, and test logs under `.scratch/<feature>/evidence/`, using a separate directory per run. Remove them with the feature's scratch materials after development. Long-lived documentation owns reproducible commands, contracts, support boundaries, and operating instructions; it must remain usable after those records are deleted and must not link to or cite them. Keep required test fixtures with the tests, not in scratch storage.
