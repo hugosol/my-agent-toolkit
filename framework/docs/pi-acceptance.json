@@ -5,7 +5,7 @@
       "schemaVersion": 1,
       "harness": "pi",
       "scope": "workflow-chat",
-      "startedAt": "2026-11-17T11:41:11.255Z",
+      "startedAt": "2026-11-17T11:55:38.206Z",
       "cli": {
         "command": [
           "D:/nvm4w/nodejs/node.exe",
@@ -16,11 +16,11 @@
       },
       "source": {
         "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-nclSwQ",
-        "head": "422c8da036bbc48beed3b1d496ac807a5d72fd75",
+        "head": "f24842b33f40a5c5da0d95fb70e3d0cc1a0bc4f4",
         "status": [],
         "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "untrackedFiles": [],
-        "sha256": "15b02af3a69e7a04e581dafd0cc855578fd8fe9d515a63dde1090bb5d20907cc"
+        "sha256": "0e7713e47b24cc18e99392731127cbabe4603e2191f96f03fed7ee7620b9af87"
       },
       "lockfiles": [
         {
@@ -58,14 +58,14 @@
         "Pi tool AbortSignal releases transport, switch preserves auto startup, and shutdown releases active collect"
       ],
       "complete": true,
-      "finishedAt": "2026-11-17T11:41:26.883Z",
+      "finishedAt": "2026-11-17T11:55:52.792Z",
       "finishedSource": {
         "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-nclSwQ",
-        "head": "422c8da036bbc48beed3b1d496ac807a5d72fd75",
+        "head": "f24842b33f40a5c5da0d95fb70e3d0cc1a0bc4f4",
         "status": [],
         "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "untrackedFiles": [],
-        "sha256": "15b02af3a69e7a04e581dafd0cc855578fd8fe9d515a63dde1090bb5d20907cc"
+        "sha256": "0e7713e47b24cc18e99392731127cbabe4603e2191f96f03fed7ee7620b9af87"
       },
       "finishedLockfiles": [
         {
@@ -74,7 +74,7 @@
           "sha256": "28ce4c0d7b7d1d45a44e335a6647b0959c333875af42ca87ba63c87bcf4c2168"
         }
       ],
-      "acceptedAt": "2026-11-17T11:41:26.883Z"
+      "acceptedAt": "2026-11-17T11:55:52.792Z"
     },
     "close-out": {
       "schemaVersion": 1,
