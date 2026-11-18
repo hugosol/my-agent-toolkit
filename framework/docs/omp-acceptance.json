@@ -310,7 +310,7 @@
       "schemaVersion": 1,
       "harness": "omp",
       "scope": "full-repository",
-      "startedAt": "2026-11-17T15:01:39.364Z",
+      "startedAt": "2026-11-17T16:58:47.194Z",
       "cli": {
         "path": "D:\\nvm4w\\nodejs\\node_modules\\@oh-my-pi\\pi-coding-agent\\dist\\cli.js",
         "command": [
@@ -320,7 +320,7 @@
         "source": "locally selected installed OMP"
       },
       "source": {
-        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-vKQMgq",
+        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-D1g6EG",
         "head": "15b11cfe6827398e597606efa508120a6e1e3458",
         "status": [],
         "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -361,9 +361,9 @@
         "test --parallel=4"
       ],
       "detail": "Suite exit 0. JUnit confirms nonempty, unskipped execution of every expected file.",
-      "finishedAt": "2026-11-17T15:07:13.414Z",
+      "finishedAt": "2026-11-17T17:04:29.072Z",
       "finishedSource": {
-        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-vKQMgq",
+        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-D1g6EG",
         "head": "15b11cfe6827398e597606efa508120a6e1e3458",
         "status": [],
         "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -377,7 +377,7 @@
           "sha256": "28ce4c0d7b7d1d45a44e335a6647b0959c333875af42ca87ba63c87bcf4c2168"
         }
       ],
-      "acceptedAt": "2026-11-17T15:07:13.414Z"
+      "acceptedAt": "2026-11-17T17:04:29.072Z"
     }
   }
 }
