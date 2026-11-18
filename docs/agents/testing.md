@@ -120,6 +120,83 @@ identity is fabricated and no backend response is substituted. Native TUI Yes
 selection and the exact node question remain separately observed in both hosts.
 Keep the existing quiet-window policy for this cross-repository runner as well.
 
+## Native approval lifecycle acceptance
+
+The participating Herdr worktree owns `scripts/accept-node-approval-lifecycle.py`
+for P3/P10/P11/P14/P16/P24/P28's S2 partitions. Its explicit worktrees, current
+production binary, isolated installation paths, authorized model configuration
+and new evidence directory are mandatory. The existing Codex wrapper supports
+`--scenario node-approval-lifecycle` with an explicitly authorized readonly auth
+file; it uses the actual adapter and checks canonical `serverModel=gpt-6-luna`,
+without copying credentials or retrying decisions.
+
+The runner compares actual native role/tool catalogs and zero-argument approval,
+keeps real confirmation pending across bounded public work and fail/retry,
+returns the old native Yes only after the new execution exists, actually exits
+and restores node processes, and separately restarts the backend without old-Run
+reclaim or input replay. Real material edits preserve approval. Actual nested
+Runs finish before their dual-role manager submits independent overall parent
+approval in each frozen mode; manual requires observed native Yes, and parent
+completion remains explicit. No Run or identity fixtures substitute these facts.
+
+Paired regression uses the current safe shutdown shell, not the business backend,
+with explicit worktree metadata and `OMP_BASELINE_RECORD_ROOT` for relocated
+baseline references. The affected named docks are `native-node-report.test.ts`,
+`node-report-contract.test.ts` and `nested-role-completion.test.ts`. The complete
+suite is run with CPU/available-memory-derived workers; noncanonical runner
+arguments do not publish a new complete installed-OMP scope. Per-host native
+histories, actual UI return/selection, HTTP, real files and held-process exit
+observations remain distinct from CLI safety or controlled-provider evidence.
+`scripts/node-approval-identity-fault.ts` is an acceptance-only caller reusing the
+existing native RPC/session facilities. A clearly labeled controlled provider
+supplies extra identity fields to the actual installed adapter on an exact owned
+history copy; original Session identity, raw calls/results and real backend
+readback prove rejection or stripping cannot select another Run/execution. This
+is not model-judgment or Chat-recovery acceptance. OMP's injected i/intent and the
+adapters' intentionally open wire schemas are not business identity selectors.
+
+For stale Yes, the invocation-owned observer deterministically holds the new
+worker before its first business model request through four public context
+handlers awaited in registration order; before_agent_start only marks its owned input. Each hook waits at most 25 seconds, below the
+installed OMP's existing 30-second handler budget; sequential phases preserve
+all product timeouts without holding an actual provider HTTP request. The actual
+Session/PID, phase and zero business requests are recorded. Snapshot the pre-Yes
+business/HTTP/actual notification send baseline, then return old Yes. Release
+only after the 51-second no-effect window; the actual model then supplies the
+new worker's initial work, which is attributed separately rather than to old Yes. The existing transparent
+`recovery_herdr_proxy` records and forwards installed Herdr unchanged, without
+its fault flag. Managers may still read an already-sent report through readonly
+status/collect; their final response is not an extra prerequisite inside the
+20-second confirmation window. Only later effects are attributed to
+that Yes; never delete earlier reports or rely on prompt wording to force zero
+initial work. Explicit Chat arguments route the shared confirmation observer;
+the caller never temporarily rebinds the primary worker, including on failure.
+Both entrypoints offer explicit diagnostic `--cases` selection from
+`persistence,nested-auto,nested-manual,lifecycle` (default all). Selected and
+missing partitions remain visible; subsets always exit nonzero and never
+certify the ticket. Each new explicit native input first observes any legitimate
+current turn finish, then retains the existing 10-second admission check; no
+product timeout or model decision is retried. A terminal actual completion
+failure leaves remaining hosts unverified rather than reusing its failed transport.
+Registration is observation, not assistant-round completion: reuse the existing
+pure native Session/OS observations. A manager may legitimately have collect in
+flight while child work must advance. The paired Python `CollectRegistrationFixture`
+regression exercises that client boundary against installed Pi and the production
+HTTP backend, with an explicitly labeled local mechanical model; it certifies no
+P partition or real-model behavior. Actual S2 handoff still requires the managers'
+own native approval and separate parent completion, never HTTP-filled success.
+Missing host/coverage/authorization, failed checks or cleanup remain nonzero.
+
+Native operations may use direct tools or the installed host's write-to-xd route.
+Decode only matching native xdev execution receipts with the original JSON payload;
+documentation help is not execution, and renderer arguments cannot hide supplied identity fields.
+The driver requests missing operations, observes already-completed legitimate native work,
+and does not require autonomous model orchestration or replay completed actions.
+The persistence fixture publicly pauses new dispatches after starting its actual node;
+approval, reporting, restoration and restart remain real. In-flight lifecycle cases stay running.
+The Herdr entrypoint documents hash-bound case composition and guarded reuse of a wholly
+successful repository-check phase; failures and excluded hosts retain their original records.
+
 ## Store disposable results
 
 Save run-specific evidence, acceptance results, rehearsal records, and test logs under `.scratch/<feature>/evidence/`, using a separate directory per run. Remove them with the feature's scratch materials after development. Long-lived documentation owns reproducible commands, contracts, support boundaries, and operating instructions; it must remain usable after those records are deleted and must not link to or cite them. Keep required test fixtures with the tests, not in scratch storage.
