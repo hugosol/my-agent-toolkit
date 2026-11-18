@@ -749,16 +749,21 @@ async function savedDocument<T>(
 	accept: (value: T) => boolean,
 ): Promise<T> {
 	const deadline = Date.now() + 30_000;
+	let lastObserved: T | undefined;
 	for (;;) {
 		if (existsSync(file)) {
 			try {
 				const value = read(file);
 				if (accept(value)) return value;
+				lastObserved = value;
 			} catch (error) {
 				if (!/Unexpected end of JSON input|Unterminated string/.test(String(error))) throw error;
 			}
 		}
-		if (Date.now() > deadline) throw new Error(`no document this case expects was published at ${file}`);
+		if (Date.now() > deadline) {
+			const details = lastObserved === undefined ? "no readable snapshot observed" : `last snapshot: ${JSON.stringify(lastObserved)}`;
+			throw new Error(`expected document state did not land at ${file} (${details})`);
+		}
 		await queuedWorkSettled();
 	}
 }
@@ -789,6 +794,24 @@ function usageOfRequests(count: number, usage: typeof CAPTURE_USAGE = CAPTURE_US
 	};
 }
 
+/** A native prompt result can precede the framework's Round-end recheck. Observe each Round's
+ * own snapshot before submitting more work that could keep that Round open. */
+async function saveTwoCodexRounds(home: IsolatedHome, run: DockRun) {
+	expect((await run.session.prompt("first codex exchange")).status).toBe("completed");
+	const position = await currentSession(run.session, run.runRoot);
+	const readRound = async (version: number) => {
+		const document = await savedDocument(home.consumptionFile, readActivity, held =>
+			recordsOf(held).some(saved => saved.id === position.id && saved.saveVersion === version),
+		);
+		const record = recordsOf(document).find(saved => saved.id === position.id);
+		expect(record?.own[CODEX_PROVIDER]?.["gpt-6-luna"]?.tokens).toEqual(usageOfRequests(version));
+		return document;
+	};
+	await readRound(1);
+	expect((await run.session.prompt("second codex exchange")).status).toBe("completed");
+	return { position, document: await readRound(2) };
+}
+
 describe("the production documents of one storage root, read back independently (P52)", () => {
 	test("one root holds the approved activity document and the independent estimate, both written by the run", async () => {
 		const home = isolatedHome("codex");
@@ -804,18 +827,9 @@ describe("the production documents of one storage root, read back independently 
 			accountDir: path.join(runRoot.path, "account-codex"),
 		});
 		try {
-			for (const prompt of ["first codex exchange", "second codex exchange"]) {
-				expect((await run.session.prompt(prompt)).status).toBe("completed");
-			}
-			// The session the harness is showing: the record the document must hold belongs to it.
-			const position = await currentSession(run.session, runRoot);
+			const { position, document } = await saveTwoCodexRounds(home, run);
 
 			// The run's own documents: the activity record it published, and the estimate it keeps beside it.
-			const document = await savedDocument(
-				home.consumptionFile,
-				readActivity,
-				held => recordsOf(held).some(saved => saved.id === position.id && saved.saveVersion >= 2),
-			);
 			expect(document.periodId).toBe(START_PERIOD);
 			expect(existsSync(home.estimateFile)).toBe(true);
 			// The root holds exactly the two documents this extension writes, and nothing else: no ledger
@@ -878,15 +892,7 @@ describe("the production documents of one storage root, read back independently 
 		let codexPosition: { readonly id: string; readonly file: string };
 		let estimateBefore: string;
 		try {
-			for (const prompt of ["first codex exchange", "second codex exchange"]) {
-				expect((await codex.session.prompt(prompt)).status).toBe("completed");
-			}
-			codexPosition = await currentSession(codex.session, runRoot);
-			await savedDocument(
-				home.consumptionFile,
-				readActivity,
-				held => recordsOf(held).some(saved => saved.id === codexPosition.id && saved.saveVersion >= 2),
-			);
+			({ position: codexPosition } = await saveTwoCodexRounds(home, codex));
 			await savedDocument(
 				home.estimateFile,
 				readEstimate,
@@ -988,15 +994,7 @@ describe("the production documents of one storage root, read back independently 
 		});
 		let position: { readonly id: string; readonly file: string };
 		try {
-			for (const prompt of ["first codex exchange", "second codex exchange"]) {
-				expect((await first.session.prompt(prompt)).status).toBe("completed");
-			}
-			position = await currentSession(first.session, runRoot);
-			await savedDocument(
-				home.consumptionFile,
-				readActivity,
-				held => recordsOf(held).some(saved => saved.id === position.id && saved.saveVersion >= 2),
-			);
+			({ position } = await saveTwoCodexRounds(home, first));
 			expect(noticesOf(first.session)).toEqual([]);
 		} finally {
 			await disposeRun(first);
