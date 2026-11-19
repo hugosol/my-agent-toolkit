@@ -175,6 +175,33 @@ test("Pi and OMP publications do not invalidate each other's source evidence", a
 	}
 });
 
+// Paired regression must retain real version evidence without dirtying the
+// checked-out acceptance ledger, and must still enforce its version floor.
+test("evidence-only regression honors the checked-in version floor without publishing", async () => {
+	const ledger = path.join(root, "framework/docs/pi-acceptance.json");
+	const baseline = '{"schemaVersion":1,"scopes":{"workflow-chat":{"scope":"workflow-chat","version":"2.0.0"}}}\n';
+	await mkdir(path.dirname(ledger), { recursive: true });
+	await writeFile(ledger, baseline);
+	await git("add", "framework/docs/pi-acceptance.json");
+	await git("-c", "user.name=Acceptance Test", "-c", "user.email=acceptance@example.invalid", "commit", "-m", "version floor");
+	const archive = options.evidenceDir!;
+	const previous = process.env.HARNESS_ACCEPTANCE_EVIDENCE_DIR;
+	process.env.HARNESS_ACCEPTANCE_EVIDENCE_DIR = archive;
+	try {
+		const isolated = { repoRoot: root };
+		await expect(beginHarnessAcceptance("pi", "workflow-chat", await cli("1.9.0"), isolated)).rejects.toThrow("highest passed version 2.0.0");
+		const run = await beginHarnessAcceptance("pi", "workflow-chat", await cli("2.1.0"), isolated);
+		await run.finish({ status: "passed", complete: true, checks: ["actual regression"] });
+		expect(await readFile(ledger, "utf8")).toBe(baseline);
+		const entries = await evidence();
+		expect(entries.find((entry) => entry.version === "1.9.0")?.status).toBe("blocked");
+		expect(entries.find((entry) => entry.version === "2.1.0")).toMatchObject({ status: "passed", complete: true, checks: ["actual regression"] });
+	} finally {
+		if (previous === undefined) delete process.env.HARNESS_ACCEPTANCE_EVIDENCE_DIR;
+		else process.env.HARNESS_ACCEPTANCE_EVIDENCE_DIR = previous;
+	}
+});
+
 test("host selection failures are retained without a success record", async () => {
 	await expect(beginHarnessAcceptance("omp", "dock", async () => { throw new Error("No selected local OMP"); }, options)).rejects.toThrow("No selected local OMP");
 	await expect(readFile(options.recordPath!)).rejects.toThrow();
