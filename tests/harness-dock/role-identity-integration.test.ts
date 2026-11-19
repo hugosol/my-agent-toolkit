@@ -107,7 +107,7 @@ test("P1/P2/P6 independent automatic roles use native identity and preserve real
 		// Dual-role authorization requires a persisted parent/execution link; sharing
 		// a native identity alone must still fail with the paired backend's exact refusal.
 		backend.behavior(nodeId, node.root.workDir);
-		const conflicting = await backend.post("/api/scheduler/maps/identity.json/runs", { managerTaskId: tasks.manager, zone: "test/manager", userInput: "Conflicting role association" });
+		const conflicting = await backend.post("/api/scheduler/maps/identity.json/runs", { managerTaskId: tasks.manager, zone: "test/node", userInput: "Conflicting role association" });
 		const crossRole = await call(node, "report", { body: "must not overwrite manager attribution", can_complete: false });
 		expect(crossRole).toMatchObject({ isError: true, details: { httpStatus: 403 }, body: { code: "node-role-invalid", message: "管理者身份没有唯一合法的父执行关联。" } });
 		const secondPath = join(backend.root.path, "runs", conflicting.id, "run.json");
