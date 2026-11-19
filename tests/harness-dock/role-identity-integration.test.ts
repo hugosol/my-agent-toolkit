@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { customMessages } from "./session-log";
 import { workflowBackend } from "../workflow-chat/support/backend";
 import { collectTransport } from "../workflow-chat/support/collect-transport";
@@ -106,6 +106,10 @@ test("P1/P2/P6 independent automatic roles use native identity and preserve real
 		// create an unrelated manager Run with the node-only Session's identity.
 		// Dual-role authorization requires a persisted parent/execution link; sharing
 		// a native identity alone must still fail with the paired backend's exact refusal.
+		const inventory = join(backend.root.path, "workspaces.json");
+		const workspaces = JSON.parse(readFileSync(inventory, "utf8"));
+		workspaces.push({ workspace_id: "w-conflicting-manager", label: basename(node.root.workDir) });
+		writeFileSync(inventory, JSON.stringify(workspaces));
 		backend.behavior(nodeId, node.root.workDir);
 		const conflicting = await backend.post("/api/scheduler/maps/identity.json/runs", { managerTaskId: tasks.manager, zone: "test/node", userInput: "Conflicting role association" });
 		const crossRole = await call(node, "report", { body: "must not overwrite manager attribution", can_complete: false });
