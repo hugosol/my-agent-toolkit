@@ -124,7 +124,9 @@ test("P14 reconciliation preserves uncertain then absence and verifies created o
 		expect(uncertain).toMatchObject({ changed: false, snapshot: failed.snapshot });
 		const absent = await scene.dock.call({ action: "reconcile_dispatch", nodeId: "A", finding: "not_created", reason: "人工查阅启动拒绝，确认没有原生 Chat" });
 		expect(absent).toMatchObject({ changed: true, snapshot: { nodes: { A: { status: "pending", execution: null, failure: null } } } });
-		writeFileSync(join(scene.backend.root.path, "behavior.json"), JSON.stringify({ fail_agent_get: true }));
+		// A malformed official reference is a terminal identity failure. A missing
+		// response waits for the launch evidence deadline instead.
+		writeFileSync(join(scene.backend.root.path, "behavior.json"), JSON.stringify({ native_session: { source: "herdr:omp", agent: "omp", kind: "id" } }));
 		const unknown = await scene.dock.call({ action: "dispatch", nodes: ["B"] });
 		expect(unknown.results[0]).toMatchObject({ status: "failed", failure: { stage: "identity" }, effects: { agentStarted: true } });
 		const original = unknown.snapshot.nodes.B.execution;
