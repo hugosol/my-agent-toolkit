@@ -219,7 +219,9 @@ async function withRecordLock<T>(recordPath: string, timeoutMs: number, action: 
 export async function beginHarnessAcceptance(harness: Harness, scope: string, selection: HarnessCli | (() => Promise<HarnessCli>), options: HarnessAcceptanceOptions = {}): Promise<HarnessAcceptanceRun> {
 	const repoRoot = path.resolve(options.repoRoot ?? path.join(import.meta.dir, "../.."));
 	const recordPath = path.resolve(options.recordPath ?? path.join(repoRoot, `framework/docs/${harness}-acceptance.json`));
-	const evidenceDir = path.resolve(options.evidenceDir ?? path.join(repoRoot, `.scratch/${harness}-version-acceptance/evidence`));
+	const evidenceOnly = options.recordPath === undefined && options.evidenceDir === undefined
+		? process.env.HARNESS_ACCEPTANCE_EVIDENCE_DIR : undefined;
+	const evidenceDir = path.resolve(options.evidenceDir ?? (evidenceOnly || path.join(repoRoot, `.scratch/${harness}-version-acceptance/evidence`)));
 	const timeoutMs = options.lockTimeoutMs ?? 5_000;
 	if (!scope.trim()) throw new Error("Harness acceptance scope must not be empty.");
 	if (!Number.isFinite(timeoutMs) || timeoutMs < 0) throw new Error("Harness acceptance lock timeout must be finite and nonnegative.");
@@ -265,6 +267,7 @@ export async function beginHarnessAcceptance(harness: Harness, scope: string, se
 					await atomicJson(evidencePath, completed);
 					if (result.status !== "passed" || !result.complete) return;
 					if (finishedSource.sha256 !== (evidence.source as JsonRecord).sha256) throw new Error("Source changed during harness acceptance; rerun the complete scope on a stable source tree before promotion.");
+					if (evidenceOnly) return;
 					await withRecordLock(recordPath, timeoutMs, async () => {
 						const publicationSource = await sourceState(repoRoot, recordPath, evidenceDir);
 						if (publicationSource.sha256 !== (evidence.source as JsonRecord).sha256) throw new Error("Source changed while awaiting harness acceptance publication; rerun the complete scope on a stable source tree.");

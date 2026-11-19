@@ -160,6 +160,8 @@ Pi and OMP entrypoints share the harness acceptance policy. The version-controll
 - Automated acceptance updates only its automated scopes. Human TUI acceptance still requires human confirmation; successful capture alone is not acceptance. Existing historical evidence and Pi history fixtures remain historical, not rewritten to the newly tested version.
 - This policy gates acceptance only, never normal extension startup. It does not promote global support, change the OMP baseline, relax behavior assertions/timeouts, or fix unrelated SUITE failures.
 
+Paired repository regressions can set `HARNESS_ACCEPTANCE_EVIDENCE_DIR` to an invocation-owned output directory. Default acceptance entrypoints continue to enforce the tracked version floor and check source stability, but archive execution evidence there without promoting the version-controlled record. This is regression evidence, not a persistent harness certification.
+
 #### Commands and acceptance scopes
 
 Each entrypoint resolves the installed Pi, applies the shared scope-specific version floor and records its result. No entrypoint installs or switches versions, and none promotes Pi to the OMP supported baseline:
