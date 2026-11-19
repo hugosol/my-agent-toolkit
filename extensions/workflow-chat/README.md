@@ -245,6 +245,10 @@ manager 使用原 `run`／`collect` 和自动公共 Session 身份；不新增�
 - 失败报告 false 不自动 fail。读取原 body 和已有的 `execution.lifecycle.failure`；通用 failure 是可选诊断，不要求固定业务结构。创建／保存 Bot 脚本提供的 stage、code、message、effects 应原样保留，分别呈现 write、readBack、materials 的 succeeded／failed／not_attempted／unknown，不把未知、缺失诊断或失败说成未发生。先显式 `run action=fail`，再按原 confirmed／reason 人工确认规则 retry；paused 先显式 resume。脚本 retry 有新 execution、无新 Chat，保留旧历史和副作用，不继承旧输出／完成资格；已结束脚本不适用 recover。Task/Map retry 仍创建新 Chat，recover 仍保留可继续的原执行与 Chat。
 - Bot 保存成功而 saved/handoff 材料失败，不撤销已保存事实；不自动回滚、刷新 baseline 或因正文相同判成功，原 baseline 重跑仍可能 revision 冲突。报告保存／通知失败和业务效果分别保留，不因辅助通知失败重投业务。传输不确定先 status／记录核实，不自动重试。
 
+在 OMP 中，直接调用 `collect` 时 ANSI 工具卡会在等待期间显示转动的 `Running…`，静默脚本或日志连接断开也不影响该指示；结束后静态显示 `Finished` 或 `Error`，并保留最终脚本日志。TSP 使用宿主原生状态。两种 OMP 视图均不展示 Collect 的原始结果 JSON（包括无日志或发生错误时），模型内容、详细结果和后端流程不变；Pi 保持原有展示。`Finished` 只说明本次等待已返回，不代表脚本或节点业务成功。
+
+OMP 的 manager-chat 将符合后端固定 `Workflow report`／`Run:`／`node:`／`Report:` 信封的通知显示为 `📋 Workflow report`。仅原输入的文本增加前缀（同时体现在会话历史和模型上下文），正文与附件不变，不拦截、不重发，也不额外创建 widget。普通、格式不完整或已带前缀的消息不变。显示与输入回归见 `bun test tests/harness-dock/manager-script-output.test.ts`。
+
 两宿主的受控原生专项入口是 `bun test tests/harness-dock/manager-script-protocol.test.ts`。它实际加载 OMP/Pi 正常 auto 入口（含嵌套同载），调用 run／collect 和宿主原生 read，读取真实临时 messages.jsonl，并在后续 provider 请求中观察原执行、报告、错误和部分效果；覆盖显式 complete、fail／confirmed retry、旧报告拒绝透传和身份字段拒绝。工具、adapter、HTTP 与 Session 保持真实，provider 和 HTTP 对端的结果／拒绝是受控条件。它不证明后端 TypeScript 脚本执行、状态门禁、真实模型理解或 H1/P34、H2/P35 会话闭环已完成，也不重复认领后端验收。保存材料及跨仓接入步骤见 [运行手册](OPERATIONS.md#无-chat-脚本的原生协议专项)。
 
 ## run 基础状态动作

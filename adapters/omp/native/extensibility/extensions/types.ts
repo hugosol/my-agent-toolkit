@@ -275,16 +275,16 @@ export interface OmpMessageEndEvent {
  * The native submission event: one input admitted to a session, published before the harness decides
  * what the submission is.
  *
- * Only the one field this mapping reads is named. `source` is the harness's own attribution of who
- * submitted it — the interactive editor, its RPC client, or an extension submitting on its own
- * behalf — which is the one distinction the framework's input fact carries. The text and the images
- * are the harness's own material for the submission it is about to make and are deliberately not
- * read here: an input fact is not the prompt's content.
+ * The framework observes only `source`. Native extension assemblies may also read and replace
+ * the text; returning only `text` leaves attached images and normal submission untouched.
  */
 export interface OmpInputEvent {
 	readonly type: "input";
 	readonly source: "interactive" | "rpc" | "extension";
+	readonly text: string;
 }
+
+type OmpInputResult = { readonly text?: string; readonly handled?: boolean };
 
 /**
  * The native surface this adapter uses, as the OMP loader hands it to an extension
@@ -354,7 +354,7 @@ export interface OmpExtensionApi {
 	 * fact; the framework's input hook is where that distinction is mapped, and registering for it is
 	 * what makes the harness publish the fact for this binding at all.
 	 */
-	on(event: "input", handler: (event: OmpInputEvent, ctx: OmpSessionContext) => void): void;
+	on(event: "input", handler: (event: OmpInputEvent, ctx: OmpSessionContext) => OmpInputResult | void | Promise<OmpInputResult | void>): void;
 	/**
 	 * The bound session's actual effective thinking level, as the harness's own session reports it.
 	 *

@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test, vi } from "bun:test";
 import { createServer } from "node:http";
 import { registerOmpTool } from "../../adapters/omp/native/extensibility/extensions/tools";
 import type { OmpExtensionApi } from "../../adapters/omp/native/extensibility/extensions/types";
@@ -8,6 +8,7 @@ import { MANAGER_TOOLS } from "../../extensions/workflow-chat/manager-chat/share
 import type { ToolExecutionResult } from "../../framework/interface/tool";
 import { businessRoles } from "../workflow-chat/support/business-roles";
 import { dualRoleDock } from "../workflow-chat/support/dual-role-dock";
+import { promptDock, providerMessages } from "../workflow-chat/support/prompt-dock";
 
 const business = { reason: "notification", snapshot: { id: "run-01" }, pendingReports: { build: "report-01" } };
 const oldNode = { nodeId: "build", nodeName: "Build", executionId: "exec-old", status: "running", lines: ["OLD-EXECUTION"], lastOutputAt: 1_000 };
@@ -37,11 +38,12 @@ test("collect renders native ANSI, TSP and Pi frames in place with no visual wra
 		for (const native of [omp, pi]) {
 			expect(native.renderResult!(first, options).render(120)).toContain("OLD-EXECUTION");
 			const rows = native.renderResult!(next, options).render(36);
-			expect(rows).toHaveLength(9); // global title + two node titles + five and one log rows
-			expect(rows[1]).toStartWith("succeeded · 4s since output");
-			expect(rows[6]).toStartWith("PARTIAL-NEW");
-			expect(rows[6]).toEndWith("…");
-			expect(Bun.stringWidth(rows[6]!)).toBeLessThanOrEqual(36);
+			const offset = native === omp ? 1 : 0;
+			expect(rows).toHaveLength(9 + offset); // lifecycle (ANSI only) + global title + two node titles + six logs
+			expect(rows[1 + offset]).toStartWith("succeeded · 4s since output");
+			expect(rows[6 + offset]).toStartWith("PARTIAL-NEW");
+			expect(rows[6 + offset]).toEndWith("…");
+			expect(Bun.stringWidth(rows[6 + offset]!)).toBeLessThanOrEqual(36);
 			expect(rows).toContain("OTHER-NODE");
 			expect(rows.join("\n")).not.toContain("OLD-EXECUTION");
 		}
@@ -52,8 +54,111 @@ test("collect renders native ANSI, TSP and Pi frames in place with no visual wra
 		expect(semantic?.body[0]?.p.text.split("\n")).toHaveLength(9);
 		expect(semantic?.body[0]?.p.text).toContain("PARTIAL-NEW");
 		expect(semantic?.body[0]?.p.text).not.toContain("OLD-EXECUTION");
+
+		const modelContent = [{ type: "text" as const, text: JSON.stringify(business) }];
+		const finalOptions = { ...options, isPartial: false };
+		const final: ToolExecutionResult = { content: modelContent, details: { scriptOutput: {
+			status: "finished", snapshot: { runId: "run-01", observedAt: 5_000, nodes: [otherNode] },
+		} } };
+		const finalRows = omp.renderResult!(final, finalOptions).render(120);
+		expect(finalRows[0]).toBe("✓ Finished");
+		expect(finalRows).toContain("OTHER-NODE");
+		expect(finalRows.join("\n")).not.toContain("report-01");
+		const finalTsp = omp.describeResult!(final, finalOptions)?.body;
+		expect(finalTsp).toHaveLength(1);
+		expect(finalTsp?.[0]?.p.text).toContain("OTHER-NODE");
+		expect(finalTsp?.[0]?.p.text).not.toContain("report-01");
+		expect(pi.renderResult!(final, finalOptions).render(120)).toContain(modelContent[0].text);
+		expect(final.content).toEqual(modelContent);
+
+		const noLogs = { content: modelContent, details: { scriptOutput: { status: "finished" } } };
+		const rejected = { content: [{ type: "text" as const, text: '{"error":"RAW-FAILURE"}' }], isError: true };
+		for (const [result, status] of [[noLogs, "✓ Finished"], [rejected, "✗ Error"]] as const) {
+			expect(omp.renderResult!(result, finalOptions).render(120)).toEqual([status]);
+			expect(omp.describeResult!(result, finalOptions)?.body).toEqual([]);
+		}
 	} finally { roles.close(); }
 });
+
+// An otherwise idle tool exercises the native timer without any log poll or simulated log event.
+for (const end of ["resolved", "rejected", "cancelled"] as const) {
+	test(`OMP ANSI refreshes a quiet call and stops when ${end}`, async () => {
+		const collect = MANAGER_TOOLS.find(tool => tool.name === "collect")!;
+		const pending = Promise.withResolvers<ToolExecutionResult>();
+		const cancel = new AbortController();
+		const updates: ToolExecutionResult[] = [];
+		const frames: string[] = [];
+		const observation = { scriptOutput: { status: "observing" } };
+		let omp!: Parameters<OmpExtensionApi["registerTool"]>[0];
+		registerOmpTool({ registerTool: definition => { omp = definition; } } as OmpExtensionApi)({
+			...collect,
+			execute(_params, delivery) {
+				delivery.onUpdate?.(observation);
+				return pending.promise;
+			},
+		});
+		const ctx = { hasUI: true, ui: {}, sessionManager: { getSessionId: () => "manager" } } as Parameters<typeof omp.execute>[4];
+		vi.useFakeTimers();
+		try {
+			const execution = omp.execute("call", {}, cancel.signal, result => {
+				updates.push(result);
+				frames.push(omp.renderResult!(result, { expanded: false, isPartial: true }).render(120)[0]!);
+			}, ctx);
+			vi.advanceTimersByTime(1_000);
+			expect(new Set(frames).size).toBeGreaterThan(1);
+			expect(frames.every(frame => frame.endsWith(" Running…"))).toBe(true);
+			expect(updates.every(result => result.content.length === 0 && result.details === observation)).toBe(true);
+
+			if (end === "cancelled") cancel.abort();
+			if (end === "rejected") {
+				pending.reject(new Error("collect rejected"));
+				await expect(execution).rejects.toThrow("collect rejected");
+			} else if (end === "resolved") {
+				pending.resolve({ content: [] });
+				await execution;
+			}
+			const stoppedAt = updates.length;
+			vi.advanceTimersByTime(1_000);
+			expect(updates).toHaveLength(stoppedAt);
+			if (end === "cancelled") {
+				pending.resolve({ content: [], isError: true });
+				await execution;
+			}
+		} finally { vi.useRealTimers(); }
+	});
+}
+
+// Real native admission and persistence: the report remains one ordinary user prompt.
+test("OMP manager prefixes only complete workflow reports, without re-emitting or doubling", async () => {
+	const dock = await promptDock("manager");
+	const report = "Workflow report\nRun: run-01\nnode: 检查 结果\nReport: bc-123456abc000\n\n正文 🇨🇳\n\n    exact body";
+	const malformed = [
+		report.replace("bc-123456abc000", "unknown"),
+		report.replace("node: 检查 结果", "node:  "),
+		report.replace("\n\n正文", "\n正文"),
+		`Quoted report:\n${report}`,
+	];
+	const inputs = [report, `📋 ${report}`, ...malformed];
+	const expected = [`📋 ${report}`, ...inputs.slice(1)];
+	try {
+		for (const [index, input] of inputs.entries()) {
+			const firstRequest = dock.capture.requests().length;
+			const outcome = await dock.session.prompt(input);
+			expect(outcome).toMatchObject({ status: "completed", agentInvoked: true });
+			const requests = dock.capture.requests().slice(firstRequest);
+			expect(requests).toHaveLength(1);
+			const reportParts = providerMessages(requests[0]!).filter(message => message.role === "user").flatMap(message => message.parts)
+				.filter(part => inputs.some(input => part === input || part === `📋 ${input}`));
+			expect(reportParts).toEqual(expected.slice(0, index + 1));
+		}
+		const history = dock.session.sessionLog().entries.flatMap(entry => {
+			const message = entry.message as { role?: string; content?: unknown } | undefined;
+			if (entry.type !== "message" || message?.role !== "user") return [];
+			return [Array.isArray(message.content) ? message.content.map(block => block.text).join("") : message.content];
+		});
+		expect(history).toEqual(expected);
+	} finally { await dock.close(); }
+}, 120_000);
 
 // Installed-host seam: real Session + actual manager entry, HTTP exchange and provider request.
 // The controlled peer only supplies application replies; it cannot write native update frames.

@@ -44,7 +44,7 @@ export interface ToolDeclaration<State> {
 	readonly parameters: ToolParameterSchema;
 	/** Keep the call visible as a top-level model tool instead of routing it through code tools. */
 	readonly directOnly?: true;
-	/** Optional in-place display derived from details, never appended to model content. One string per row. */
+	/** Optional UI-only rows derived from details. OMP replaces the raw result display; Pi shows rows alongside its existing result. */
 	readonly displayOutput?: (details: unknown) => readonly string[] | undefined;
 	readonly execute: (state: State, params: unknown, delivery: ToolExecutionDelivery) => ToolExecutionResult | Promise<ToolExecutionResult>;
 }
