@@ -34,6 +34,27 @@ The panel's open registration boundary accepts older extensions without this fie
 future string values. Its current UI recognizes only `pi` and `omp`; missing or unrecognized
 values display `未知` beside the session name rather than being guessed as a known harness.
 
+## Managed launch observations
+
+When the launcher supplies both `HERDR_BOT_LAUNCH_ID` and `HERDR_BOT_LAUNCH_TARGET_ID`,
+connect-bot publishes through the existing `POST /api/sessions/events` interface. The envelope is
+`{sessionId, kind, data: {launchId, targetId, agentType, pid, cwd, sessionFile?}}`. `sessionId` and the
+optional `sessionFile` are native session manager readings; a native path need not have been
+persisted yet. `targetId` is an opaque correlation, not a claimed Pane or Terminal ID. The receiver
+must independently bind it to the live target in the selected host instance and validate the
+publishing process (`pid`, a number). Each event carries the same tuple; HTTP arrivals may reorder.
+
+- `launch_identity` identifies the first owner of this managed invocation.
+- `launch_ready` adds the framework's `session_ready` observation for that same owner.
+- `launch_ended` withdraws the evidence when that owner transfers or ends. In-flight publications
+  are cancelled locally; a replacement owner cannot reuse the launch association. Withdrawal is
+  best effort on process exit, so the receiver must also check live target/owner validity and
+  reject late reports after withdrawal.
+
+The events neither require nor establish panel registration, online status or idleness. Ordinary
+manual/automatic registration is unchanged. A ready report does not permit bypassing the host's
+input admission check when submitting a message.
+
 ## History persistence feedback
 
 An accepted registration and persistent history are separate results. A registered receipt with

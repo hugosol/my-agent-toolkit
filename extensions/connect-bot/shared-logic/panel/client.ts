@@ -14,7 +14,7 @@
 import { type HttpRequestOptions, type HttpRequestResult, request } from "../../../../framework/interface/general/http";
 
 /** Closed kind enum of the wire contract; each kind carries its own `data` shape. */
-export type PushKind = "register" | "heartbeat" | "state" | "unregister";
+export type PushKind = "register" | "heartbeat" | "state" | "unregister" | "launch_identity" | "launch_ready" | "launch_ended";
 
 /**
  * One event envelope, `{sessionId, kind, data}`. `data` is omitted for an event whose contract
@@ -69,12 +69,14 @@ export async function pushEvent(
 	endpoint: string,
 	envelope: PushEnvelope,
 	timeoutMs: number,
+	signal?: AbortSignal,
 ): Promise<PushOutcome> {
 	const result = await panelRequest(`${endpoint}${EVENTS_PATH}`, {
 		method: "POST",
 		headers: { "content-type": "application/json" },
 		body: JSON.stringify(envelope),
 		timeoutMs,
+		...(signal === undefined ? {} : { signal }),
 		// The panel is reached directly: never through an ambient or configured proxy.
 		proxy: false,
 	});

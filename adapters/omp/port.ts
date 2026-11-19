@@ -90,7 +90,7 @@ export const OMP_PORT = defineAdapterPort<OmpPortContext>({
 	// This harness integrates subagent observations itself; the native registry mapping answers how that
 	// integration stands, so the port carries no inline capability fact of its own.
 	subagentIntegration: () => subagentIntegrationOf,
-	onSession: context => handler => observeSessionEvents(context.pi, context.sessionEvents, handler),
+	onSession: context => (handler, observeReady) => observeSessionEvents(context.pi, context.sessionEvents, handler, observeReady),
 	onRound: context => observer => observeRoundEvents(context.pi, context.sessionEvents, observer),
 	onSessionContext: context => handler =>
 		observeSessionContext(context.pi, handler, { record: context.record, owner: context.ownerOf }),

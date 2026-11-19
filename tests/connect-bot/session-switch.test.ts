@@ -133,6 +133,103 @@ afterEach(() => {
 	jest.useRealTimers();
 });
 
+// S2 / P19: start an idle but input-blocked native owner. Only its actual startup
+// evidence may qualify for this invocation; a second owner may still register normally.
+test("launch evidence retires with the originating native owner without blocking ordinary registration", async () => {
+	jest.useFakeTimers();
+	const previousId = process.env.HERDR_BOT_LAUNCH_ID;
+	const previousTarget = process.env.HERDR_BOT_LAUNCH_TARGET_ID;
+	process.env.HERDR_BOT_LAUNCH_ID = "dock-launch-first-owner";
+	process.env.HERDR_BOT_LAUNCH_TARGET_ID = "dock-target-owned-pane";
+	const readyResponse = Promise.withResolvers<HttpRequestResult>();
+	const peer = panel(kind => kind === "launch_ready" ? readyResponse.promise : panelAnswer(200, {}));
+	const host = bound(peer.request);
+	let open = false;
+	const original = host.context({ sessionId: "native-origin", cwd: "E:/work/launch", idle: true });
+	const file = "E:/owned/sessions/native-origin.jsonl";
+	const active: OmpCommandContext = {
+		...original,
+		mode: "tui",
+		sessionManager: { ...original.sessionManager, ...{ getSessionFile: () => file } },
+		ui: {
+			...original.ui,
+			setWidget(key, content, options) {
+				if (typeof content === "function") {
+					(content as (tui: unknown) => unknown)({ getFocused: () => ({
+						disableSubmit: !open, onSubmit() {}, setCustomKeyHandler() {},
+					}) });
+				} else original.ui.setWidget(key, content, options);
+			},
+		},
+	};
+	const replacement: OmpCommandContext = {
+		...host.context({ sessionId: "native-other", cwd: "E:/work/replacement", idle: true }),
+		mode: "tui", ui: active.ui,
+	};
+	const events = () => peer.requests.map(envelopeOf);
+	try {
+		host.startSession(active);
+		jest.advanceTimersByTime(100);
+		await settleAll();
+		const launchData = {
+			launchId: "dock-launch-first-owner", targetId: "dock-target-owned-pane", agentType: "omp", pid: process.pid,
+			sessionFile: "E:/owned/sessions/native-origin.jsonl", cwd: "E:/work/launch",
+		};
+		expect(events()).toEqual([{ sessionId: "native-origin", kind: "launch_identity", data: launchData }]);
+		open = true;
+		jest.advanceTimersByTime(100);
+		await settleAll();
+		expect(events().slice(-1)[0]).toEqual({ sessionId: "native-origin", kind: "launch_ready", data: launchData });
+		host.switchSession(replacement, "new");
+		const sentReady = peer.requests.find(request => envelopeOf(request).kind === "launch_ready");
+		expect(sentReady?.init.signal?.aborted).toBe(true);
+		readyResponse.resolve(panelAnswer(200, {}));
+		jest.advanceTimersByTime(100);
+		await settleAll();
+		expect(events().slice(-1)[0]).toEqual({ sessionId: "native-origin", kind: "launch_ended", data: launchData });
+		const notified = host.nextNotification();
+		host.run("connect-bot", "", replacement);
+		await notified;
+		await settleAll();
+		expect(events().map(({ kind, sessionId }) => [kind, sessionId])).toEqual([
+			["launch_identity", "native-origin"], ["launch_ready", "native-origin"], ["launch_ended", "native-origin"],
+			["register", "native-other"], ["state", "native-other"],
+		]);
+		host.shutdown(replacement);
+		const reloaded = bound(peer.request);
+		reloaded.startSession(active);
+		jest.advanceTimersByTime(100);
+		await settleAll();
+		// Reopening the original native ID in a replacement binding is still not this launch.
+		expect(events().filter(event => event.kind.startsWith("launch_")).map(event => event.kind)).toEqual([
+			"launch_identity", "launch_ready", "launch_ended",
+		]);
+		reloaded.shutdown(active);
+
+		process.env.HERDR_BOT_LAUNCH_ID = "dock-launch-terminates-before-ready";
+		open = false;
+		const terminating = bound(peer.request);
+		terminating.startSession(active);
+		jest.advanceTimersByTime(100);
+		terminating.shutdown(active);
+		open = true;
+		jest.advanceTimersByTime(100);
+		await settleAll();
+		const terminated = events().slice(-2);
+		expect(terminated.map(event => [event.kind, event.sessionId, (event.data as typeof launchData).launchId])).toEqual([
+			["launch_identity", "native-origin", "dock-launch-terminates-before-ready"],
+			["launch_ended", "native-origin", "dock-launch-terminates-before-ready"],
+		]);
+	} finally {
+		readyResponse.resolve(panelAnswer(200, {}));
+		if (previousId === undefined) delete process.env.HERDR_BOT_LAUNCH_ID;
+		else process.env.HERDR_BOT_LAUNCH_ID = previousId;
+		if (previousTarget === undefined) delete process.env.HERDR_BOT_LAUNCH_TARGET_ID;
+		else process.env.HERDR_BOT_LAUNCH_TARGET_ID = previousTarget;
+		setPanelRequestForTest(null);
+	}
+});
+
 describe("another identity takes the session's place (E13, P34, P15)", () => {
 	test("everything local stops before the old row is even asked about", async () => {
 		let releaseUnregister!: () => void;

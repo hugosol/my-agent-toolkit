@@ -80,6 +80,7 @@ type DeliveryKind =
 const DELIVERY_KIND_BY_EVENT: Readonly<Record<IntegrationEventKind, DeliveryKind>> = {
 	session_start: "session",
 	session_end: "session",
+	session_ready: "session",
 	session_facts: "session",
 	round_start: "round",
 	round_end: "round",
@@ -870,7 +871,7 @@ function addFrameworkSemantics(
 	const followOrigins = stateOrigin === undefined ? undefined : [stateOrigin];
 	const eventOrigins = (kinds: readonly IntegrationEventKind[]): SourceLocation[] =>
 		events.filter(event => kinds.includes(event.kind)).map(event => event.origin);
-	const sessionLifecycleEvents = eventOrigins(["session_start", "session_end", "session_facts"]);
+	const sessionLifecycleEvents = eventOrigins(["session_start", "session_end", "session_facts", "session_ready"]);
 	const roundLifecycleEvents = eventOrigins(["round_start", "round_end"]);
 	const observationEvents = eventOrigins(["session_activity", "session_context"]);
 	const commitEvents = eventOrigins(["session_commit"]);

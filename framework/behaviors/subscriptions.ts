@@ -34,7 +34,7 @@ import type {
 import type { OwnerReference } from "../interface/state";
 
 /** The session axis's event kinds, for a binding that must know which axis a group observes. */
-export const SESSION_EVENT_KINDS: readonly SessionEvent["kind"][] = ["session_start", "session_end", "session_facts"];
+export const SESSION_EVENT_KINDS: readonly SessionEvent["kind"][] = ["session_start", "session_end", "session_facts", "session_ready"];
 
 /** The round axis's event kinds. */
 export const ROUND_EVENT_KINDS: readonly RoundEvent["kind"][] = ["round_start", "round_end"];

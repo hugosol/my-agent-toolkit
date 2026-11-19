@@ -190,6 +190,7 @@ export interface IntegrationPlan {
 export const INTEGRATION_EVENT_AXIS: Readonly<Record<IntegrationEventKind, IntegrationAxis>> = {
 	session_start: "session",
 	session_end: "session",
+	session_ready: "session",
 	session_facts: "session",
 	round_start: "round",
 	round_end: "round",
