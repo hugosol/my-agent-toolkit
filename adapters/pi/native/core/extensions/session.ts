@@ -36,7 +36,7 @@ export interface PiSessionLifecycle {
 
 /** The native session axis; callers pair its transitions with any cross-source operations. */
 export function observePiSession(context: PiPortContext, lifecycle: PiSessionLifecycle): NonNullable<HarnessPort["onSession"]> {
-	return handler => {
+	return (handler, observeReady) => {
 		const deliver = (
 			event: SessionEvent,
 			owner: OwnerReference,
@@ -44,12 +44,12 @@ export function observePiSession(context: PiPortContext, lifecycle: PiSessionLif
 			session: SessionFacts,
 			processStart?: boolean,
 		): void => {
-			context.catalogued(ctx);
+			if (event.kind !== "session_ready") context.catalogued(ctx);
 			const feedback = feedbackTransport(ctx);
 			handler(defineAdapterDelivery("session", {
 				event, session, owner,
 				...(processStart === undefined ? {} : { processStart }),
-				statePayloads: piStatePayloadsOf(ctx, context.stateEntryType),
+				statePayloads: event.kind === "session_ready" ? [] : piStatePayloadsOf(ctx, context.stateEntryType),
 				persist: context.statePersistence.persist,
 				hasUI: ctx.hasUI,
 				feedback,
@@ -65,13 +65,21 @@ export function observePiSession(context: PiPortContext, lifecycle: PiSessionLif
 			const position = context.positionOf(ctx, reason);
 			const owner = context.resolvedOwner(position.owner);
 			const session = context.sessionFactsAt(position, ctx, reason);
+			const deliverStart = (): void => {
+				deliver({ kind: "session_start", reason }, owner, ctx, session, event.reason === "startup");
+				// Interactive Pi installs its normal editor submit handler before this lifecycle hook,
+				// even on native resume. A later hook can still put a modal between input and editor.
+				if (observeReady && ctx.hasUI && ctx.mode === "tui") {
+					deliver({ kind: "session_ready" }, owner, ctx, context.sessionFactsAt(position, ctx));
+				}
+			};
 			// Every actual session enters its own lifecycle, including a child whose Owner is
 			// inherited. Pair that entry before delivering its start.
 			if (owner.kind !== "owner") {
 				// A session that is not its own owner has no life of its own to pair: it is
 				// delivered with the owner it resolved and takes no part in the transfer below.
 				lifecycle.starting(session.sessionId);
-				deliver({ kind: "session_start", reason }, owner, ctx, session, event.reason === "startup");
+				deliverStart();
 				return;
 			}
 			// A native start that leaves the owner this binding already serves alone is not a
@@ -86,7 +94,7 @@ export function observePiSession(context: PiPortContext, lifecycle: PiSessionLif
 				lifecycle.ending(ended.session.sessionId);
 				deliver({ kind: "session_end", reason: "transferred" }, { kind: "owner", key: ended.key }, ctx, ended.session);
 			}
-			deliver({ kind: "session_start", reason }, owner, ctx, session, event.reason === "startup");
+			deliverStart();
 		}));
 		context.keepSubscription(context.pi.on("session_shutdown", async (event, ctx) => {
 			const session = context.sessionFactsOf(ctx);

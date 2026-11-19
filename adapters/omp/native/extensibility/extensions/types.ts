@@ -92,6 +92,8 @@ export interface OmpSessionContext {
 	};
 	/** Whether a UI is available; feedback falls back to stderr when it is not. */
 	readonly hasUI: boolean;
+	/** The native mode distinguishes a real interactive terminal from an RPC UI. */
+	readonly mode?: "tui" | "rpc" | "json" | "print";
 	/** The session's UI channel, the surface both feedback and the marker area use. */
 	readonly ui: OmpUiContext;
 	/**

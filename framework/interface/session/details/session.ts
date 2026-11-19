@@ -17,12 +17,17 @@ import type { SessionEndReason, SessionFacts, SessionStartReason } from "./facts
  * `session_facts` is neither a transition nor a boundary. The harness reported that a fact it holds
  * about one actual session — its identity, its direct parent or its latest name — has changed since
  * the delivery that carried it last, and it says so as it changes rather than waiting for the
- * session's next boundary. Nothing the framework owns moves for it.
+ * the session's next boundary. Nothing the framework owns moves for it.
+ *
+ * `session_ready` reports that this session's interactive startup input pipeline has been
+ * initialized. It reconciles nothing and does not certify that a subsequent input is admissible:
+ * a modal can still take focus. It says nothing about extension startup, registration or activity.
  */
 export type SessionEvent =
 	| { readonly kind: "session_start"; readonly reason: SessionStartReason }
 	| { readonly kind: "session_end"; readonly reason: SessionEndReason }
-	| { readonly kind: "session_facts" };
+	| { readonly kind: "session_facts" }
+	| { readonly kind: "session_ready" };
 
 /**
  * The facts one subscribed extension handler receives for a semantic session event.
