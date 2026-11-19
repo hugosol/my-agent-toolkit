@@ -51,10 +51,9 @@ export async function workflowBackend(collectWaitSeconds = 1) {
 	try {
 		endpoint = await listening.promise;
 		if (!output.join("").includes("安全壳已启动")) throw new Error("Not the safe backend shell");
-		// The controlled Herdr emits launch-correlated identity and ready to this owned backend.
+		// The controlled CLI emits correlated launch identity/ready to this owned backend.
 		writeFileSync(join(root.path, "launch_endpoint.txt"), new URL(endpoint).host);
-	}
-	catch (error) { child.kill(); await child.exited; await Promise.all(readers); root.dispose(); throw error; }
+	} catch (error) { child.kill(); await child.exited; await Promise.all(readers); root.dispose(); throw error; }
 	finally { clearTimeout(timer); }
 	return {
 		endpoint, root, output,
