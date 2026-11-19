@@ -287,7 +287,13 @@ manager 的 `collect` 没有业务参数，调用样例为 `{}`。实际传输�
 | `no-running` | 没有未检查通知且没有 running node，避免空等；根据现场显式派发、核实失败或 finish。 |
 | `timeout` | 后端配置的等待期限正常到期，不改变 Run/node 状态。客户端预算耗尽是错误，不是这个正常原因。 |
 
-结果保留后端 `snapshot`、`ready`、`blocked`、`canFinish` 和 `pendingReports`，**不包含 `reports` 或报告正文**。仍有 running node 且没有新通知时，即使有 ready node 也可能等待；扩展不强制提前返回、不轮询、不自动重试。
+结果保留后端 `snapshot`、`ready`、`blocked`、`canFinish` 和 `pendingReports`，**不包含 `reports` 或报告正文**。仍有 running node 且没有新通知时，即使有 ready node 也可能等待；扩展不轮询或自动重试业务 collect，也不强制提前返回。
+
+请直接调用原生 `collect {}`。等待期间，工具向 `POST /api/workflow/manager/script-output` 发送同一公共 `{sessionId}`，立即读取一次，然后成功后约每 500 ms 刷新当前 Run 同层 TypeScript 节点各自最近五个逻辑行（包括未换行片段），按执行隔离，不递归子 Run，不消费通知。原生工具结果区显示节点执行状态以及距最后输出的时间，长行截断或单行横览，不折行；不使用 widget。正常结束时尽可能取得最后一帧，只在工具 `details.scriptOutput` 保留，状态与时间冻结，模型仍只收到原业务 `content`。取消或任一采样失败立即停止并标注，不取消脚本、不自动重连；新的 collect 从服务端当前尾部重新读取。原有失败诊断仍走原 Run/报告通道。
+
+OMP 使用原生 ANSI/TSP 的同一直接调用；Pi 将 collect 注册为只供模型直接调用，即使 Suite 为 `only` 也不把该工具藏入 codemode。宿主内置的 codemode/eval 不为显式嵌套调用提供 collect 输出行，不通过 wrapper 调用，也不回退到 widget。
+
+原生回归：`bun test tests/harness-dock/manager-script-output.test.ts tests/workflow-chat/pi-native.test.ts`。只检查渲染入口时，用 `bun test tests/harness-dock/manager-script-output.test.ts --test-name-pattern "renders native ANSI"`：从真实适配器注册的 collect 定义取得 ANSI/Pi 的 `renderResult(...).render(width)` 与 OMP 的 `describeResult(...)`，分别以旧/新帧验证原位替换、不折行和 TSP 单行模式，不访问真实用户会话或外部模型。完整回归另用已安装 OMP/Pi 和受控 HTTP/provider 验证真实更新帧、正常结束／取消／连接失败以及 UI-only 隔离。
 
 `pendingReports` 是 node → 最新适用报告标识。按标识读取已提供的 `messages.jsonl` 或已有 Run 详情，阅读报告结论、阻塞、部分效果和限制作编排判断，不默认打开输出正文验收。collect/读取/辅助通知均不等于交接，不清除未完成待办；只有后端显式 complete 等事实改变适用待办。completed 后原执行仍可报告收尾，但不会重开待办；retry 后旧执行报告仍属旧执行历史，不能以全局最新报告替代新执行依据。旧/新报告交错、待办移除与通知检查均由后端决定，客户端不缓存或重算适用性。pendingReports 保留同一报告并非新通知，门禁拒绝不制造通知；已有通知检查后有 running 节点时 collect 继续等待新报告或正常到期。
 ## run 批量派发与故障恢复

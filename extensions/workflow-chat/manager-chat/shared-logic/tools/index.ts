@@ -1,6 +1,7 @@
 import type { ToolDeclaration, ToolParameterSchema } from "../../../../../framework/interface/tool";
 import { workflowToolResult } from "../../../common/tool-result";
 import type { ManagerActions } from "../actions";
+import { displayScriptOutput } from "../script-output";
 
 type ManagerToolState = { readonly operations: ManagerActions };
 
@@ -74,10 +75,15 @@ export const MANAGER_TOOLS: readonly ToolDeclaration<ManagerToolState>[] = [
 	},
 	{
 		name: "collect", label: "Collect",
-		description: "等待或立即收取后端原因、快照与报告标识待办；不含报告正文，不清除交接待办。",
+		description: "直接调用，勿从 codemode/eval 包装；等待或立即收取后端原因、快照与报告标识待办。脚本日志仅在用户可见的工具行中显示；不含报告正文，不清除交接待办。",
+		directOnly: true,
+		displayOutput: displayScriptOutput,
 		parameters: { type: "object", properties: {}, required: [], additionalProperties: false },
 		async execute(state, params, delivery) {
-			return workflowToolResult(await state.operations.collect(delivery.sessionId, params, delivery.signal));
+			const collected = await state.operations.collect(delivery.sessionId, params, delivery.signal,
+				scriptOutput => delivery.onUpdate?.({ scriptOutput }));
+			const result = workflowToolResult(collected);
+			return collected.scriptOutput ? { ...result, details: { httpStatus: collected.httpStatus, body: collected.body, scriptOutput: collected.scriptOutput } } : result;
 		},
 	},
 ];

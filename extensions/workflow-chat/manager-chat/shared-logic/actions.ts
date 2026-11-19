@@ -1,6 +1,7 @@
 import { WorkflowRequests, type WorkflowResponse } from "../../common/requests";
+import { collectWithScriptOutput, type ScriptOutputObservation } from "./script-output";
 
-type ActionResult = WorkflowResponse & { readonly message?: string };
+type ActionResult = WorkflowResponse & { readonly message?: string; readonly scriptOutput?: ScriptOutputObservation };
 
 /** Manager protocol and parameter rules, independent of the tool's harness. */
 export class ManagerActions {
@@ -30,10 +31,13 @@ export class ManagerActions {
 		return this.requests.post(sessionId, "/api/workflow/manager/" + input.action, body, signal);
 	}
 
-	async collect(sessionId: string, params: unknown, signal?: AbortSignal): Promise<ActionResult> {
+	async collect(sessionId: string, params: unknown, signal?: AbortSignal, onScriptOutput?: (output: ScriptOutputObservation) => void): Promise<ActionResult> {
 		if (!params || typeof params !== "object" || Array.isArray(params) || Object.keys(params).length !== 0) {
 			return { body: null, message: JSON.stringify({ error: { kind: "parameters", message: "collect 不接受业务或身份字段。" } }), isError: true };
 		}
-		return this.requests.post(sessionId, "/api/workflow/manager/collect", {}, signal, true);
+		const collect = () => this.requests.post(sessionId, "/api/workflow/manager/collect", {}, signal, true);
+		if (!onScriptOutput) return collect();
+		return collectWithScriptOutput(collect, outputSignal => this.requests.post(sessionId, "/api/workflow/manager/script-output", {}, outputSignal),
+			this.requests.interactionSignal(sessionId, signal), onScriptOutput);
 	}
 }

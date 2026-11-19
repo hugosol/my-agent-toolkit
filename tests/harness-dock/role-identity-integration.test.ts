@@ -121,9 +121,12 @@ test("P1/P2/P6 independent automatic roles use native identity and preserve real
 			expect(request.body.sessionId).toBe(id);
 			expect(Object.keys(request.body).sort()).toEqual(request.path.endsWith("/report") ? ["body", "canComplete", "sessionId"] : request.path.endsWith("/dispatch") ? ["nodes", "sessionId"] : ["sessionId"]);
 		}
-		// P2 constrains external connections: observe ALL role HTTP paths, including any
-		// accidental connect-bot registration, heartbeat, or websocket upgrade attempt.
-		expect(transport.calls.map(call => call.path)).toEqual([
+		// P2 observes every role path, including accidental registration or heartbeat.
+		// Script polling has an independent lifetime; its exact count is not a business action.
+		const outputCalls = transport.calls.filter(call => call.path === "/api/workflow/manager/script-output");
+		expect(outputCalls.length).toBeGreaterThan(0);
+		expect(outputCalls.every(call => call.body.sessionId === managerId)).toBe(true);
+		expect(transport.calls.filter(call => call.path !== "/api/workflow/manager/script-output").map(call => call.path)).toEqual([
 			"/api/workflow/manager/status", "/api/workflow/node/report", "/api/workflow/manager/status", "/api/workflow/manager/dispatch",
 			"/api/workflow/node/report", "/api/workflow/manager/collect", "/api/workflow/node/report", "/api/workflow/node/report", "/api/workflow/manager/status",
 		]);

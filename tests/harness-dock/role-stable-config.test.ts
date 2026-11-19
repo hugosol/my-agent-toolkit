@@ -24,6 +24,11 @@ test("P7 both automatic roles select deployment endpoint and budgets despite two
 	const reportReply = { independent: "explicit-deployment-endpoint", saved: true };
 	const server = createServer(async (request, response) => {
 		const chunks: Buffer[] = []; for await (const chunk of request) chunks.push(Buffer.from(chunk));
+		if (request.url === "/api/workflow/manager/script-output") {
+			response.writeHead(200, { "content-type": "application/json" });
+			response.end(JSON.stringify({ runId: "fixture", observedAt: Date.now(), nodes: [] }));
+			return;
+		}
 		const call = { path: request.url!, body: JSON.parse(Buffer.concat(chunks).toString()), elapsedMs: undefined as number | undefined };
 		calls.push(call);
 		const started = performance.now();

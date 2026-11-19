@@ -7,6 +7,8 @@
  * the port the assembly builds from them. They live here rather than in the entry because every
  * feature module reads the same facts and none of them may depend on the assembly that wires them.
  */
+import type { ToolExecutionResult } from "../../../../../framework/interface/tool";
+import type { NativeToolOutputOptions } from "../../../../tool-output";
 import type { OmpViewedSessionFacts } from "./viewed-session";
 import type { OmpUiContext } from "./ui";
 import type { OmpSessionEvent, OmpSessionEventType } from "./lifecycle";
@@ -293,7 +295,12 @@ export interface OmpExtensionApi {
 	setLabel(label: string): void;
 	registerTool: (tool: {
 		name: string; label: string; description: string; parameters: unknown; loadMode: "essential";
-		execute(callId: string, params: unknown, signal: AbortSignal | undefined, onUpdate: unknown, ctx: OmpSessionContext): Promise<{ readonly content: readonly { readonly type: "text"; readonly text: string }[]; readonly details?: unknown; readonly isError?: boolean }>;
+		execute(callId: string, params: unknown, signal: AbortSignal | undefined, onUpdate: ((result: ToolExecutionResult) => void) | undefined, ctx: OmpSessionContext): Promise<ToolExecutionResult>;
+		renderResult?: (result: ToolExecutionResult, options: NativeToolOutputOptions) => { render(width: number): readonly string[]; invalidate(): void };
+		describeResult?: (result: ToolExecutionResult, options: NativeToolOutputOptions) => {
+			preview: "children";
+			body: readonly { k: "code"; key: string; p: { text: string; numbers: false; wrap: boolean; preview?: { lines: number } } }[];
+		} | undefined;
 	}) => void;
 	/** Registers a custom command the user can run as `/<name>`. */
 	registerCommand(

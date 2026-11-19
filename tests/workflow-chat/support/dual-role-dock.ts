@@ -19,6 +19,11 @@ export async function dualRoleDock(host: "omp" | "pi", endpoint?: string) {
 	const backend = createServer(async (request, response) => {
 		const chunks: Buffer[] = [];
 		for await (const chunk of request) chunks.push(Buffer.from(chunk));
+		if (request.url === "/api/workflow/manager/script-output") {
+			response.writeHead(200, { "content-type": "application/json" });
+			response.end(JSON.stringify({ runId: "fixture", observedAt: Date.now(), nodes: [] }));
+			return;
+		}
 		calls.push({ path: request.url!, body: JSON.parse(Buffer.concat(chunks).toString("utf8")) });
 		const encoded = Buffer.from(JSON.stringify(answer));
 		response.writeHead(status, { "content-type": "application/json", "content-length": encoded.length });

@@ -6,6 +6,8 @@
  * native vocabulary — extensions that draw pi's own widgets describe their input with them — so
  * they live beside the mapping rather than inside the assembly entry.
  */
+import type { ToolExecutionResult } from "../../../../../framework/interface/tool";
+import type { NativeToolOutputOptions } from "../../../../tool-output";
 import type { FeedbackLevel } from "../../../../../framework/interface/feedback";
 import type { BindingResult } from "../../../../../framework/runtime/port";
 
@@ -332,7 +334,9 @@ export interface PiExtensionApi {
 	registerCommand(name: string, options: PiCommandRegistration): void;
 	registerTool: (tool: {
 		name: string; label: string; description: string; parameters: unknown;
-		execute(callId: string, params: unknown, signal: AbortSignal | undefined, onUpdate: unknown, ctx: PiExtensionContext): Promise<{ readonly content: readonly { readonly type: "text"; readonly text: string }[]; readonly details?: unknown; readonly isError?: boolean }>;
+		exposure?: "model-only";
+		execute(callId: string, params: unknown, signal: AbortSignal | undefined, onUpdate: ((result: ToolExecutionResult) => void) | undefined, ctx: PiExtensionContext): Promise<ToolExecutionResult>;
+		renderResult?: (result: ToolExecutionResult, options: NativeToolOutputOptions) => { render(width: number): readonly string[]; invalidate(): void };
 	}) => void;
 	appendEntry(customType: string, data?: unknown): void;
 	/**

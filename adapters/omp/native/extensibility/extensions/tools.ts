@@ -2,6 +2,7 @@ import type { ToolParameterSchema } from "../../../../../framework/interface/too
 import type { BoundTool } from "../../../../../framework/runtime/port";
 import { defineAdapterDelivery } from "../../../../../framework/runtime/adapter-authoring";
 import { toolConfirmation } from "../../../../../framework/runtime/tool-confirmation";
+import { clipToolOutput, toolBusinessText, toolOutputComponent } from "../../../../tool-output";
 import type { OmpExtensionApi } from "./types";
 
 /** OMP repairs scalar types and closed objects. Business guards must see invalid values and extra keys. */
@@ -22,19 +23,36 @@ export function ompToolParameters(schema: ToolParameterSchema): unknown {
 
 export function registerOmpTool(api: OmpExtensionApi): (tool: BoundTool) => void {
 	const register = api.registerTool;
-	return tool => register.call(api, {
-		name: tool.name, label: tool.label, description: tool.description, loadMode: "essential",
-		parameters: ompToolParameters(tool.parameters),
-		async execute(callId, params, signal, _onUpdate, ctx) {
-			const result = await tool.execute(params, defineAdapterDelivery("tool", {
-				callId, sessionId: ctx.sessionManager.getSessionId(), ...(signal === undefined ? {} : { signal }),
-				confirm: toolConfirmation(
-					ctx.hasUI && typeof ctx.ui.confirm === "function" ? ctx.ui.confirm.bind(ctx.ui) : undefined,
-					signal,
-					(active, label) => api.events?.emit?.("herdr:blocked", { active, label }),
-				),
-			}));
-			return result;
-		},
-	});
+	return tool => {
+		const display = tool.displayOutput;
+		const presentation: Pick<Parameters<typeof register>[0], "renderResult" | "describeResult"> = display ? {
+			renderResult: (result, options) => toolOutputComponent(display(result.details), result, options),
+			describeResult(result, options) {
+				const rows = display(result.details);
+				if (!rows?.length) return undefined;
+				const business = toolBusinessText(result);
+				return { preview: "children", body: [
+					{ k: "code", key: "output", p: { text: rows.map(line => clipToolOutput(line, 120)).join("\n"), numbers: false, wrap: false } },
+					...(business ? [{ k: "code" as const, key: "result", p: { text: business, numbers: false as const, wrap: true, ...(options.expanded ? {} : { preview: { lines: 8 } }) } }] : []),
+				] };
+			},
+		} : {};
+		register.call(api, {
+			name: tool.name, label: tool.label, description: tool.description, loadMode: "essential",
+			parameters: ompToolParameters(tool.parameters),
+			...presentation,
+			async execute(callId, params, signal, onUpdate, ctx) {
+				const result = await tool.execute(params, defineAdapterDelivery("tool", {
+					callId, sessionId: ctx.sessionManager.getSessionId(), ...(signal === undefined ? {} : { signal }),
+					...(onUpdate === undefined ? {} : { onUpdate: (details: unknown) => onUpdate({ content: [], details }) }),
+					confirm: toolConfirmation(
+						ctx.hasUI && typeof ctx.ui.confirm === "function" ? ctx.ui.confirm.bind(ctx.ui) : undefined,
+						signal,
+						(active, label) => api.events?.emit?.("herdr:blocked", { active, label }),
+					),
+				}));
+				return result;
+			},
+		});
+	};
 }

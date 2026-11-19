@@ -41,7 +41,7 @@ function acceptanceTest(name: string, body: () => Promise<void>, timeout: number
 }
 
 /** Real installed Pi RPC, isolated deployment/state, controlled HTTP and model protocol. */
-async function dock(role: "manager" | "node") {
+async function dock(role: "manager" | "node", suiteOnly = false) {
 	const root = createRunRoot(`workflow-pi-${role}`);
 	const deployment = join(root.path, "deployment");
 	for (const tree of ["framework", "adapters", "extensions/workflow-chat", "entrypoints"]) {
@@ -60,6 +60,11 @@ async function dock(role: "manager" | "node") {
 	const backend = createServer(async (request, response) => {
 		const chunks: Buffer[] = [];
 		for await (const chunk of request) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+		if (request.url === "/api/workflow/manager/script-output") {
+			response.writeHead(200, { "content-type": "application/json" });
+			response.end(JSON.stringify({ runId: "fixture", observedAt: Date.now(), nodes: [] }));
+			return;
+		}
 		calls.push({ path: request.url ?? "/", body: JSON.parse(Buffer.concat(chunks).toString("utf8")) });
 		const encoded = Buffer.from(JSON.stringify(answer));
 		response.writeHead(status, { "content-type": "application/json", "content-length": encoded.length });
@@ -106,8 +111,14 @@ async function dock(role: "manager" | "node") {
 	} });
 	let session: PiSession | undefined;
 	try {
+		const entries = [join(deployment, `entrypoints/pi-auto/${role}-chat.ts`)];
+		const suiteConfig = join(root.path, "suite-only.json");
+		if (suiteOnly) {
+			entries.push(join(REPO_ROOT, "entrypoints/pi/pi-suite.ts"));
+			writeFileSync(suiteConfig, JSON.stringify({ version: 1, codemode: "only", mcpServers: {} }));
+		}
 		session = await PiSession.start({ cli, runRoot: root,
-			entrypoint: join(deployment, `entrypoints/pi-auto/${role}-chat.ts`), selector: "workflow-fixture/fixture" });
+			entrypoint: entries, selector: "workflow-fixture/fixture", ...(suiteOnly ? { extraArgs: ["--pi-suite-config", suiteConfig] } : {}) });
 		const running = session;
 		return { session: running, calls, capture,
 			answer(body: unknown, code = 200) { answer = body; status = code; },
@@ -148,6 +159,22 @@ async function dock(role: "manager" | "node") {
 		await session?.stop(); await closeBackend(); capture.stop(); root.dispose(); throw error;
 	}
 }
+
+// Real Suite-only loadout: the model may call collect directly; codemode may not nest it.
+acceptanceTest("Pi Suite only keeps collect visible exclusively as a direct native tool", async () => {
+	const run = await dock("manager", true);
+	try {
+		run.answer({ reason: "no-running" });
+		const collect = await run.call("collect", {});
+		expect(collect.result.details.body).toEqual({ reason: "no-running" });
+		const request = run.capture.requests()[0]!.json as { tools: { function: { name: string } }[] };
+		expect(request.tools.map(tool => tool.function.name)).toEqual(expect.arrayContaining(["collect", "codemode"]));
+		expect(request.tools.map(tool => tool.function.name)).not.toContain("run");
+		const nested = await run.call("codemode", { code: 'text("collect" in tools ? "collect-is-nested" : "collect-is-direct-only")' });
+		expect(nested.result.content.map(item => item.text).join("\n")).toContain("collect-is-direct-only");
+		expect(run.calls.map(call => call.path)).toEqual(["/api/workflow/manager/collect"]);
+	} finally { await run.close(); }
+}, 180_000);
 
 for (const role of ["manager", "node"] as const) {
 	acceptanceTest(`Pi ${role}: native tools, first Prompt identity, strict parameters and original results`, async () => {

@@ -15,6 +15,8 @@ export interface ToolExecutionDelivery {
 	readonly sessionId: string;
 	readonly callId: string;
 	readonly signal?: AbortSignal;
+	/** Replace the current call’s presentation with a UI-only details snapshot. */
+	readonly onUpdate?: (details: unknown) => void;
 	/** Native user approval only; absent UI, cancellation, errors and timeout all refuse. */
 	readonly confirm?: (request: {
 		readonly title: string;
@@ -40,6 +42,10 @@ export interface ToolDeclaration<State> {
 	readonly label: string;
 	readonly description: string;
 	readonly parameters: ToolParameterSchema;
+	/** Keep the call visible as a top-level model tool instead of routing it through code tools. */
+	readonly directOnly?: true;
+	/** Optional in-place display derived from details, never appended to model content. One string per row. */
+	readonly displayOutput?: (details: unknown) => readonly string[] | undefined;
 	readonly execute: (state: State, params: unknown, delivery: ToolExecutionDelivery) => ToolExecutionResult | Promise<ToolExecutionResult>;
 }
 

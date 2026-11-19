@@ -22,6 +22,11 @@ test("P3 overlapping native role Sessions cancel independently and both accept s
 	const server = createServer(async (request, response) => {
 		const chunks: Buffer[] = [];
 		for await (const chunk of request) chunks.push(Buffer.from(chunk));
+		if (request.url === "/api/workflow/manager/script-output") {
+			response.writeHead(200, { "content-type": "application/json" });
+			response.end(JSON.stringify({ runId: "fixture", observedAt: Date.now(), nodes: [] }));
+			return;
+		}
 		const path = request.url!;
 		calls.push({ path, body: JSON.parse(Buffer.concat(chunks).toString()) });
 		response.writeHead(200, { "content-type": "application/json" });
