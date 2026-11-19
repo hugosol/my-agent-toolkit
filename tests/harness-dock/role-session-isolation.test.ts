@@ -48,7 +48,7 @@ test("P3 overlapping native role Sessions cancel independently and both accept s
 		await closed.promise;
 	}];
 	try {
-		const config = `endpoint: http://127.0.0.1:${address.port}\nrequestTimeoutMs: 10000\nreportConfirmationTimeoutMs: 20000\ncollectTimeoutMs: 10000\n`;
+		const config = `endpoint: http://127.0.0.1:${address.port}\nrequestTimeoutMs: 10000\nreportConfirmationTimeoutMs: 20000\napproveConfirmationTimeoutMs: 60000\ncollectTimeoutMs: 10000\n`;
 		const manager = await promptDock("manager", { config }); cleanup.unshift(() => manager.close());
 		const node = await promptDock("node", { config }); cleanup.unshift(() => node.close());
 		const managerId = await nativeIdentity(manager);

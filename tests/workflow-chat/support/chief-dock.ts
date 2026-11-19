@@ -39,7 +39,7 @@ export async function chiefDock(host: "omp" | "pi", endpoint: string): Promise<C
 				filter: candidate => candidate !== join(REPO_ROOT, "framework", ".runtime") });
 		}
 		cpSync(join(REPO_ROOT, "node_modules/yaml"), join(deployment, "node_modules/yaml"), { recursive: true, dereference: true });
-		writeFileSync(join(deployment, "extensions/workflow-chat/config.yaml"), `endpoint: ${endpoint}\nrequestTimeoutMs: 3000\nreportConfirmationTimeoutMs: 20000\ncollectTimeoutMs: 6000\n`);
+		writeFileSync(join(deployment, "extensions/workflow-chat/config.yaml"), `endpoint: ${endpoint}\nrequestTimeoutMs: 3000\nreportConfirmationTimeoutMs: 20000\napproveConfirmationTimeoutMs: 60000\ncollectTimeoutMs: 6000\n`);
 		// Isolate all conventional host directories as well as native session storage.
 		const home = join(root.path, "home"); mkdirSync(home);
 		const env = { HOME: home, USERPROFILE: home, APPDATA: home, LOCALAPPDATA: home,

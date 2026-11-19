@@ -6,12 +6,14 @@ import type { OmpExtensionApi, OmpSessionContext } from "../../adapters/omp/nati
 import type { ToolExecutionDelivery } from "../../framework/interface/tool";
 
 const request = { title: "Submit report?", message: "Task: child-17\nComplete report:\nFirst line\nLast line", timeoutMs: 30 };
-type NativeConfirm = (title: string, message: string, options?: { signal?: AbortSignal; timeout?: number; onTimeout?: () => void }) => Promise<boolean>;
+type NativeConfirm = (title: string, message: string, options?: { signal?: AbortSignal; timeout?: number; onTimeout?: () => void; onTimeoutStart?: () => void }) => Promise<boolean>;
 
 // The seam is the host-registered tool: only the external host/UI is controlled.
 for (const host of ["pi", "omp"] as const) {
 	describe(`${host} registered tool user confirmation`, () => {
-		function registered(confirm?: NativeConfirm, hasUI = true, lifetimeSignal?: AbortSignal) {
+		function registered(confirm?: NativeConfirm, hasUI = true, lifetimeSignal?: AbortSignal, notifyOnWait = false) {
+			const emissions: { channel: string; data: unknown }[] = [];
+			const events = { on: () => () => {}, emit: (channel: string, data: unknown) => { emissions.push({ channel, data }); } };
 			let invoke!: (signal?: AbortSignal) => Promise<unknown>;
 			const ctx = {
 				sessionManager: { getSessionId: () => "confirm-session" }, hasUI,
@@ -22,25 +24,76 @@ for (const host of ["pi", "omp"] as const) {
 				name: "confirmation_probe", label: "Confirm", description: "Confirm native user approval",
 				parameters: { type: "object" as const, properties: {} },
 				async execute(_params: unknown, delivery: ToolExecutionDelivery) {
-					approval = await delivery.confirm?.({ ...request, ...(lifetimeSignal === undefined ? {} : { signal: lifetimeSignal }) });
+					approval = await delivery.confirm?.({ ...request, notifyOnWait, ...(lifetimeSignal === undefined ? {} : { signal: lifetimeSignal }) });
 					return { content: [{ type: "text" as const, text: String(approval) }] };
 				},
 			};
 			if (host === "pi") {
 				const api: PiExtensionApi = {
-					on() { return () => {}; }, registerCommand() {}, appendEntry() {},
+					events, on() { return () => {}; }, registerCommand() {}, appendEntry() {},
 					registerTool(native) { invoke = signal => native.execute("confirm-call", {}, signal, undefined, ctx); },
 				};
 				registerPiTool(api)(tool);
 			} else {
 				const api: OmpExtensionApi = {
-					on() {}, registerCommand() {}, appendEntry() {}, setLabel() {},
+					events, on() {}, registerCommand() {}, appendEntry() {}, setLabel() {},
 					registerTool(native) { invoke = signal => native.execute("confirm-call", {}, signal, undefined, ctx); },
 				};
 				registerOmpTool(api)(tool);
 			}
-			return { invoke, approval: () => approval };
+			return { invoke, emissions, approval: () => approval };
 		}
+
+		for (const ending of ["yes", "no", "cancel", "session-end", "timeout", "error"] as const) {
+			test(`waiting attention is paired once on ${ending}, without late reactivation`, async () => {
+				const answer = Promise.withResolvers<boolean>();
+				const lifetime = new AbortController();
+				const controller = new AbortController();
+				let present!: () => void;
+				const probe = registered((_title, _message, options) => {
+					present = options!.onTimeoutStart!;
+					return answer.promise;
+				}, true, lifetime.signal, true);
+				const pending = probe.invoke(controller.signal);
+				if (host === "omp") expect(probe.emissions).toEqual([]);
+				present(); present();
+				expect(probe.emissions).toEqual([{ channel: "herdr:blocked", data: { active: true, label: request.title } }]);
+				if (ending === "cancel") controller.abort();
+				else if (ending === "session-end") lifetime.abort();
+				else if (ending === "error") answer.reject(new Error("closed UI"));
+				else if (ending !== "timeout") answer.resolve(ending === "yes");
+				await pending;
+				expect(probe.approval()).toBe(ending === "yes");
+				present(); answer.resolve(true);
+				await Promise.resolve();
+				expect(probe.emissions).toEqual([
+					{ channel: "herdr:blocked", data: { active: true, label: request.title } },
+					{ channel: "herdr:blocked", data: { active: false, label: request.title } },
+				]);
+			});
+		}
+
+		test("ordinary confirmations and absent UI do not publish waiting attention", async () => {
+			for (const [hasUI, notify] of [[true, false], [false, true]] as const) {
+				const probe = registered(async (_title, _message, options) => { options?.onTimeoutStart?.(); return true; }, hasUI, undefined, notify);
+				await probe.invoke();
+				expect(probe.emissions).toEqual([]);
+				expect(probe.approval()).toBe(hasUI);
+			}
+		});
+
+		if (host === "omp") test("queued confirmation cancelled before display never claims attention", async () => {
+			const answer = Promise.withResolvers<boolean>();
+			let present!: () => void;
+			const probe = registered((_title, _message, options) => { present = options!.onTimeoutStart!; return answer.promise; }, true, undefined, true);
+			const controller = new AbortController();
+			const pending = probe.invoke(controller.signal);
+			controller.abort();
+			await pending;
+			present(); answer.resolve(true);
+			expect(probe.approval()).toBe(false);
+			expect(probe.emissions).toEqual([]);
+		});
 
 		test("only literal native approval accepts, with the complete message and configured timeout", async () => {
 			let nativeSignal: AbortSignal | undefined;

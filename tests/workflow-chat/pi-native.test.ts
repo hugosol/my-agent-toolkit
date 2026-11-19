@@ -93,7 +93,7 @@ async function dock(role: "manager" | "node") {
 		backend.close(error => error ? closed.reject(error) : closed.resolve());
 		await closed.promise;
 	}
-	writeFileSync(join(deployment, "extensions/workflow-chat/config.yaml"), `endpoint: http://127.0.0.1:${address.port}\nrequestTimeoutMs: 500\nreportConfirmationTimeoutMs: 20000\ncollectTimeoutMs: 5000\n`);
+	writeFileSync(join(deployment, "extensions/workflow-chat/config.yaml"), `endpoint: http://127.0.0.1:${address.port}\nrequestTimeoutMs: 500\nreportConfirmationTimeoutMs: 20000\napproveConfirmationTimeoutMs: 60000\ncollectTimeoutMs: 5000\n`);
 	let next: { name: string; arguments: string } | undefined;
 	const capture = startCaptureServer({ dir: root.captureDir, respond() {
 		const toolCall = next; next = undefined;

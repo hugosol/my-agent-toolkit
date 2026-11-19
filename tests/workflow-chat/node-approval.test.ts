@@ -136,7 +136,8 @@ test("manual Yes submits captured original execution and preserves stale refusal
 		const pending = scene.call({}, async preview => { shown.resolve(preview); return answer.promise; });
 		const preview = await Promise.race([shown.promise, pending.then(() => { throw new Error("submitted before native Yes"); })]);
 		expect(preview.message).toBe(question);
-		expect(preview.timeoutMs).toBe(20000);
+		// The manual budget differs from both the deployment default and the report budget.
+		expect(preview).toMatchObject({ timeoutMs: 45000, notifyOnWait: true });
 		expect(scene.calls).toEqual([{ path: "/api/workflow/node/context", body: { sessionId: "business-native-session" } }]);
 		const failure = { code: "approval-execution-stale", message: "execution-original is no longer current" };
 		scene.response(failure, 409);

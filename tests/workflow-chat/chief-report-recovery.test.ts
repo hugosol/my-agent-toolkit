@@ -13,9 +13,9 @@ function scene(peer: (request: Request) => Promise<Response>) {
 	const server = Bun.serve({ hostname: "127.0.0.1", port: 0, fetch: peer });
 	const port = portDouble();
 	let requests: WorkflowRequests | undefined;
-	const binding = port.bind(defineExtension({ id: `recovery-protocol-${++fixture}`, displayName: "Recovery protocol", config: { fields: { endpoint: "non-empty-string", requestTimeoutMs: "milliseconds", reportConfirmationTimeoutMs: "milliseconds", collectTimeoutMs: "milliseconds" } } }), {
+	const binding = port.bind(defineExtension({ id: `recovery-protocol-${++fixture}`, displayName: "Recovery protocol", config: { fields: { endpoint: "non-empty-string", requestTimeoutMs: "milliseconds", reportConfirmationTimeoutMs: "milliseconds", approveConfirmationTimeoutMs: "milliseconds", collectTimeoutMs: "milliseconds" } } }), {
 		factory: context => { requests = new WorkflowRequests(context); return {}; },
-		config: { reader: () => `endpoint: ${server.url.origin}\nrequestTimeoutMs: 2000\nreportConfirmationTimeoutMs: 2000\ncollectTimeoutMs: 3000\n` },
+		config: { reader: () => `endpoint: ${server.url.origin}\nrequestTimeoutMs: 2000\nreportConfirmationTimeoutMs: 2000\napproveConfirmationTimeoutMs: 60000\ncollectTimeoutMs: 3000\n` },
 	});
 	if (!binding.bound || !requests) { server.stop(true); throw new Error("Fixture binding unavailable"); }
 	const sessionId = "sender-native-18";

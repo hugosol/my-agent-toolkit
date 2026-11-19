@@ -16,7 +16,7 @@ test("P1/P2/P6 independent automatic roles use native identity and preserve real
 	try {
 	const transport = await collectTransport(backend.endpoint);
 	cleanup.unshift(() => transport.close());
-	const config = `endpoint: ${transport.endpoint}\nrequestTimeoutMs: 3000\nreportConfirmationTimeoutMs: 20000\ncollectTimeoutMs: 6000\n`;
+	const config = `endpoint: ${transport.endpoint}\nrequestTimeoutMs: 3000\nreportConfirmationTimeoutMs: 20000\napproveConfirmationTimeoutMs: 60000\ncollectTimeoutMs: 6000\n`;
 	const manager = await promptDock("manager", { config, observeIdentity: true });
 	cleanup.unshift(() => manager.close());
 	const node = await promptDock("node", { config, observeIdentity: true });

@@ -35,7 +35,7 @@ export async function dualRoleDock(host: "omp" | "pi", endpoint?: string) {
 	await listening.promise;
 	const address = backend.address();
 	if (!address || typeof address === "string") throw new Error("Missing dual-role fixture port");
-	const config = `endpoint: ${endpoint ?? `http://127.0.0.1:${address.port}`}\nrequestTimeoutMs: 3000\nreportConfirmationTimeoutMs: 20000\ncollectTimeoutMs: 30000\n`;
+	const config = `endpoint: ${endpoint ?? `http://127.0.0.1:${address.port}`}\nrequestTimeoutMs: 3000\nreportConfirmationTimeoutMs: 20000\napproveConfirmationTimeoutMs: 60000\ncollectTimeoutMs: 30000\n`;
 	async function closeBackend() {
 		for (const socket of sockets) socket.destroy();
 		const closed = Promise.withResolvers<void>();

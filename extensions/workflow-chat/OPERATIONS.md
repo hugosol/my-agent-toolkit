@@ -138,11 +138,11 @@ python scripts/accept-workflow-nesting-roles.py `
 
 使用合法后端派发与对应宿主正常自动入口，升级后创建新 Chat/Run，不使用用户历史，不补写旧 Run。
 
-1. 以 `auto_approved:false` 的普通工作节点验证：模型正常成果先调用无参数 approve；原生确认严格询问“当前会话的成果是否已达到预期，可以交接并推进后续流程？”。只在明确 Yes 后提交后端批准；聊天同意不能代替。
-2. 分别核对拒绝、取消、超时、无 UI 均未批准且执行不变 failed，可继续工作和 report，无自动新确认。只有后续用户主动请求才再次确认。原配置 `reportConfirmationTimeoutMs` 默认 20 秒；RPC 客户端须处理原生确认请求/响应。
+1. 以 `auto_approved:false` 的普通工作节点验证：模型正常成果先调用无参数 approve；原生确认严格询问“当前会话的成果是否已达到预期，可以交接并推进后续流程？”。确认实际呈现时核对 Herdr 原生等待状态提醒；普通完成音不变。只在明确 Yes 后提交后端批准；聊天同意不能代替。
+2. 分别核对拒绝、取消、超时、无 UI 均未批准且不将执行标为 failed，可继续工作和 report，无自动新确认。只有后续用户主动请求才再次确认。升级时须在部署配置中加入 `approveConfirmationTimeoutMs`（默认 60000 毫秒）；`reportConfirmationTimeoutMs` 和普通 HTTP `requestTimeoutMs` 默认仍为 20000 和 30000 毫秒。RPC 客户端须处理原生确认请求/响应。
 3. 等确认期间公开查询、报告和无依赖分支仍可继续；如发生 retry，旧 Yes 只能提交捕获的旧 execution，不能批准新执行。保留后端真实拒绝。
-4. `auto_approved:true` 必须仍由工具主动 approve，派发本身不批准。核对后端 `autoApproved` 冻结模式、`approved` 事实与 `approvalSource`；持久失败不得声称成功。
-5. 两种模式的 report 随时可发，不再确认；批准不生成报告、通知或推进。正常成果 approve 后 report，进度／失败／问题可先 report，批准不等于 manager 验收。chief 委派／报告确认不变。
+4. `auto_approved:true` 必须仍由工具主动 approve，派发本身不批准；不打开确认，也不新增等待提醒。核对后端 `autoApproved` 冻结模式、`approved` 事实与 `approvalSource`；持久失败不得声称成功。
+5. 两种模式的 report 随时可发，不再确认；批准提交不生成报告或后端通知，也不自动推进。正常成果 approve 后 report，进度／失败／问题可先 report，批准不等于 manager 验收。chief 委派／报告确认不变。
 
 `bun test tests/workflow-chat/node-approval.test.ts tests/workflow-chat/free-report.test.ts` 仅是工具协议/受控 adapter 机制检查。`bun test tests/harness-dock/native-node-report.test.ts` 验证真实宿主自由报告及不确定结果处理，不代替双宿主原生批准、真实持久门禁或真实模型职责验收。配对安全后端和隔离数据必须显式选择，不使用生产后端进行关机检查。
 

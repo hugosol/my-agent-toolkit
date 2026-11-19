@@ -207,12 +207,14 @@ python (Join-Path $HERDR_BOT_WT 'scripts/test-workflow-file-handoff.py') `
 endpoint: http://127.0.0.1:18787
 requestTimeoutMs: 30000
 reportConfirmationTimeoutMs: 20000
+approveConfirmationTimeoutMs: 60000
 collectTimeoutMs: 5460000
 ```
 
 - `endpoint` 为 herdr-bot 基地址；按实际部署修改后重启 Session。
 - `requestTimeoutMs` 是 report 等普通请求的完整传输预算，包含响应正文。
-- `reportConfirmationTimeoutMs` 是 manual 报告与 chief 委派的用户确认等待预算，默认部署值 20000 毫秒；统一配置，不是模型参数。升级时须在部署配置中加入此字段，修改后重启 Session。
+- `reportConfirmationTimeoutMs` 是 chief 人工报告与 chief 委派的原生确认等待预算，默认 20000 毫秒。
+- `approveConfirmationTimeoutMs` 仅用于 `approve` 的人工成果确认，默认 60000 毫秒，与报告确认和普通 HTTP 请求（默认 30000 毫秒）的预算独立。两个确认预算都是必填部署配置，不是模型参数；升级时须补齐部署配置，修改后重启 Session。
 - `collectTimeoutMs` 是管理者长等待的独立预算，节点 report 不使用它。后端默认 5400 秒，建议客户端 5460000 毫秒（91 分钟）；没有自动同步握手，预算较长也不保证所有网络请求成功。
 - 文件缺失、非法 YAML、缺少或错误类型的字段会由公共配置机制明确拒绝绑定；不静默换用 cwd 配置或其他 endpoint。正整数毫秒范围是 1..2147483647。
 
@@ -353,11 +355,11 @@ Map node 的 `input` 工作文本保持原样；文件交接使用 `input_rule` 
 
 工具使用公共 Session 请求 `POST /api/workflow/node/context {sessionId}`，读取后端真实角色对应 execution 冻结的 `executionId`、boolean `autoApproved`、`approved` 和 `approvalSource`。查询或协议错误原样保留，不推定自动、不从当前 Map 或提示词猜模式。工具在等待之前绑定该 execution，之后不重新解析身份目标。
 
-- `autoApproved=true`：直接 `POST /api/workflow/node/approve {sessionId,executionId,source:"auto"}`。
-- `autoApproved=false`：原生确认只问“当前会话的成果是否已达到预期，可以交接并推进后续流程？”，不要求说明或展示报告。仅显式 Yes 才以 `source:"manual"` 提交原 execution。
-- 拒绝、取消、超时、会话结束或无 UI 返回未批准，不将执行标为 failed；可继续工作或 report，不自动重试。仅用户后续主动请求才重新确认。确认使用原 `reportConfirmationTimeoutMs` 配置（默认 20000ms），与 HTTP 预算独立，等待期间没有后端请求或 Run 锁。
+- `autoApproved=true`：直接 `POST /api/workflow/node/approve {sessionId,executionId,source:"auto"}`，不打开确认或触发等待提醒。
+- `autoApproved=false`：原生确认只问“当前会话的成果是否已达到预期，可以交接并推进后续流程？”，不要求说明或展示报告。确认实际呈现时触发 Herdr 原生等待状态提醒，不改变普通完成音。仅显式 Yes 才以 `source:"manual"` 提交原 execution。
+- 拒绝、取消、超时、会话结束或无 UI 返回未批准，不将执行标为 failed；可继续工作或 report，不自动重试。仅用户后续主动请求才重新确认。等待使用独立的 `approveConfirmationTimeoutMs`（默认 60000 毫秒），期间没有后端请求或 Run 锁。
 - 后端仍检查真实身份、执行新旧及冻结模式，retry 期间迟到的 Yes 不得批准新执行；原拒绝和持久化错误保留。成功回执须含原 `executionId`、`approved:true` 和匹配的 `approvalSource`；异常回执结果不确定，不声称成功或回滚。
-- 批准不制造报告或主动通知，不自动 complete、dispatch 或 finish，也不等于 manager 验收。不需要报告或输出才能批准；批准后材料修改和追加报告不自动撤销批准。新 retry 不继承旧批准。结束节点无 node 批准职责。
+- 批准提交不生成报告或后端通知，不自动 complete、dispatch 或 finish，也不等于 manager 验收。不需要报告或输出才能批准；批准后材料修改和追加报告不自动撤销批准。新 retry 不继承旧批准。结束节点无 node 批准职责。
 
 已有 Chat 的持久指引不热更新；配套升级 toolkit/herdr-bot 后使用新 Chat/Run，不迁移、猜测或补写旧 Run 批准状态。chief 委派、chief 报告及原报告重发仍保留完整载荷预览和独立原生确认。
 

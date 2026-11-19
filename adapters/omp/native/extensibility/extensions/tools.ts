@@ -28,7 +28,11 @@ export function registerOmpTool(api: OmpExtensionApi): (tool: BoundTool) => void
 		async execute(callId, params, signal, _onUpdate, ctx) {
 			const result = await tool.execute(params, defineAdapterDelivery("tool", {
 				callId, sessionId: ctx.sessionManager.getSessionId(), ...(signal === undefined ? {} : { signal }),
-				confirm: toolConfirmation(ctx.hasUI && typeof ctx.ui.confirm === "function" ? ctx.ui.confirm.bind(ctx.ui) : undefined, signal),
+				confirm: toolConfirmation(
+					ctx.hasUI && typeof ctx.ui.confirm === "function" ? ctx.ui.confirm.bind(ctx.ui) : undefined,
+					signal,
+					(active, label) => api.events?.emit?.("herdr:blocked", { active, label }),
+				),
 			}));
 			return result;
 		},

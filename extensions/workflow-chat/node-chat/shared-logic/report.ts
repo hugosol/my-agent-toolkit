@@ -25,6 +25,7 @@ export class NodeReports {
 			? await this.requests.post(sessionId, "/api/workflow/node/approve", payload, pendingSignal)
 			: await this.requests.postConfirmed(sessionId, "/api/workflow/node/approve", payload, {
 				title: "成果批准", message: "当前会话的成果是否已达到预期，可以交接并推进后续流程？", includePayload: false,
+				timeoutMs: this.requests.approveConfirmationTimeoutMs, notifyOnWait: true,
 			}, pendingSignal, confirm);
 		if (result.notSent) return { ...result, body: {
 			...(result.body as Record<string, unknown>), approved: false,

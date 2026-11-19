@@ -28,7 +28,16 @@ export function registerPiTool(pi: PiExtensionApi): (tool: BoundTool) => void {
 		async execute(callId, params, signal, _onUpdate, ctx) {
 			const result = await tool.execute(params, defineAdapterDelivery("tool", {
 				callId, sessionId: ctx.sessionManager.getSessionId(), ...(signal === undefined ? {} : { signal }),
-				confirm: toolConfirmation(ctx.hasUI && typeof ctx.ui.confirm === "function" ? ctx.ui.confirm.bind(ctx.ui) : undefined, signal),
+				confirm: toolConfirmation(
+					ctx.hasUI && typeof ctx.ui.confirm === "function" ? (title, message, options) => {
+						// Pi installs its selector synchronously; unlike OMP it has no presentation callback.
+						const answer = ctx.ui.confirm!(title, message, options);
+						options.onTimeoutStart();
+						return answer;
+					} : undefined,
+					signal,
+					(active, label) => pi.events?.emit("herdr:blocked", { active, label }),
+				),
 			}));
 			return result;
 		},

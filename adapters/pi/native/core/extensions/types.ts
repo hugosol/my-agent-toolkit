@@ -51,7 +51,8 @@ export interface PiSessionAnchor {
  * pi's shared event bus: how extensions in one process speak to each other.
  *
  * The framework's pi adapter reads one versioned interface from it — the subagent provider's own
- * announcement and query pair — and publishes nothing of its own on it. A surface that publishes no
+ * announcement and query pair — and publishes opt-in native confirmation attention through
+ * `herdr:blocked`. A surface that publishes no
  * bus is a process in which no provider can be reached, which is answered as a provider this entry
  * does not have rather than as one that failed.
  */

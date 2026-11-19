@@ -44,8 +44,8 @@ test("P7 both automatic roles select deployment endpoint and budgets despite two
 		wrong.stop(true);
 	}];
 	try {
-		const config = `endpoint: http://127.0.0.1:${address.port}\nrequestTimeoutMs: 700\nreportConfirmationTimeoutMs: 20000\ncollectTimeoutMs: 1600\n`;
-		const misleadingConfig = `endpoint: http://127.0.0.1:${wrong.port}\nrequestTimeoutMs: 1\nreportConfirmationTimeoutMs: 20000\ncollectTimeoutMs: 1\n`;
+		const config = `endpoint: http://127.0.0.1:${address.port}\nrequestTimeoutMs: 700\nreportConfirmationTimeoutMs: 20000\napproveConfirmationTimeoutMs: 60000\ncollectTimeoutMs: 1600\n`;
+		const misleadingConfig = `endpoint: http://127.0.0.1:${wrong.port}\nrequestTimeoutMs: 1\nreportConfirmationTimeoutMs: 20000\napproveConfirmationTimeoutMs: 60000\ncollectTimeoutMs: 1\n`;
 		const manager = await promptDock("manager", { config, misleadingConfig }); cleanup.unshift(() => manager.close());
 		const node = await promptDock("node", { config, misleadingConfig }); cleanup.unshift(() => node.close());
 		expect(manager.root.workDir).not.toBe(node.root.workDir);

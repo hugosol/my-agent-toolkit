@@ -373,8 +373,8 @@ export interface OmpExtensionApi {
 	 * This is the one native surface a fact reaches the adapter on outside any delivery of its own:
 	 * the frames stating what each subagent execution had run when they were emitted, which is the
 	 * only route that carries a kept-alive subagent's follow-up turns. The bus is the harness's own
-	 * and is shared with every extension in the process; the adapter reads two channels from it and
-	 * publishes nothing on it. Optional: a surface that publishes no bus is observed on the
+	 * and is shared with every extension in the process; the adapter reads provider channels and
+	 * publishes opt-in native confirmation attention through `herdr:blocked`. Optional: a surface that publishes no bus is observed on the
 	 * delegation tool's payloads alone, and an execution only the frames state is then unreported
 	 * rather than guessed.
 	 */
@@ -384,6 +384,7 @@ export interface OmpExtensionApi {
 /** The minimal event-bus surface this adapter subscribes on: one channel's own handler, and the unsubscribe back. */
 export interface OmpEventBus {
 	on(channel: string, handler: (data: unknown) => void): () => void;
+	emit?(channel: string, data: unknown): void;
 }
 
 /** The native contribution payload a run-initiation handler may return. */

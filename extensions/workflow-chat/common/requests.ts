@@ -32,6 +32,7 @@ export class WorkflowRequests {
 	}
 
 	get reportConfirmationTimeoutMs(): number { return Number(this.#context.config.reportConfirmationTimeoutMs); }
+	get approveConfirmationTimeoutMs(): number { return Number(this.#context.config.approveConfirmationTimeoutMs); }
 
 	/** Keep a pending interaction tied to the same actual Session as its HTTP request. */
 	interactionSignal(sessionId: string, signal?: AbortSignal): AbortSignal {
@@ -56,6 +57,8 @@ export class WorkflowRequests {
 		readonly message: string;
 		/** Result approval asks only the business question; chief previews retain full wire payload. */
 		readonly includePayload?: boolean;
+		readonly timeoutMs?: number;
+		readonly notifyOnWait?: boolean;
 	}, signal?: AbortSignal, confirm?: ToolExecutionDelivery["confirm"]): Promise<WorkflowResponse> {
 		const prepared = this.#prepare(sessionId, params, signal);
 		const notSent = (reason: string): WorkflowResponse => ({ isError: false, notSent: true, body: {
@@ -68,7 +71,7 @@ export class WorkflowRequests {
 			approved = await confirm({
 				...preview,
 				message: preview.includePayload === false ? preview.message : `${preview.message}\n\n完整 HTTP JSON 载荷：\n${JSON.stringify(JSON.parse(prepared.body), null, 2)}\n\n只有明确选择“是”才会发送。`,
-				timeoutMs: this.reportConfirmationTimeoutMs,
+				timeoutMs: preview.timeoutMs ?? this.reportConfirmationTimeoutMs,
 				signal: prepared.signal,
 			}) === true;
 		} catch { /* Failed or unavailable native interaction never grants approval. */ }

@@ -156,20 +156,20 @@ is not model-judgment or Chat-recovery acceptance. OMP's injected i/intent and t
 adapters' intentionally open wire schemas are not business identity selectors.
 
 For stale Yes, the invocation-owned observer deterministically holds the new
-worker before its first business model request through four public context
-handlers awaited in registration order; before_agent_start only marks its owned input. Each hook waits at most 25 seconds, below the
-installed OMP's existing 30-second handler budget; sequential phases preserve
-all product timeouts without holding an actual provider HTTP request. The actual
-Session/PID, phase and zero business requests are recorded. Snapshot the pre-Yes
-business/HTTP/actual notification send baseline, then return old Yes. Release
-only after the 51-second no-effect window; the actual model then supplies the
-new worker's initial work, which is attributed separately rather than to old Yes. The existing transparent
-`recovery_herdr_proxy` records and forwards installed Herdr unchanged, without
-its fault flag. Managers may still read an already-sent report through readonly
-status/collect; their final response is not an extra prerequisite inside the
-20-second confirmation window. Only later effects are attributed to
-that Yes; never delete earlier reports or rely on prompt wording to force zero
-initial work. Explicit Chat arguments route the shared confirmation observer;
+worker before its first business model request through six public `context`
+handlers awaited in registration order; `before_agent_start` only marks its
+owned input. Each hook waits at most 25 seconds, below the installed OMP's
+existing 30-second handler budget, without holding a provider HTTP request.
+Record the actual Session/PID, phase and absence of business requests. Snapshot
+the pre-Yes business/HTTP/actual notification send baseline, then return old Yes.
+Release only after the 91-second no-effect window (60 seconds for approval,
+30 seconds for HTTP, 1 second of margin). Attribute the new worker's initial
+work after release separately from old Yes. The transparent
+`recovery_herdr_proxy` forwards and records installed Herdr without its fault
+flag. Managers may read an already-sent report through readonly status/collect.
+Their final response is not required inside the approval confirmation window.
+Preserve earlier reports and verify zero initial work through the gate rather
+than prompt wording. Explicit Chat arguments route the shared confirmation observer;
 the caller never temporarily rebinds the primary worker, including on failure.
 Both entrypoints offer explicit diagnostic `--cases` selection from
 `persistence,nested-auto,nested-manual,lifecycle` (default all). Selected and

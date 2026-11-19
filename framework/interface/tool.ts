@@ -20,6 +20,8 @@ export interface ToolExecutionDelivery {
 		readonly title: string;
 		readonly message: string;
 		readonly timeoutMs: number;
+		/** Ask the host integration to signal attention while this confirmation is visible. */
+		readonly notifyOnWait?: boolean;
 		/** Additional business lifetime cancellation, alongside this tool call's signal. */
 		readonly signal?: AbortSignal;
 	}) => Promise<boolean>;
