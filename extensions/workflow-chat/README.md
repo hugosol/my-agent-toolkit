@@ -231,19 +231,19 @@ collectTimeoutMs: 5460000
 
 检查错误、`changed`、`stateCommitted`、`historyError` 和 `snapshot.inputsReady` 后才能派发；普通成功可用 `changed:true` 加就绪快照确认，不要求存在仅可能在部分失败时提供的 `stateCommitted`。错误/历史错误须保留处理，不当作干净成功；不确定先 status，不自动重提。dispatch/retry 在未就绪时被后端拒绝，所有必需输入须在任何业务节点启动前齐备。已执行不锁定后续输入编辑，但不会修改已冻结 execution 输入。本门槛只针对输入，不增加输出复核或输出就绪规则，成果验收仍由 Map 的 node 承担。
 
-## 无 Chat 的 Rust 脚本节点
+## 无 Chat 的 TypeScript 脚本节点
 
 manager 使用原 `run`／`collect` 和自动公共 Session 身份；不新增脚本执行或接收工具，不让模型填写 Run、execution、来源或接收者。后端继续检查真实 manager 归属；chief 入口及权限不变。
 
-后端在原 `snapshot.nodes[nodeId].execution` 返回 `kind:"rust_script"`、`rustScript:"create_blank_bot"|"save_bot_guides"`、独立 `id`、真实 `zone`、冻结 `inputRule`／`outputRule`／`inputs`、`autoApproved:true`、`autoClose:false`。该分支**没有** taskId、agent、chat、childRunId，不补 null 或假身份，也没有节点 Session、Tab 或 Chat 可寻找或关闭。普通 Task/Map execution 仍保留原 Chat、recover、嵌套角色和 自动／人工成果批准语义；不要把所有 retry 改成无 Chat。
+后端在原 `snapshot.nodes[nodeId].execution` 返回 `kind:"typescript"`、`script` 相对路径、独立 `id`、真实 `zone`、冻结 `inputRule`／`outputRule`／`inputs`、`autoApproved:true`、`autoClose:false`。该分支**没有** taskId、agent、chat、childRunId，不补 null 或假身份，也没有节点 Session、Tab 或 Chat 可寻找或关闭。普通 Task/Map execution 仍保留原 Chat、recover、嵌套角色和 自动／人工成果批准语义；不要把所有 retry 改成无 Chat。
 
 - `dispatch` 返回只表示已派发，不表示业务已结束。`execution.lifecycle` 的 running／succeeded／failed 与外层 node 的 pending／running／failed／completed 分开解释；生命周期结束不修改节点交接状态。逐项保留原结果、拒绝与实际效果，不因没有 Chat 判失败。
-- 脚本由后端自动报告，进入原通知与 collect；无需节点模型 report 或 manual 发送确认。collect 不含正文时按 pendingReports 的报告 ID 读取已给定 messages.jsonl 或 Run 详情，不寻找脚本 Chat。报告保留原 id、type、at、runId、nodeId、executionId、body、canComplete、outputs、真实 manager to；`from:null` 加必需 `source:{kind:"rust_script",rustScript:能力值}` 表示后端来源，不是缺少待补的发送身份。普通 Task/Map 报告仍使用原真实 Chat from，不要求新增 source。
-- Rust 的 true 建立在确定性业务检查、合法保存、完整读回和必要材料检查之上；不要求 manager 模型重复确定性 Rust 业务验收。manager 阅读结论、限制、部分效果与干预事项，当前执行最新 true 只允许、而不强迫显式 complete。报告成功、业务结束和交接不同；不自动 complete 或派发下游，旧执行 true 不能完成新执行。
-- 失败报告 false 不自动 fail。读取原 body 和 `execution.lifecycle.failure:{stage,code,message,effects}`，分别呈现 write、readBack、materials 的 succeeded／failed／not_attempted／unknown，不把未知或失败说成未发生。先显式 `run action=fail`，再按原 confirmed／reason 人工确认规则 retry；paused 先显式 resume。脚本 retry 有新 execution、无新 Chat，保留旧历史和副作用，不继承旧输出／完成资格；已结束脚本不适用 recover。Task/Map retry 仍创建新 Chat，recover 仍保留可继续的原执行与 Chat。
+- 脚本由后端自动报告，进入原通知与 collect；无需节点模型 report 或 manual 发送确认。collect 不含正文时按 pendingReports 的报告 ID 读取已给定 messages.jsonl 或 Run 详情，不寻找脚本 Chat。报告保留原 id、type、at、runId、nodeId、executionId、body、canComplete、outputs、真实 manager to；`from:null` 加必需 `source:{kind:"typescript",script:"相对脚本路径.ts"}` 表示后端来源，不是缺少待补的发送身份。普通 Task/Map 报告仍使用原真实 Chat from，不要求新增 source。
+- 脚本成功要求明确返回 success、正常退出且全部声明输出真实可读；具体业务校验由脚本实现，不能从通用成功状态推定 Bot 保存或业务材料读回。不默认要求 manager 重复脚本已完成的确定性校验。manager 阅读结论、限制、部分效果与干预事项，当前执行最新 true 只允许、而不强迫显式 complete。报告成功、业务结束和交接不同；不自动 complete 或派发下游，旧执行 true 不能完成新执行。
+- 失败报告 false 不自动 fail。读取原 body 和已有的 `execution.lifecycle.failure`；通用 failure 是可选诊断，不要求固定业务结构。创建／保存 Bot 脚本提供的 stage、code、message、effects 应原样保留，分别呈现 write、readBack、materials 的 succeeded／failed／not_attempted／unknown，不把未知、缺失诊断或失败说成未发生。先显式 `run action=fail`，再按原 confirmed／reason 人工确认规则 retry；paused 先显式 resume。脚本 retry 有新 execution、无新 Chat，保留旧历史和副作用，不继承旧输出／完成资格；已结束脚本不适用 recover。Task/Map retry 仍创建新 Chat，recover 仍保留可继续的原执行与 Chat。
 - Bot 保存成功而 saved/handoff 材料失败，不撤销已保存事实；不自动回滚、刷新 baseline 或因正文相同判成功，原 baseline 重跑仍可能 revision 冲突。报告保存／通知失败和业务效果分别保留，不因辅助通知失败重投业务。传输不确定先 status／记录核实，不自动重试。
 
-两宿主的受控原生专项入口是 `bun test tests/harness-dock/manager-script-protocol.test.ts`。它实际加载 OMP/Pi 正常 auto 入口（含嵌套同载），调用 run／collect 和宿主原生 read，读取真实临时 messages.jsonl，并在后续 provider 请求中观察原执行、报告、错误和部分效果；覆盖显式 complete、fail／confirmed retry、旧报告拒绝透传和身份字段拒绝。工具、adapter、HTTP 与 Session 保持真实，provider 和 HTTP 对端的结果／拒绝是受控条件。它不证明后端 Rust 执行、状态门禁、真实模型理解或 H1/P34、H2/P35 会话闭环已完成，也不重复认领后端验收。保存材料及跨仓接入步骤见 [运行手册](OPERATIONS.md#无-chat-脚本的原生协议专项)。
+两宿主的受控原生专项入口是 `bun test tests/harness-dock/manager-script-protocol.test.ts`。它实际加载 OMP/Pi 正常 auto 入口（含嵌套同载），调用 run／collect 和宿主原生 read，读取真实临时 messages.jsonl，并在后续 provider 请求中观察原执行、报告、错误和部分效果；覆盖显式 complete、fail／confirmed retry、旧报告拒绝透传和身份字段拒绝。工具、adapter、HTTP 与 Session 保持真实，provider 和 HTTP 对端的结果／拒绝是受控条件。它不证明后端 TypeScript 脚本执行、状态门禁、真实模型理解或 H1/P34、H2/P35 会话闭环已完成，也不重复认领后端验收。保存材料及跨仓接入步骤见 [运行手册](OPERATIONS.md#无-chat-脚本的原生协议专项)。
 
 ## run 基础状态动作
 

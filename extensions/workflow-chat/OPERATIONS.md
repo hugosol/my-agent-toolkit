@@ -69,7 +69,7 @@ pi -e D:/service/my-agent-toolkit/entrypoints/pi-auto/node-chat.ts
 
 ### 无 Chat 脚本的原生协议专项
 
-角色部署不变：manager 使用上列 OMP/Pi 的正常 manager-chat auto 入口；脚本由后端内置 Rust 执行，不安装 node-chat、解释器或脚本专用工具，不建立脚本 Chat／Tab。升级后在新建 manager Session 消费更新指引，已有 Session 的持久指引不热更新。字段与处置以 [无 Chat 的 Rust 脚本节点](README.md#无-chat-的-rust-脚本节点) 为准；配套后端的长期公开表示由其 `docs/workflow-runtime.md`、`docs/contracts/rust-script-bots.schema.json` 和字面实例维护。
+角色部署不变：manager 使用上列 OMP/Pi 的正常 manager-chat auto 入口；脚本由后端调用已有 Bun 执行用户维护的 TypeScript，不安装 node-chat 或脚本专用工具，不建立脚本 Chat／Tab。升级后在新建 manager Session 消费更新指引，已有 Session 的持久指引不热更新。字段与处置以 [无 Chat 的 TypeScript 脚本节点](README.md#无-chat-的-typescript-脚本节点) 为准；配套后端的长期公开表示由其 `docs/workflow-runtime.md`、`docs/contracts/rust-script-bots.schema.json` 和字面实例维护。
 
 在本 toolkit worktree 根使用 Bun 1.4.4 和 frozen lock，选择已有宿主，不修改全局安装、PATH、配置或用户会话。示例中的原始 toolkit 根、Pi 和 Node 必须换成实际参与安装的绝对位置：
 
@@ -87,7 +87,7 @@ bun run check:integrations
 bun run test
 ```
 
-专项在两个实际宿主的同一原生 manager＋node 嵌套 Session 中加载正常入口，使用真实 run／collect、自动 Session、HTTP 和原生 read 读取测试独占 messages.jsonl，并核对结果确实进入后续模型请求。受控对端提供无 Chat 的派发／成功报告、业务失败和已保存但材料失败、显式 fail／retry 的独立执行、recover 拒绝及旧报告完成拒绝；它检查错误和实际效果不丢失、confirmed=false 原样透传、非法身份不发送、无隐式下游派发。`captures/`、`sessions/` 和 `host.json` 保留 provider 请求、原生 frames／stderr／HTTP；每次运行使用独占目录，关闭并等待所属宿主退出、销毁回环连接后清理临时部署。受控工具调用不是模型自主决定，受控拒绝也不是后端门禁证明；不证明真实 Rust 业务、P34/P35、H1/H2 已通过。
+专项在两个实际宿主的同一原生 manager＋node 嵌套 Session 中加载正常入口，使用真实 run／collect、自动 Session、HTTP 和原生 read 读取测试独占 messages.jsonl，并核对结果确实进入后续模型请求。受控对端提供无 Chat 的派发／成功报告、业务失败和已保存但材料失败、显式 fail／retry 的独立执行、recover 拒绝及旧报告完成拒绝；它检查错误和实际效果不丢失、confirmed=false 原样透传、非法身份不发送、无隐式下游派发。`captures/`、`sessions/` 和 `host.json` 保留 provider 请求、原生 frames／stderr／HTTP；每次运行使用独占目录，关闭并等待所属宿主退出、销毁回环连接后清理临时部署。受控工具调用不是模型自主决定，受控拒绝也不是后端门禁证明；不证明真实 TypeScript 脚本业务、P34/P35、H1/H2 已通过。
 
 跨仓验收复用正常 manager 入口和上述专项，不复制第二套工具或后端验收。完整回归的 `HERDR_BOT_REPO`、独立绝对 `CARGO_TARGET_DIR`、`HERDR_BOT_BINARY`（safe_shutdown_shell）和 `HERDR_BOT_METADATA` 必须由参与后端的隔离验收提供，并先构建安全壳与 herdr-fixture；缺失时保留失败，不回落生产可执行文件运行关机检查。真实会话另须留证：dispatch 返回时业务尚未结束；自动通知／collect 后按报告 ID 读取；生命周期结束时 node 仍待显式 complete；失败先 fail，修复并经原确认 retry 后有新 execution、无新 Chat，旧 true 不放行新执行。保存两仓构建／锁文件身份、原生会话工具、实际配置／文件／报告及清理结果，最终真实模型／人工 H1/H2 确认由跨仓验收独立完成。
 

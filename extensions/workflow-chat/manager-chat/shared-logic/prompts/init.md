@@ -6,17 +6,17 @@
 - **身份**由公共 Session 提供。调用时不填写 sessionId、Run、执行或接收者，也不用名称或 cwd 推断身份。
 - **显式推进**：ready 表示可派发，不表示已派发；交接、恢复派发资格和实际启动执行是不同动作。
 
-# 无 Chat 的 Rust 脚本节点
+# 无 Chat 的 TypeScript 脚本节点
 
-后端公开 execution 的 `kind: "rust_script"`、`rustScript: "create_blank_bot"|"save_bot_guides"` 表示固定 Rust 工作。使用原 `run` / `collect`，不新增脚本工具或单独接收工具，不填写 Run、execution、来源或收件者身份。此分支没有 taskId、agent、chat、childRunId，没有节点 Chat、Session 或 Tab 可供寻找、恢复或关闭；不要把缺少 Chat 当作派发失败。普通 Task/Map 的 Chat 和嵌套角色规则不变。
+后端公开 execution 的 `kind: "typescript"` 与 `script` 相对路径表示由已有 Bun 执行的用户脚本。使用原 `run` / `collect`，不新增脚本工具或单独接收工具，不填写 Run、execution、来源或收件者身份。此分支没有 taskId、agent、chat、childRunId，没有节点 Chat、Session 或 Tab 可供寻找、恢复或关闭；不要把缺少 Chat 当作派发失败。普通 Task/Map 的 Chat 和嵌套角色规则不变。旧 `rust_script` / `rustScript` 仅用于历史记录只读展示，不作为当前派发协议，不改写旧记录。
 
 - `dispatch` 返回表示已派发，不表示业务结束；不等待业务完成才解释派发结果。`execution.lifecycle.status` 的 running / succeeded / failed 是本次工作生命周期，外层 node.status 是 pending / running / failed / completed；执行结束与 node 交接不能混同。
-- 脚本固定自动成果批准（autoApproved=true、autoClose=false），仅本次成功并通过既有结果校验后由后端批准和自动报告，不等待节点模型调用 approve/report 或用户确认，也无需关闭会话。自动报告进入原通知/collect；collect 不含正文时，按 pendingReports 标识读取已提供的 messages.jsonl 或 Run 详情，不期待节点 Chat。报告 `from=null` 且 `source={kind:"rust_script",rustScript:能力值}` 是合法后端来源，不伪造发送 Session；原 body、canComplete、outputs、executionId 和 manager to 均保持原归属。
-- 成功 true 表示 Rust 已完成确定性业务检查、合法写入、完整读回及必要材料检查；不要求模型重复确定性 Rust 业务验收。阅读报告结论、限制、部分效果及待决事项，当前执行最新 true 只允许 manager 显式 complete，不强迫立即完成。报告或 succeeded 不自动 complete，不自动派发下游；旧报告不能完成新执行，缺字段/最新 false 仍遵守原门禁。
+- 脚本固定自动成果批准（autoApproved=true、autoClose=false），仅本次成功并通过既有结果校验后由后端批准和自动报告，不等待节点模型调用 approve/report 或用户确认，也无需关闭会话。自动报告进入原通知/collect；collect 不含正文时，按 pendingReports 标识读取已提供的 messages.jsonl 或 Run 详情，不期待节点 Chat。报告 `from=null` 且 `source={kind:"typescript",script:"相对脚本路径.ts"}` 是合法后端来源，不伪造发送 Session；原 body、canComplete、outputs、executionId 和 manager to 均保持原归属。
+- 成功要求脚本明确返回 success、正常退出且全部声明输出真实可读；正常函数返回本身不构成成功。具体业务校验由脚本实现，不能从通用成功状态推定所有脚本都完成了 Bot 保存或业务材料读回。阅读报告结论、限制、部分效果及待决事项，不默认重复脚本已完成的确定性校验；当前执行最新 true 只允许 manager 显式 complete，不强迫立即完成。报告或 succeeded 不自动 complete，不自动派发下游；旧报告不能完成新执行，缺字段/最新 false 仍遵守原门禁。
 
-脚本失败时，保留报告原错误和 `execution.lifecycle.failure` 的 stage、code、message、effects；write、readBack、materials 的 succeeded / failed / not_attempted / unknown 分别表示实际效果，不把 unknown 说成未发生。业务失败报告 false 不自动把 node 记为 failed；先显式 fail，再按原确认规则 retry（明确 confirmed、reason，人工检查已有写入、材料和旧副作用；paused 先显式 resume）。重跑产生新执行，但没有新 Chat；旧执行和报告保留，新执行不继承旧输出或完成资格。已结束的脚本不适用 recover，不创建 Chat 代替恢复。
+脚本失败时，保留报告原错误及已有的 `execution.lifecycle.failure`；通用脚本的 failure 是可选诊断，不要求固定业务结构。创建/保存 Bot 脚本提供的 stage、code、message、effects 应原样保留；其中 write、readBack、materials 的 succeeded / failed / not_attempted / unknown 分别表示实际效果，不把 unknown 或缺失诊断说成未发生。业务失败报告 false 不自动把 node 记为 failed；先显式 fail，再按原确认规则 retry（明确 confirmed、reason，人工检查已有写入、材料和旧副作用；paused 先显式 resume）。重跑产生新执行，但没有新 Chat；旧执行和报告保留，新执行不继承旧输出或完成资格。已结束的脚本不适用 recover，不创建 Chat 代替恢复。
 
-已保存后材料生成/读回失败，不能据此声称业务写入回滚；不自动刷新 baseline，不因正文相同认定成功，原 baseline 重跑仍可能因 revision 冲突拒绝。报告保存与通知分开，通知失败不撤销已保存报告或 outputs，不自动重投业务。传输不确定先查 status/记录，再显式决定。
+已保存后材料生成/读回失败，不能据此声称业务写入回滚。涉及 Bot baseline 的保存失败不自动刷新 baseline，不因正文相同认定成功，原 baseline 重跑仍可能因 revision 冲突拒绝。报告保存与通知分开，通知失败不撤销已保存报告或 outputs，不自动重投业务。传输不确定先查 status/记录，再显式决定。
 
 # 同一 Session 的内外职责
 

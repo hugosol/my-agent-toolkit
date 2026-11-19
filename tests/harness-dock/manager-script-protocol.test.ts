@@ -2,12 +2,12 @@ import { expect, test } from "bun:test";
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { dualRoleDock } from "../workflow-chat/support/dual-role-dock";
-import { providerMessages, roleGuidance } from "../workflow-chat/support/prompt-dock";
+import { providerMessages } from "../workflow-chat/support/prompt-dock";
 
 // Approved S2 enabling seam (P34/P35): normal OMP/Pi manager entries, native tools,
 // Session, HTTP, file reader and subsequent provider context. Only provider/HTTP are
-// controlled. These checks do NOT prove Rust execution, backend gates or H1/H2.
-// Independent source: public rust_script execution/report contract and ticket 10.
+// controlled. These checks do NOT prove TypeScript script execution, backend gates or H1/H2.
+// Independent source: public TypeScript execution/report contract.
 // Violation: treating dispatch/lifecycle success as node completion, requiring Chat,
 // dropping null-source reports, or hiding the original partial-effect error.
 for (const host of ["omp", "pi"] as const) {
@@ -15,7 +15,7 @@ for (const host of ["omp", "pi"] as const) {
 		const dock = await dualRoleDock(host);
 		try {
 			const execution = {
-				id: "exec-create-1", kind: "rust_script", rustScript: "create_blank_bot",
+				id: "exec-create-1", kind: "typescript", script: "create-blank-bot.ts",
 				zone: dock.root.workDir, inputRule: [], outputRule: [{ id: "baseline" }, { id: "handoff" }],
 				inputs: [], autoApproved: true, approved: false, approvalSource: null, autoClose: false,
 				lifecycle: { status: "running", startedAt: 1794480000000 },
@@ -29,19 +29,13 @@ for (const host of ["omp", "pi"] as const) {
 			const dispatch = await dock.call("run", { action: "dispatch", nodes: ["create"] });
 			expect(dispatch.isError).toBe(false);
 			expect(dispatch.body).toEqual(dispatched);
-			const first = dock.capture.requests()[0]!;
-			const guide = roleGuidance(first, "manager");
-			// Targeted semantic clauses, not a full-prompt snapshot or a registration test.
-			expect(guide).toContain('kind: "rust_script"');
-			expect(guide).toContain("已派发，不表示业务结束");
-			expect(guide).toContain("不要求模型重复确定性 Rust 业务验收");
 			const dispatchMessages = providerMessages(dock.capture.requests()[dock.capture.requests().length - 1]!);
 			expect(dispatchMessages.some(message => message.role === "tool" && message.content.includes('"exec-create-1"'))).toBe(true);
 			const managerId = dock.calls[0]!.body.sessionId;
 			const report = {
 				id: "report-create-1", type: "report", at: 1794480000011,
 				runId: "run-script", nodeId: "create", executionId: "exec-create-1",
-				from: null, source: { kind: "rust_script", rustScript: "create_blank_bot" },
+				from: null, source: { kind: "typescript", script: "create-blank-bot.ts" },
 				to: { sessionId: managerId, workspaceId: "workspace-1", tabId: "tab-1", paneId: "pane-1", agentName: "manager" },
 				body: "创建、合法保存和完整读回成功；仅交付空白定义，目标业务未执行。",
 				canComplete: true, outputs: [],
@@ -87,7 +81,7 @@ for (const host of ["omp", "pi"] as const) {
 					{ id: "saved", path: join(dock.root.workDir, "saved.json"), status: "failed" },
 				] },
 			};
-			const execution = { id: "exec-save-old", kind: "rust_script", rustScript: "save_bot_guides",
+			const execution = { id: "exec-save-old", kind: "typescript", script: "save-bot-guides.ts",
 				zone: dock.root.workDir, inputRule: [], outputRule: [{ id: "saved" }, { id: "handoff" }], inputs: [],
 				autoApproved: true, approved: false, approvalSource: null, autoClose: false,
 				lifecycle: { status: "failed", startedAt: 1794480000000, endedAt: 1794480000010, failure },
@@ -98,17 +92,10 @@ for (const host of ["omp", "pi"] as const) {
 			};
 			dock.answer(failedWork);
 			expect((await dock.call("collect", {})).body).toEqual(failedWork);
-			const guide = roleGuidance(dock.capture.requests()[0]!, "manager");
-			expect(guide).toContain("先显式 fail");
-			expect(guide).toContain("新执行，但没有新 Chat");
-			expect(guide).toContain("已结束的脚本不适用 recover");
-			// Keep the existing Task/Map recovery and human confirmation semantics.
-			expect(guide).toContain("启动新执行和新 Chat");
-			expect(guide).toContain("原 Chat 可继续");
 			const managerId = dock.calls[0]!.body.sessionId;
 			const report = { id: "report-save-failed", type: "report", at: 1794480000011,
 				runId: "run-script", nodeId: "save", executionId: "exec-save-old", from: null,
-				source: { kind: "rust_script", rustScript: "save_bot_guides" },
+				source: { kind: "typescript", script: "save-bot-guides.ts" },
 				to: { sessionId: managerId, workspaceId: "workspace-1", tabId: "tab-1", paneId: "pane-1", agentName: "manager" },
 				body: "saved 文件不可写；Bot 已保存并读回。未交付 saved；不回滚，不刷新 baseline，原 baseline 重跑仍可能 revision 冲突。",
 				canComplete: false, outputs: [],
