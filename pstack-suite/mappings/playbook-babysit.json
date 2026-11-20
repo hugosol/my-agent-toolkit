@@ -1,0 +1,9 @@
+[
+  {
+    "name": "run-github-observer-locally",
+    "reason": "Use the delivered read-only Bun CLI with explicit path and scope, keeping the Origin procedure.",
+    "anchor": "- Use `gh` by default, or `origin pr` when Origin's CLI resolves the repository. Never require Graphite (`gt`). On GitHub, status comes from the mode's watcher at `scripts/watch-pr/watch-pr`. In `check` mode pass `--status-only`. The watcher covers GitHub only. On Origin, use `origin pr view <pr> --checks` and `origin pr checks <pr> --watch`.",
+    "find": "On GitHub, status comes from the mode's watcher at `scripts/watch-pr/watch-pr`. In `check` mode pass `--status-only`. The watcher covers GitHub only.",
+    "replace": "On GitHub, run `bun \"<absolute poteto-mode directory>/scripts/watch-pr/cli.ts\" --pr <number>` from the intended checkout; pass `--stack` for a connected stack and `--status-only` in `check` mode. Supply `--owner` and `--repo` when the checkout cannot identify the target. This watcher only observes GitHub; it cannot push, reply, enqueue, or merge."
+  }
+]

@@ -10,6 +10,6 @@
     "name": "respect-review-only-methods",
     "reason": "Keep read-only investigation and local prototypes independent of delivery side effects.",
     "anchor": "Invoked at the end of every other playbook.",
-    "replace": "Use this when the selected task calls for publishing a PR and the operator and repository authorize it."
+    "replace": "Use at the end of a delivery playbook that calls for publishing a PR, or early when the selected autopilot playbook says so. Opening a PR is not a merge or deploy grant. Follow the task scope and existing project and forge requirements; read-only work does not publish."
   }
 ]

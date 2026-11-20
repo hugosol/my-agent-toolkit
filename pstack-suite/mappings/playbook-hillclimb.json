@@ -1,10 +1,10 @@
 [
   {
-    "name": "no-implied-wake-automation",
-    "reason": "Preserve the explicit local optimization loop without referencing an undelivered scheduler/playbook.",
+    "name": "reuse-local-observation-cadence",
+    "reason": "Use the delivered live-session observation cadence without replacing hillclimb's own stopping condition.",
     "anchor": "   Each iteration ends in a check before the next begins (the **sequence-verifiable-units** principle skill). If the run is unattended, borrow only the wake mechanism from the Autonomous run playbook (`playbooks/autonomous-run.md`), not its stop rule.",
     "find": "If the run is unattended, borrow only the wake mechanism from the Autonomous run playbook (`playbooks/autonomous-run.md`), not its stop rule.",
-    "replace": "Keep that stop rule for an unattended current session too. Do not assume scheduled wake-ups or continuation after the session exits."
+    "replace": "For unattended work, borrow the live-session observation cadence from [Autonomous run](autonomous-run.md), not its stopping condition."
   },
   {
     "name": "resolve-suite-role",

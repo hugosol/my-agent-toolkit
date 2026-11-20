@@ -3,8 +3,7 @@
     "name": "use-owned-portable-resume-note",
     "reason": "Place the note outside committed source in an owned directory rather than requiring a POSIX path.",
     "anchor": "4. Write the resume note off-context. Capture intent, what you were doing, progress and what's verified, current state, next steps, key files, and gotchas. For the compaction trigger write it to a file like `/tmp/<slug>-resume.md`. If a show-me-your-work trail exists, point at it instead of duplicating it.",
-    "find": "write it to a file like `/tmp/<slug>-resume.md`",
-    "replace": "write it in the run’s owned scratch directory as `<slug>-resume.md`"
+    "replace": "4. Write the resume note in the run’s owned scratch directory as `<slug>-resume.md`, before compacting or leaving the conversation. Record intent, the current branch/worktree and WIP SHA (or why no commit was authorized), what is verified and how, current state, next action, key files, and gotchas. Carry over relevant facts from the current conversation; link an existing decision log instead of duplicating it. Give the note’s absolute path so the next OMP session can read it explicitly."
   },
   {
     "name": "scope-wip-to-owned-work",

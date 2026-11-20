@@ -1,0 +1,12 @@
+### Worktree and simulator cleanup
+
+1. Snapshot free space on the affected volume. From the parent of this playbook’s directory run `bash scripts/worktree-audit.sh [-b <pr-base-ref>] [--no-pr] [repo-path]` (Git Bash on Windows); elsewhere use the script’s absolute path. It reads linked paths from `git worktree list`, reports size, age, ancestry, local work, remote state and optional PR metadata, and suggests a bucket. `-b origin/<branch>` targets the actual PR base and can fetch it, updating Git metadata (`FETCH_HEAD`, the tracking ref and downloaded objects). Pass a verified local base to avoid the helper’s fetch, and `--no-pr` to skip forge queries. `LAST_CHAT` is not discovered.
+2. The bucket is advice, not permission. The pinned and active chats are the real artifact (principle-prove-it-works). Get that set from the user or sidebar and cross-check every candidate. The lever has marked `safe` a worktree the user had pinned, so the pinned set wins.
+3. Verify usage before deleting. Use the current conversation, user-provided active and pinned sessions, and explicitly supplied handoff records. Check adjacent arena and repro worktrees that may belong to those sessions. `-` in `LAST_CHAT` or `PR` is not clearance. If a candidate’s use or PR state cannot be resolved, hold it. Do not search unrelated sessions.
+4. Pause on irreversible loss. `wip:N` is N tracked uncommitted edits. Show the diff and get a decision first, since removing a clean worktree is recoverable from its branch but uncommitted work is gone. `scratch:N` is untracked throwaway, safe to drop, but name the files. Per Autonomy, clean and merged and not-in-use proceeds. `wip` and in-use pause.
+5. Remove only the confirmed set by exact path with `git worktree remove <path>`. Use `--force` only for a specifically confirmed worktree with disposable local files. Do not delete branch refs, run a broad prune, or remove leftover files whose ownership is uncertain. Re-list the worktrees and check the same volume’s free space.
+6. Consider simulator and build caches only on a platform with the applicable tooling and within the requested cleanup scope. Name the resources and leave user evidence untouched.
+
+This is the one playbook that deletes user state with no code review to catch a slip, so the gates above are the review.
+
+**Reply:** affected volume free space before and after, space reclaimed, the worktrees removed, and a one-line reason for each held back (active use, unresolved PR or history evidence, or uncommitted work).

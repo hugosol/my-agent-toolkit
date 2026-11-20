@@ -64,7 +64,7 @@ How explains the current mechanism, why cites its historical reasons, and teach 
 
 ## Playbooks and principles
 
-Playbooks are steps, not slash commands. The [generated mode](../poteto-mode/SKILL.md#playbooks) is the default route list for investigation, design, implementation, refactoring, bug fixing, performance, prototype, visual parity, forensics and handoff. The [principles](../poteto-mode/SKILL.md#principles) are hidden leaf skills the mode reads on demand. The mode should cite only leaves it actually read.
+Playbooks are steps, not slash commands. The [generated mode](../poteto-mode/SKILL.md#playbooks) is the default route list for investigation, design, implementation, refactoring, bug fixing, performance, prototype, visual parity, forensics, handoff, PR opening and babysitting, shipping a verified stack, and local autonomous or autopilot runs. The [principles](../poteto-mode/SKILL.md#principles) are hidden leaf skills the mode reads on demand. The mode should cite only leaves it actually read.
 
 ## Fix a run that went wrong
 

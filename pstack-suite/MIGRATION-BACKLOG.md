@@ -16,9 +16,9 @@
 
 ## 2. 云端并行执行环境
 
-来源：`skills/swarm/SKILL.md`、`skills/poteto-mode/playbooks/autopilot-full.md`、`shipping.md`。
+来源：`skills/swarm/SKILL.md`、`skills/poteto-mode/playbooks/autopilot-full.md`、`skills/poteto-mode/playbooks/shipping.md`。
 
-暂缓 Cursor 云 VM 的供应、远端执行、云 agent URL、机器生命周期等集成。[swarm](generated/skills/swarm/SKILL.md)、[arena](generated/skills/arena/SKILL.md) 与 [interrogate](generated/skills/interrogate/SKILL.md) 的本地流程使用 OMP task 和明确绑定的席位；独立 checkout 不等于 VM 或安全沙箱，也不保证本机关机后继续工作。
+暂缓 Cursor 云 VM 的供应、远端执行、云 agent URL、机器生命周期等集成。[swarm](generated/skills/swarm/SKILL.md)、[arena](generated/skills/arena/SKILL.md)、[interrogate](generated/skills/interrogate/SKILL.md)、[Shipping](generated/skills/poteto-mode/playbooks/shipping.md) 与 [Autopilot-full](generated/skills/poteto-mode/playbooks/autopilot-full.md) 的本地流程使用 OMP task；独立 checkout 不等于 VM 或安全沙箱，也不保证宿主退出后继续工作。
 
 后续专题：远端部署与资源供应、环境和凭据隔离、产物取回、进程故障与恢复。herdr 后端重启后旧 Run 不自动接管，不能视为现成持久执行队列。
 

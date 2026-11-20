@@ -1,0 +1,15 @@
+[
+  {
+    "name": "open-the-delivered-full-playbook",
+    "reason": "Use the compatible sibling method, retaining the no-merge override.",
+    "anchor": "Run the Autopilot-full playbook, but do not merge.",
+    "replace": "Run [Autopilot-full](autopilot-full.md), but do not merge."
+  },
+  {
+    "name": "keep-the-no-merge-rule-on-every-audit",
+    "reason": "Carry the original no-merge override into native task kickoffs and live audits in place of Cursor timer prompts.",
+    "anchor": "1. **In place of step 5, stop at verified.** Stop when each PR is verified and green at its current head, then hand the PRs to the operator. After the handoff, nobody pushes without the operator's go. Every loop tick prompt names this file, so each tick sees the no-merge rule.",
+    "find": "Every loop tick prompt names this file, so each tick sees the no-merge rule.",
+    "replace": "Every owner and replacement kickoff names this file, and every live audit reads it so the no-merge rule stays in scope."
+  }
+]

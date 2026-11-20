@@ -70,6 +70,21 @@ bun run pstack:check
 
 同一个 `-e …/pstack-suite/generated` 加载原生 task 的只读结果观察器。对已确认角色的终态结果，观察器追加 `pstack task facts`，区分配置的模型、原生有效选择器、实际模型身份、provider 路由、推理等级和已观察到的偏离；不改变任务或重新派发。没有可用实际值时报告未知。Provider 路由不一定等于模型厂商；只有以已知的实际模型和厂商资料核实后，才能计入跨厂商比较，不从席位名推断。模型效果、评分和综合质量不在机制验证范围内。
 
+## 本地 PR 交付与观察
+
+[打开 PR](generated/skills/poteto-mode/playbooks/opening-a-pr.md)只负责创建 ready PR；[Babysit](generated/skills/poteto-mode/playbooks/babysit.md)最多驱动到 merge-ready，不合并、不 retarget、不 rebase；[Shipping](generated/skills/poteto-mode/playbooks/shipping.md)在操作者给定的交付范围内，要求独立验证、从栈底连续落地并回读真实目标分支。开启模式不是交付授权，也不新增统一逐项确认。[Autopilot-full](generated/skills/poteto-mode/playbooks/autopilot-full.md)只合入获授权队列中通过验证的项；[Autopilot-stack](generated/skills/poteto-mode/playbooks/autopilot-stack.md)交到 verified 即止，不合并。[Autonomous run](generated/skills/poteto-mode/playbooks/autonomous-run.md)使用活跃会话中的有界等待和本地 task，不承诺定时唤醒或退出后续跑。现有项目、宿主和 forge 门禁照常生效。
+
+GitHub watcher 使用已安装的 Bun、`gh` 和 Git（仅目标推断需要 Git）。从目标 checkout 执行；也可以用 `--owner`、`--repo` 和 `--pr`/`--stack-prs` 显式指定目标：
+
+```text
+bun "<absolute poteto-mode directory>/scripts/watch-pr/cli.ts" --pr 31 --status-only --pretty
+bun "<absolute poteto-mode directory>/scripts/watch-pr/cli.ts" --queued-stack --stack-prs 31,32 --timeout 300
+```
+
+`--help` 列出所有选项。默认输出 JSON；轮询输出 NDJSON，`--pretty` 输出便于阅读的报告。`QUEUE` 是观察列表，不是 forge 入列成功；`queued` 是 GitHub 观察到的队列条目，`auto-merge-requested` 单独报告。`MERGED` 和 `COMPLETE` 给出已观察到的实际 base；合入父分支不代表已到 trunk。后续查询失败时，错误和此前观察到的合并会同时保留在输出中。watcher 的 GitHub 请求只读，不创建、回复、入队、fetch、推送、合并或删除；PR 写操作由相应 playbook 的独立工具完成。Origin 走各 playbook 的原生命令，不用 GitHub watcher。
+
+Windows 机械检查：`bun run test:pstack --test-name-pattern='P38|P36 installed OMP reads Shipping'`。设置 `PSTACK_FORGE_EVIDENCE_DIR` 可保存命令、退出、forge 请求、消费到的状态文本及本次 Git/OMP 清理证据。受控 forge 响应不代表真实 GitHub 或 Origin 已验收，也不评价模型的 shipping 决策。
+
 ## 更新流程
 
 [manifest.json](manifest.json) 记录上游仓库、固定提交和版本，以及每个源文件及其确切交付位置。上游授权保留在[交付许可证](generated/LICENSE)。[待迁移事项](MIGRATION-BACKLOG.md) 不属于当前资源清单。
@@ -130,6 +145,23 @@ Cursor Team Kit 固定提交中，这三个技能各只有一个 `SKILL.md`；�
 **包内资产与运行前提：**这些创建、维护和核查技能的上游目录仅交付 Markdown（包括 [Notes feature map 示例](generated/skills/create-verification-skill/references/feature-map-example/README.md)），没有捆绑生成器、验证驱动或基准脚本。示例中的 Notes 应用、`control-notes` 和 `notes` 不随包交付。行为验证使用目标项目的实际启动命令、测试数据和 UI/CLI/API 驱动；宽影响面复核若用 arena，需要其配置完毕的工作流及角色。TDD 与性能核查使用项目现有测试、测量和分析工具。形式验证使用目标项目明确选定的验证器；TLA+ 的可执行套件资产与外部 Bun、Java、TLC 前提见[下节](#windows-statechart)。有引用不等于已执行。
 
 本分区使用 `bun run test:pstack --test-name-pattern=P34`；设定 `PSTACK_VERIFICATION_EVIDENCE_DIR` 为本次独占证据位置可保留原生 OMP 读取的请求、事件、退出和清理记录。测试不评价模型生成的验证方案或自主执行质量。
+
+### 决策日志、worktree 审计与交接
+
+运行下面的命令需要 Bash（Windows 用 Git for Windows 自带的 Git Bash，不是 WSL）；审计还需要支持 `git worktree list --porcelain -z` 的 Git，以及 `du` 和支持 `sort -h` 的 coreutils。用工作区自有的日志路径和要审计的仓库；下面从 toolkit 根执行。
+
+```bash
+bash pstack-suite/generated/skills/show-me-your-work/scripts/log.sh \
+  "C:/owned run/audit/decisions.tsv" review "Keep the change" "Checks passed" "tests/report.txt" done
+bash pstack-suite/generated/skills/poteto-mode/scripts/worktree-audit.sh \
+  --base origin/main --no-pr "C:/owned repo"
+```
+
+- [决策日志](generated/skills/show-me-your-work/SKILL.md)使用随包的 [TSV 模板](generated/skills/show-me-your-work/references/decision-log-template.tsv)。辅助命令需要六个参数，创建缺失父目录，为新建或空文件追加表头，再追加一行 UTC 记录。单元格内 Tab、CR 和 LF 各替换为一个空格；前导 `=`, `+`, `-`, `@` 加单引号。已有行不改写；同一日志使用一个写入者。
+- [worktree 审计](generated/skills/poteto-mode/playbooks/worktree-cleanup.md)输出按大小排序的 TSV，排除主 worktree。`--base` 指定合入比较基线；不提供时尝试 `origin/HEAD` 所指分支、`origin/main`、`origin/master`。`origin/<branch>` 会尝试 fetch，可能更新远端跟踪 ref、`FETCH_HEAD` 和 Git 对象；即使之后返回错误，之前的效果也不会回滚。fetch 失败但本地 ref 可用时输出陈旧警告并继续。若要避免这一步，传已核实的本地 ref 或 SHA。默认可用 `jq` 和已授权的 `origin` 或 `gh` 查询 PR；`--no-pr` 跳过查询，不等于禁止 Git fetch。`PR` 为 `-` 不能证明没有 PR；`LAST_CHAT` 为 `-` 不代表没有活动会话。用法错误退出 `2`，无法完成审计退出 `1`，出错时表格可能不完整。辅助命令不删除 worktree、分支或证据；分类仅作建议。
+- [安全暂停](generated/skills/poteto-mode/playbooks/pause-safely.md)仅按明确请求，在安全边界保存本次工作及可明确读取的续接笔记。[本地续接](generated/skills/poteto-mode/playbooks/session-pickup.md)使用当前上下文与明确提供的笔记、日志、WIP 或分支，不自动读取其他会话历史或云 agent。
+
+本分区使用 `bun run test:pstack --test-name-pattern=logs-audit`（包含 P36 的日志／审计代码分区）。Windows 可用 `PSTACK_GIT_BASH` 显式选择现有的 `Git/bin/bash.exe`。设置 `PSTACK_LOGS_AUDIT_EVIDENCE_DIR` 保留日志字节、Git refs、进程退出与原生 OMP 读取记录。测试不执行删除或评价模型选择暂停点的能力。
 
 ### H1：真实 OMP TUI 开关与恢复
 
