@@ -122,6 +122,14 @@ Cursor Team Kit 固定提交中，这三个技能各只有一个 `SKILL.md`；�
 
 仅跑本分区：`bun run test:pstack -- -t 'external drivers'`。可用 `PSTACK_CHROMIUM` 和 `PSTACK_PYTHON` 指定已安装的可执行文件，用 `PSTACK_EXTERNAL_DRIVERS_EVIDENCE_DIR` 保留原始结果和截图。测试不会安装宿主或浏览器，不接触用户现有的浏览器、会话或凭据。找不到依赖或目标时失败；不会将不同页面当成成功目标。
 
+### 视频汇报
+
+在 OMP 中显式调用 [`/skill:ketchup-video`](generated/skills/ketchup-video/SKILL.md)。它沿用 Ketchup 的待决事项写法，以真实的静音横向幻灯片视频替代进展摘要。字幕烧录在画面下方的固定条带中；嵌入前检查真实解码帧、字幕位置和每页停留时间。渲染或解码失败时，说明失败并仅列出待决事项，不把文本方案当视频。
+
+固定上游的 `ketchup-video` 目录只包含技能正文，不附渲染器、辅助脚本或字体。生成的技能附有可执行的 FFmpeg 示例：在仓库外的自有工作目录提供同尺寸 PNG 幻灯片和 `captions.ass`，使用已有的 `ffmpeg`（带 `xfade`、`ass`/libass 和 `libx264`）、`ffprobe` 及可用字体。不会安装依赖或覆盖已有的 `report.mp4`。保留核验过的视频、字幕源及必要证据，仅清理自己创建的临时资源。
+
+本分区用 `bun run test:pstack --test-name-pattern=P42`。测试通过已安装的 OMP 显式读取方法并执行其渲染命令，用 FFprobe 读取元信息，再解码检查两页画面、停留、过渡及条带内不同的烧录字幕。Windows 验收还核对所属进程退出和临时目录清理。缺少工具、产物或可解码画面会失败。设定 `PSTACK_VIDEO_EVIDENCE_DIR` 为本次独占证据目录，可同时保留原生请求、进程记录、字幕源、MP4 及取样帧；受控 provider 不评价模型编排或视频叙事质量。
+
 ### 项目验证与工程核查
 
 | 要做什么 | OMP 入口 |

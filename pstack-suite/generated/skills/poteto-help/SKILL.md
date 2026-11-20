@@ -44,6 +44,7 @@ These are explicit OMP commands. Read the leaf before giving a recommendation an
 | Trace a design decision, regression or number to its source | [`/skill:why`](../why/SKILL.md) |
 | Understand a subsystem in plain language | [`/skill:teach`](../teach/SKILL.md) |
 | Catch up on changes and decisions in this chat | [`/skill:ketchup`](../ketchup/SKILL.md) |
+| Catch up with a short subtitled video and action items in text | [`/skill:ketchup-video`](../ketchup-video/SKILL.md) |
 | Restate the last reply plainly | [`/skill:bro`](../bro/SKILL.md) |
 | Assess what else a change can break | [`/skill:blast-radius`](../blast-radius/SKILL.md) |
 | Design types and boundaries before code | [`/skill:architect`](../architect/SKILL.md) |
