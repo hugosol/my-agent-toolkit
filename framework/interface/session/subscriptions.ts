@@ -71,6 +71,8 @@ export type SemanticEvent =
 export interface SemanticEventDeliveryMap {
 	readonly session_start: SessionEventDelivery;
 	readonly session_end: SessionEventDelivery;
+	/** The interactive startup input pipeline has been initialized for this session. */
+	readonly session_ready: SessionEventDelivery;
 	/** A facts delivery carries the session's current facts and no branch payload of its own. */
 	readonly session_facts: SessionEventDelivery;
 	readonly round_start: RoundDelivery;

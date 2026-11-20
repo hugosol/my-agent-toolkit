@@ -6,6 +6,7 @@ import { CONNECT_BOT } from "../definition";
 import { createConnectBotCommand } from "../shared-logic/command/command";
 import type { ManagedTimers } from "../shared-logic/managed-timer";
 import { PanelRegistrations } from "../shared-logic/panel/registration";
+import { LaunchReports } from "../shared-logic/panel/launch-reports";
 import type { SessionFacts } from "../shared-logic/session/session";
 import { applyRoundEdge } from "../shared-logic/session/state-machine";
 import { EXTENSION_REPOSITORY_ROOT } from "./startup-modes";
@@ -13,6 +14,7 @@ import { EXTENSION_REPOSITORY_ROOT } from "./startup-modes";
 /** Pi's native context also publishes the working directory and model display name. */
 type ConnectBotPiContext = PiExtensionContext & {
 	readonly cwd: string;
+	readonly sessionManager: { getSessionFile?(): string | undefined };
 	readonly model?: { readonly name?: string };
 };
 
@@ -76,6 +78,7 @@ export function connectBotPi(startupPolicy: string): (pi: PiExtensionApi) => voi
 		};
 		const implementation = defineImplementation<{
 			readonly registrations: PanelRegistrations;
+			readonly launch: LaunchReports;
 			readonly command: DirectedCommandImplementation;
 			readonly enable: (delivery: StartupDelivery) => void;
 		}>({
@@ -87,6 +90,7 @@ export function connectBotPi(startupPolicy: string): (pi: PiExtensionApi) => voi
 				}, registrations);
 				return {
 					registrations,
+					launch: new LaunchReports(),
 					command: command.command,
 					enable: delivery => {
 						const ctx = observed.current();
@@ -101,7 +105,19 @@ export function connectBotPi(startupPolicy: string): (pi: PiExtensionApi) => voi
 			subscriptions: [{
 				scope: "owner",
 				events: {
-					session_end: (state, delivery) => state.registrations.ownerEnded(delivery),
+					session_start: (state, delivery) => state.launch.started(delivery, () => {
+						const ctx = observed.current();
+						if (ctx.mode !== "tui") return undefined;
+						return {
+							agentType: "pi", cwd: ctx.cwd,
+							sessionId: ctx.sessionManager.getSessionId(), sessionFile: ctx.sessionManager.getSessionFile?.(),
+						};
+					}),
+					session_ready: (state, delivery) => state.launch.ready(delivery),
+					session_end: (state, delivery) => {
+						state.launch.ended(delivery);
+						state.registrations.ownerEnded(delivery);
+					},
 					round_start: (_state, delivery) => applyRoundEdge(delivery.owner, "round_start"),
 					round_end: (_state, delivery) => applyRoundEdge(delivery.owner, "round_end"),
 				},

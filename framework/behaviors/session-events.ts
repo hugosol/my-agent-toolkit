@@ -6,8 +6,7 @@
  * owner is seeded from its branch, and the marker area is refreshed — all before any
  * extension handler runs, so a handler observes State as the event left it rather than as
  * an earlier delivery found it, and an extension can never act on a boundary the framework
- * has not applied yet. That behavior belongs to a boundary, so the one session delivery that
- * reports a change without crossing one — `session_facts` — skips it entirely: the groups are
+ * has not applied yet. `session_facts` and `session_ready` cross no boundary: the groups are
  * reached, and nothing the framework owns moves.
  *
  * A handler's failure is its own. It is reported on the adapter's diagnostic channel — a
@@ -44,9 +43,8 @@ import { dispatchToGroups } from "./subscriptions";
  *
  * `handlers` is what the extension's assembly injected for this event kind; a kind with no
  * handler still gets the framework's own behavior, which is why a definition with no session
- * subscription at all is reconciled exactly like one with a handler. A `session_facts` delivery
- * is the exception in both directions: it reconciles nothing, and a group that subscribes nothing
- * for it simply observes nothing.
+ * subscription at all is reconciled exactly like one with a handler. `session_facts` and
+ * `session_ready` reconcile nothing and reach only their own subscribers.
  *
  * The channel a handler publishes on is the dispatch's own: it carries a notice while that
  * handler runs and is closed when the dispatch ends. That is the only channel that can speak for
@@ -64,11 +62,9 @@ export function dispatchSessionEvent(
 	startupChoice?: StartupChoice,
 ): StartupApplication | undefined {
 	let applied: StartupApplication | undefined;
-	// A facts delivery crossed no boundary: the session's own facts are re-stated, so nothing the
-	// framework owns moves — no owner's life begins or ends, no State reconciles, and the marker
-	// area is not published. The groups below are still reached; only the framework's own behavior
-	// is skipped, and only for this one kind.
-	if (session.event.kind !== "session_facts") {
+	// Only boundaries can reconcile an owner's life, State and markers. A reading of facts or
+	// input initialization still reaches subscribers without changing any of them.
+	if (session.event.kind === "session_start" || session.event.kind === "session_end") {
 		applied = state.reconcile({
 			owner: session.owner,
 			event: session.event,

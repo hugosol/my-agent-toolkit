@@ -13,7 +13,10 @@ test("P17 collect preserves five literal reasons, snapshots and body-free pendin
 		{ reason: "timeout", snapshot: { id: "run-wait", status: "running", nodes: { A: { status: "running" }, B: { status: "pending" } } }, ready: ["B"], blocked: {}, canFinish: false, pendingReports: { A: "report-still-pending" } },
 	];
 	const server = Bun.serve({ hostname: "127.0.0.1", port: 0, async fetch(request) {
-		calls.push({ path: new URL(request.url).pathname, body: await request.json() });
+		const path = new URL(request.url).pathname;
+		const body = await request.json();
+		if (path === "/api/workflow/manager/script-output") return Response.json({ runId: "fixture", observedAt: Date.now(), nodes: [] });
+		calls.push({ path, body });
 		return Response.json(replies[calls.length - 1]);
 	} });
 	const dock = await managerDock(`http://127.0.0.1:${server.port}`);

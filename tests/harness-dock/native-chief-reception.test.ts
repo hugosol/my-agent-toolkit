@@ -13,7 +13,9 @@ for (const host of ["omp", "pi"] as const) test(`${host} receives before model p
 	const release = Promise.withResolvers<void>();
 	let malformed = false;
 	const peer = Bun.serve({ hostname: "127.0.0.1", port: 0, async fetch(request) {
-		calls.push({ path: new URL(request.url).pathname, body: await request.json() });
+		const route = new URL(request.url).pathname;
+		if (request.method !== "POST" || route !== "/api/chief/reports/report-native-18/receive") return new Response("Not found", { status: 404 });
+		calls.push({ path: route, body: await request.json() });
 		arrived.resolve(); await release.promise;
 		const body = calls[0]!.body;
 		if (!body || typeof body !== "object" || !("sessionId" in body) || typeof body.sessionId !== "string") throw new Error("Missing real native session identity");

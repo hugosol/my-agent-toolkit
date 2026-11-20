@@ -20,11 +20,11 @@ export interface RoleContractDock {
 }
 
 /** S1 only: real host/tool validation and HTTP persistence; scripted model, not role obedience. */
-export async function roleContractDock(host: "omp" | "pi", endpoint: string, confirmationTimeoutMs = 20000,
+export async function roleContractDock(host: "omp" | "pi", endpoint: string, confirmationTimeoutMs?: number,
 	role: "node" | "chief" | "manager" | "dual" | "chief-report" = "node", requestTimeoutMs = 30000,
 	toolName = role === "chief" ? "chief_delegate" : role === "chief-report" || role === "manager" ? "chief_report" : "report"): Promise<RoleContractDock> {
 	if (host === "omp") {
-		const dock = await promptDock(role, { isolatedHome: true, config: `endpoint: ${endpoint}\nrequestTimeoutMs: ${requestTimeoutMs}\nreportConfirmationTimeoutMs: ${confirmationTimeoutMs}\ncollectTimeoutMs: 5460000\n` });
+		const dock = await promptDock(role, { isolatedHome: true, config: `endpoint: ${endpoint}\nrequestTimeoutMs: ${requestTimeoutMs}\nreportConfirmationTimeoutMs: ${confirmationTimeoutMs ?? 20000}\napproveConfirmationTimeoutMs: ${confirmationTimeoutMs ?? 60000}\ncollectTimeoutMs: 5460000\n` });
 		let mark = 0;
 		return {
 			root: dock.root, capture: dock.capture,
@@ -63,7 +63,7 @@ export async function roleContractDock(host: "omp" | "pi", endpoint: string, con
 		}
 		cpSync(join(REPO_ROOT, "node_modules/yaml"), join(deployment, "node_modules/yaml"), { recursive: true, dereference: true });
 		writeFileSync(join(deployment, "extensions/workflow-chat/config.yaml"),
-			`endpoint: ${endpoint}\nrequestTimeoutMs: ${requestTimeoutMs}\nreportConfirmationTimeoutMs: ${confirmationTimeoutMs}\ncollectTimeoutMs: 5460000\n`);
+			`endpoint: ${endpoint}\nrequestTimeoutMs: ${requestTimeoutMs}\nreportConfirmationTimeoutMs: ${confirmationTimeoutMs ?? 20000}\napproveConfirmationTimeoutMs: ${confirmationTimeoutMs ?? 60000}\ncollectTimeoutMs: 5460000\n`);
 		session = await PiSession.start({ cli: run.cli, runRoot: run.root,
 			entrypoint: (role === "dual" ? ["manager", "node"] : [role]).map(name => join(deployment, `entrypoints/pi-auto/${name === "chief-report" ? name : `${name}-chat`}.ts`)), selector: run.selector,
 			env: { HOME: run.root.path, USERPROFILE: run.root.path, APPDATA: run.root.path, LOCALAPPDATA: run.root.path,

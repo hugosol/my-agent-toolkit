@@ -58,7 +58,7 @@ export interface StateCapabilityTarget extends StateWriteTarget {
 /** The semantic session facts and publication effect used for State reconciliation. */
 export interface StateSessionChange {
 	readonly owner: OwnerReference;
-	readonly event: SessionEvent;
+	readonly event: Extract<SessionEvent, { kind: "session_start" | "session_end" }>;
 	readonly statePayloads: readonly unknown[];
 	/**
 	 * Records the extension's new values in the owner's persistence medium.

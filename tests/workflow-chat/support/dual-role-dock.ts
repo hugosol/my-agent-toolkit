@@ -17,12 +17,13 @@ export async function dualRoleDock(host: "omp" | "pi", endpoint?: string) {
 	let gate: { started: { promise: Promise<void>; resolve(): void }; closed: { promise: Promise<void>; resolve(): void } } | undefined;
 	const sockets = new Set<Socket>();
 	const backend = createServer(async (request, response) => {
-		if (request.url === "/api/workflow/node/context") {
-			request.resume(); response.writeHead(200, { "content-type": "application/json" });
-			response.end(JSON.stringify({ reportPolicy: "auto" })); return;
-		}
 		const chunks: Buffer[] = [];
 		for await (const chunk of request) chunks.push(Buffer.from(chunk));
+		if (request.url === "/api/workflow/manager/script-output") {
+			response.writeHead(200, { "content-type": "application/json" });
+			response.end(JSON.stringify({ runId: "fixture", observedAt: Date.now(), nodes: [] }));
+			return;
+		}
 		calls.push({ path: request.url!, body: JSON.parse(Buffer.concat(chunks).toString("utf8")) });
 		const encoded = Buffer.from(JSON.stringify(answer));
 		response.writeHead(status, { "content-type": "application/json", "content-length": encoded.length });
@@ -39,7 +40,7 @@ export async function dualRoleDock(host: "omp" | "pi", endpoint?: string) {
 	await listening.promise;
 	const address = backend.address();
 	if (!address || typeof address === "string") throw new Error("Missing dual-role fixture port");
-	const config = `endpoint: ${endpoint ?? `http://127.0.0.1:${address.port}`}\nrequestTimeoutMs: 3000\nreportConfirmationTimeoutMs: 20000\ncollectTimeoutMs: 30000\n`;
+	const config = `endpoint: ${endpoint ?? `http://127.0.0.1:${address.port}`}\nrequestTimeoutMs: 3000\nreportConfirmationTimeoutMs: 20000\napproveConfirmationTimeoutMs: 60000\ncollectTimeoutMs: 30000\n`;
 	async function closeBackend() {
 		for (const socket of sockets) socket.destroy();
 		const closed = Promise.withResolvers<void>();

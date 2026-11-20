@@ -22,5 +22,12 @@ test("P10 dispatch sends literal nodes and rejects identity and inapplicable fie
 		// Type coercion/defaulting before execute belongs to OMP; this partition
 		// specifically verifies that forbidden extra fields cannot trigger an action.
 		expect(calls).toHaveLength(1);
+		const zoneIds = { A: "created/project-a", C: "created/project-c" };
+		expect(await dock.call({ action: "dispatch", nodes: ["A", "C"], zoneIds })).toEqual(response);
+		expect(calls[1]).toEqual({ path: "/api/workflow/manager/dispatch", body: { sessionId, nodes: ["A", "C"], zoneIds } });
+		expect(await dock.call({ action: "retry", nodeId: "A", confirmed: true, reason: "Checked prior effects", zoneId: "created/retry-a" })).toEqual(response);
+		expect(calls[2]).toEqual({ path: "/api/workflow/manager/retry", body: { sessionId, nodeId: "A", confirmed: true, reason: "Checked prior effects", zoneId: "created/retry-a" } });
+		expect(await dock.call({ action: "recover", nodeId: "A", confirmed: true, reason: "Original execution", zoneId: "forbidden" }, true)).toMatch(/Validation failed|parameters|不接受/);
+		expect(calls).toHaveLength(3);
 	} finally { await dock.close(); server.stop(true); }
 }, 300_000);

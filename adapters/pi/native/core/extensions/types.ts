@@ -6,6 +6,8 @@
  * native vocabulary — extensions that draw pi's own widgets describe their input with them — so
  * they live beside the mapping rather than inside the assembly entry.
  */
+import type { ToolExecutionResult } from "../../../../../framework/interface/tool";
+import type { NativeToolOutputOptions } from "../../../../tool-output";
 import type { FeedbackLevel } from "../../../../../framework/interface/feedback";
 import type { BindingResult } from "../../../../../framework/runtime/port";
 
@@ -51,7 +53,8 @@ export interface PiSessionAnchor {
  * pi's shared event bus: how extensions in one process speak to each other.
  *
  * The framework's pi adapter reads one versioned interface from it — the subagent provider's own
- * announcement and query pair — and publishes nothing of its own on it. A surface that publishes no
+ * announcement and query pair — and publishes opt-in native confirmation attention through
+ * `herdr:blocked`. A surface that publishes no
  * bus is a process in which no provider can be reached, which is answered as a provider this entry
  * does not have rather than as one that failed.
  */
@@ -331,7 +334,9 @@ export interface PiExtensionApi {
 	registerCommand(name: string, options: PiCommandRegistration): void;
 	registerTool: (tool: {
 		name: string; label: string; description: string; parameters: unknown;
-		execute(callId: string, params: unknown, signal: AbortSignal | undefined, onUpdate: unknown, ctx: PiExtensionContext): Promise<{ readonly content: readonly { readonly type: "text"; readonly text: string }[]; readonly details?: unknown; readonly isError?: boolean }>;
+		exposure?: "model-only";
+		execute(callId: string, params: unknown, signal: AbortSignal | undefined, onUpdate: ((result: ToolExecutionResult) => void) | undefined, ctx: PiExtensionContext): Promise<ToolExecutionResult>;
+		renderResult?: (result: ToolExecutionResult, options: NativeToolOutputOptions) => { render(width: number): readonly string[]; invalidate(): void };
 	}) => void;
 	appendEntry(customType: string, data?: unknown): void;
 	/**

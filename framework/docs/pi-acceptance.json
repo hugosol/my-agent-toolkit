@@ -3,26 +3,93 @@
   "scopes": {
     "workflow-chat": {
       "schemaVersion": 1,
+      "harness": "pi",
       "scope": "workflow-chat",
-      "startedAt": "2026-11-12T20:20:51.384Z",
+      "startedAt": "2026-11-19T10:24:09.397Z",
       "cli": {
         "command": [
-          "D:/Users/hugos/AppData/Local/nvm/v22.19.0/node.exe",
-          "D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js"
+          "node",
+          "D:\\nvm4w\\nodejs\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js"
         ],
-        "path": "D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js",
-        "source": "node script"
+        "path": "D:\\nvm4w\\nodejs\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js",
+        "source": "the shim D:\\nvm4w\\nodejs\\pi.cmd (run through node: a shell shim cannot be spawned without a shell)"
       },
       "source": {
-        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-9Z2J1e",
-        "head": "208453735f37678bdc9228b20b733f0c3578ac2c",
+        "repoRoot": "E:\\Developer\\myhub\\my-agent-toolkit",
+        "head": "86a481c1e95b005c738c5fc4422b24257e4428d0",
         "status": [
+          " M adapters/omp/native/extensibility/extensions/tools.ts",
+          " M adapters/omp/native/extensibility/extensions/types.ts",
+          " M adapters/omp/native/extensibility/extensions/ui.ts",
+          " M adapters/pi/native/core/extensions/tools.ts",
+          " M adapters/pi/native/core/extensions/types.ts",
           " M docs/agents/testing.md",
-          " M tests/harness-dock/capture-server.ts"
+          " M extensions/workflow-chat/OPERATIONS.md",
+          " M extensions/workflow-chat/README.md",
+          " M extensions/workflow-chat/common/config.ts",
+          " M extensions/workflow-chat/common/requests.ts",
+          " M extensions/workflow-chat/config.yaml",
+          " M extensions/workflow-chat/node-chat/shared-logic/report.ts",
+          " M framework/interface/tool.ts",
+          " M framework/runtime/tool-confirmation.ts",
+          " M tests/framework/tool-confirmation-adapters.test.ts",
+          " M tests/harness-dock/role-config-failures.test.ts",
+          " M tests/harness-dock/role-identity-integration.test.ts",
+          " M tests/harness-dock/role-missing-identity.test.ts",
+          " M tests/harness-dock/role-session-isolation.test.ts",
+          " M tests/harness-dock/role-stable-config.test.ts",
+          " M tests/workflow-chat/chief-delegation.test.ts",
+          " M tests/workflow-chat/chief-report-recovery.test.ts",
+          " M tests/workflow-chat/node-approval.test.ts",
+          " M tests/workflow-chat/pi-native.test.ts",
+          " M tests/workflow-chat/report-parameters.test.ts",
+          " M tests/workflow-chat/support/business-roles.ts",
+          " M tests/workflow-chat/support/chief-dock.ts",
+          " M tests/workflow-chat/support/dual-role-dock.ts",
+          " M tests/workflow-chat/support/headless-tool.ts",
+          " M tests/workflow-chat/support/manager-dock.ts",
+          " M tests/workflow-chat/support/node-dock.ts",
+          " M tests/workflow-chat/support/role-contract-dock.ts",
+          "?? .scratch/approve-attention/evidence/1795083716321/omp-events.json",
+          "?? .scratch/approve-attention/evidence/1795083716321/omp-terminal.txt",
+          "?? .scratch/approve-attention/evidence/1795083716321/pi-events.json",
+          "?? .scratch/approve-attention/evidence/1795083716321/pi-terminal.txt",
+          "?? .scratch/approve-attention/evidence/omp-events.json",
+          "?? .scratch/approve-attention/evidence/omp-terminal.txt",
+          "?? .scratch/approve-attention/native-smoke.ts"
         ],
-        "diffSha256": "7585d910381a349968bd2ce5fb7a63ed172f5f79b9539c972c5417ae3621db60",
-        "untrackedFiles": [],
-        "sha256": "a4893fee10d4dde64e7862e6e7a5b62dfeba15cd71e992398d692b444be7c589"
+        "diffSha256": "28d8e484a930dc43e3dc77a019f4662193870f8e98b015d60d32e9c4b9452690",
+        "untrackedFiles": [
+          {
+            "path": ".scratch/approve-attention/evidence/1795083716321/omp-events.json",
+            "sha256": "b80bd7ea62c24d751228cc2d63303615c192a9ac115051353f8c0bdb8e1c149d"
+          },
+          {
+            "path": ".scratch/approve-attention/evidence/1795083716321/omp-terminal.txt",
+            "sha256": "7786d0a8288a5d7c414fe6c1b3b77da85831b76059236346318ae73a26c509d2"
+          },
+          {
+            "path": ".scratch/approve-attention/evidence/1795083716321/pi-events.json",
+            "sha256": "5723f595cf33a140bc20bfa5dc4cffed470a5bb3996ce8d40af2393ec1899f94"
+          },
+          {
+            "path": ".scratch/approve-attention/evidence/1795083716321/pi-terminal.txt",
+            "sha256": "f1a60f49722eadbadfbb655b5baa29c4a8ed4864e01a0f1cfc699d05641cfca4"
+          },
+          {
+            "path": ".scratch/approve-attention/evidence/omp-events.json",
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          {
+            "path": ".scratch/approve-attention/evidence/omp-terminal.txt",
+            "sha256": "c5c2d36b91daaf39930fe6eca87b39bc1e6bc49f2204dabbe0fbec692707f626"
+          },
+          {
+            "path": ".scratch/approve-attention/native-smoke.ts",
+            "sha256": "c753584fc3deb8c767bcfcfd3895fb4cd1d32cbdfde91b0d710c158e9d4ccdf2"
+          }
+        ],
+        "sha256": "bacc23bd3ee3ea6d5cc3cec58b84d902b93b3f3ba5a3ac5cc265bfff4df19341"
       },
       "lockfiles": [
         {
@@ -38,18 +105,19 @@
           "bun": "1.4.4"
         },
         "cli": {
-          "execPath": "D:\\Users\\hugos\\AppData\\Local\\nvm\\v22.19.0\\node.exe",
-          "node": "22.19.0",
+          "execPath": "D:\\nvm4w\\nodejs\\node.exe",
+          "node": "24.18.0",
           "bun": null
         },
         "artifact": {
-          "path": "D:/nvm4w/nodejs/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js",
+          "path": "D:\\nvm4w\\nodejs\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js",
           "bytes": 160,
           "sha256": "e79626f2dd6f94aa45d30f3fa63cd84319a6eefcd150b353cfaf274366926774"
         },
         "platform": "win32",
         "arch": "x64"
       },
+      "reportedVersion": "1.5.2",
       "version": "1.5.2",
       "status": "passed",
       "checks": [
@@ -59,17 +127,83 @@
         "Pi tool AbortSignal releases transport, switch preserves auto startup, and shutdown releases active collect"
       ],
       "complete": true,
-      "finishedAt": "2026-11-12T20:20:59.544Z",
+      "finishedAt": "2026-11-19T10:24:16.837Z",
       "finishedSource": {
-        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-9Z2J1e",
-        "head": "208453735f37678bdc9228b20b733f0c3578ac2c",
+        "repoRoot": "E:\\Developer\\myhub\\my-agent-toolkit",
+        "head": "86a481c1e95b005c738c5fc4422b24257e4428d0",
         "status": [
+          " M adapters/omp/native/extensibility/extensions/tools.ts",
+          " M adapters/omp/native/extensibility/extensions/types.ts",
+          " M adapters/omp/native/extensibility/extensions/ui.ts",
+          " M adapters/pi/native/core/extensions/tools.ts",
+          " M adapters/pi/native/core/extensions/types.ts",
           " M docs/agents/testing.md",
-          " M tests/harness-dock/capture-server.ts"
+          " M extensions/workflow-chat/OPERATIONS.md",
+          " M extensions/workflow-chat/README.md",
+          " M extensions/workflow-chat/common/config.ts",
+          " M extensions/workflow-chat/common/requests.ts",
+          " M extensions/workflow-chat/config.yaml",
+          " M extensions/workflow-chat/node-chat/shared-logic/report.ts",
+          " M framework/interface/tool.ts",
+          " M framework/runtime/tool-confirmation.ts",
+          " M tests/framework/tool-confirmation-adapters.test.ts",
+          " M tests/harness-dock/role-config-failures.test.ts",
+          " M tests/harness-dock/role-identity-integration.test.ts",
+          " M tests/harness-dock/role-missing-identity.test.ts",
+          " M tests/harness-dock/role-session-isolation.test.ts",
+          " M tests/harness-dock/role-stable-config.test.ts",
+          " M tests/workflow-chat/chief-delegation.test.ts",
+          " M tests/workflow-chat/chief-report-recovery.test.ts",
+          " M tests/workflow-chat/node-approval.test.ts",
+          " M tests/workflow-chat/pi-native.test.ts",
+          " M tests/workflow-chat/report-parameters.test.ts",
+          " M tests/workflow-chat/support/business-roles.ts",
+          " M tests/workflow-chat/support/chief-dock.ts",
+          " M tests/workflow-chat/support/dual-role-dock.ts",
+          " M tests/workflow-chat/support/headless-tool.ts",
+          " M tests/workflow-chat/support/manager-dock.ts",
+          " M tests/workflow-chat/support/node-dock.ts",
+          " M tests/workflow-chat/support/role-contract-dock.ts",
+          "?? .scratch/approve-attention/evidence/1795083716321/omp-events.json",
+          "?? .scratch/approve-attention/evidence/1795083716321/omp-terminal.txt",
+          "?? .scratch/approve-attention/evidence/1795083716321/pi-events.json",
+          "?? .scratch/approve-attention/evidence/1795083716321/pi-terminal.txt",
+          "?? .scratch/approve-attention/evidence/omp-events.json",
+          "?? .scratch/approve-attention/evidence/omp-terminal.txt",
+          "?? .scratch/approve-attention/native-smoke.ts"
         ],
-        "diffSha256": "7585d910381a349968bd2ce5fb7a63ed172f5f79b9539c972c5417ae3621db60",
-        "untrackedFiles": [],
-        "sha256": "a4893fee10d4dde64e7862e6e7a5b62dfeba15cd71e992398d692b444be7c589"
+        "diffSha256": "28d8e484a930dc43e3dc77a019f4662193870f8e98b015d60d32e9c4b9452690",
+        "untrackedFiles": [
+          {
+            "path": ".scratch/approve-attention/evidence/1795083716321/omp-events.json",
+            "sha256": "b80bd7ea62c24d751228cc2d63303615c192a9ac115051353f8c0bdb8e1c149d"
+          },
+          {
+            "path": ".scratch/approve-attention/evidence/1795083716321/omp-terminal.txt",
+            "sha256": "7786d0a8288a5d7c414fe6c1b3b77da85831b76059236346318ae73a26c509d2"
+          },
+          {
+            "path": ".scratch/approve-attention/evidence/1795083716321/pi-events.json",
+            "sha256": "5723f595cf33a140bc20bfa5dc4cffed470a5bb3996ce8d40af2393ec1899f94"
+          },
+          {
+            "path": ".scratch/approve-attention/evidence/1795083716321/pi-terminal.txt",
+            "sha256": "f1a60f49722eadbadfbb655b5baa29c4a8ed4864e01a0f1cfc699d05641cfca4"
+          },
+          {
+            "path": ".scratch/approve-attention/evidence/omp-events.json",
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          {
+            "path": ".scratch/approve-attention/evidence/omp-terminal.txt",
+            "sha256": "c5c2d36b91daaf39930fe6eca87b39bc1e6bc49f2204dabbe0fbec692707f626"
+          },
+          {
+            "path": ".scratch/approve-attention/native-smoke.ts",
+            "sha256": "c753584fc3deb8c767bcfcfd3895fb4cd1d32cbdfde91b0d710c158e9d4ccdf2"
+          }
+        ],
+        "sha256": "bacc23bd3ee3ea6d5cc3cec58b84d902b93b3f3ba5a3ac5cc265bfff4df19341"
       },
       "finishedLockfiles": [
         {
@@ -78,7 +212,7 @@
           "sha256": "28ce4c0d7b7d1d45a44e335a6647b0959c333875af42ca87ba63c87bcf4c2168"
         }
       ],
-      "acceptedAt": "2026-11-12T20:20:59.544Z"
+      "acceptedAt": "2026-11-19T10:24:16.837Z"
     },
     "close-out": {
       "schemaVersion": 1,

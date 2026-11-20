@@ -56,11 +56,11 @@ pi -e D:/service/my-agent-toolkit/entrypoints/pi-auto/manager-chat.ts
 pi -e D:/service/my-agent-toolkit/entrypoints/pi-auto/node-chat.ts
 ```
 
-升级已有 herdr-bot Run 存储时，节点执行新增必填 `agent` 字段；先停服、备份，再按后端长期运行说明的“执行宿主字段与旧 Run 升级”执行 `scripts/migrate-execution-agents.py`。它只为旧版 OMP 执行补明确宿主，保留原字节备份及追加历史；不要让新服务自动猜测，也不要直接编辑活动 Run。实际部署切换与整体模型协作验收由人工完成。
+成果批准协议与旧 Run 不兼容。停服备份后配套升级两仓，创建全新 Run/Chat；不要改写历史、映射旧报告策略或补写批准事实。原生与真实模型专项须按各自范围独立留证，受控 provider 不代表真实模型验收。
 
 ## 2. 上线核对与预算
 
-- 在合法关联的管理者 Session 显式 `run {"action":"status"}`，核对 Run 现场和角色；节点遵守本次派发的 report_policy：auto 在材料可交接或需报告阻塞时显式 report，如实填写 can_complete，manual 调用 report 后由工具展示完整待发送内容并取得用户明确发送批准，拒绝、取消、超时或无法交互不发送；旧派发缺字段按 auto。模型只传业务参数，真实 `sessionId` 由公共 Session 加入；完整协议以 [run](README.md#run-基础状态动作)、[collect](README.md#collect-长等待与报告待办)、[report](README.md#report-协议与交接) 为准。
+- 在合法管理者 Session 显式 `run {"action":"status"}` 核对现场。节点正常成果先 `approve {}` 再 report；进度、失败、问题可随时 report，不要求报告发送确认。人工成果仅原生 Yes 后提交，自动模式也须主动调用；context 查询失败不默认自动。公共 Session 提供真实身份，后台冻结模式及门禁唯一权威；详见 [成果批准](README.md#approve-成果批准) 与 [报告](README.md#report-协议与交接)。
 - 普通预算覆盖请求至完整正文，不只是连通或响应头。普通预算默认 30000ms；collect 独立默认 5460000ms，覆盖后端默认 5400 秒再留 60 秒余量。不要为了普通 report 调短 collect，也不要把所有普通调用都改为 91 分钟。后端改期时人工核对客户端预算，无自动握手。
 - collect 的正常 `reason: "timeout"` 不是错误，也不修改状态；客户端 `error.kind: "timeout"` 是完整传输预算耗尽。paused/completed/notification/no-running 的处理和待办查阅见 README。collect 不返回报告正文；按 pendingReports 的标识读取 messages.jsonl 或已有 Run 详情，阅读报告结论、阻塞、部分效果及必要干预；不默认读取输出正文验收。
 - 取消、网络/正文失败或非 2xx 不是回滚保证。保留整个错误正文、已发生 effects、逐项结果、historyError/stateCommitted；HTTP 200 也不能概括整批成功。故障分类与 Session 结束语义见 [故障、取消与信任边界](README.md#故障取消与信任边界)。
@@ -69,7 +69,7 @@ pi -e D:/service/my-agent-toolkit/entrypoints/pi-auto/node-chat.ts
 
 ### 无 Chat 脚本的原生协议专项
 
-角色部署不变：manager 使用上列 OMP/Pi 的正常 manager-chat auto 入口；脚本由后端内置 Rust 执行，不安装 node-chat、解释器或脚本专用工具，不建立脚本 Chat／Tab。升级后在新建 manager Session 消费更新指引，已有 Session 的持久指引不热更新。字段与处置以 [无 Chat 的 Rust 脚本节点](README.md#无-chat-的-rust-脚本节点) 为准；配套后端的长期公开表示由其 `docs/workflow-runtime.md`、`docs/contracts/rust-script-bots.schema.json` 和字面实例维护。
+角色部署不变：manager 使用上列 OMP/Pi 的正常 manager-chat auto 入口；脚本由后端调用已有 Bun 执行用户维护的 TypeScript，不安装 node-chat 或脚本专用工具，不建立脚本 Chat／Tab。升级后在新建 manager Session 消费更新指引，已有 Session 的持久指引不热更新。字段与处置以 [无 Chat 的 TypeScript 脚本节点](README.md#无-chat-的-typescript-脚本节点) 为准；配套后端的长期公开表示由其 `docs/workflow-runtime.md`、`docs/contracts/rust-script-bots.schema.json` 和字面实例维护。
 
 在本 toolkit worktree 根使用 Bun 1.4.4 和 frozen lock，选择已有宿主，不修改全局安装、PATH、配置或用户会话。示例中的原始 toolkit 根、Pi 和 Node 必须换成实际参与安装的绝对位置：
 
@@ -87,7 +87,7 @@ bun run check:integrations
 bun run test
 ```
 
-专项在两个实际宿主的同一原生 manager＋node 嵌套 Session 中加载正常入口，使用真实 run／collect、自动 Session、HTTP 和原生 read 读取测试独占 messages.jsonl，并核对结果确实进入后续模型请求。受控对端提供无 Chat 的派发／成功报告、业务失败和已保存但材料失败、显式 fail／retry 的独立执行、recover 拒绝及旧报告完成拒绝；它检查错误和实际效果不丢失、confirmed=false 原样透传、非法身份不发送、无隐式下游派发。`captures/`、`sessions/` 和 `host.json` 保留 provider 请求、原生 frames／stderr／HTTP；每次运行使用独占目录，关闭并等待所属宿主退出、销毁回环连接后清理临时部署。受控工具调用不是模型自主决定，受控拒绝也不是后端门禁证明；不证明真实 Rust 业务、P34/P35、H1/H2 已通过。
+专项在两个实际宿主的同一原生 manager＋node 嵌套 Session 中加载正常入口，使用真实 run／collect、自动 Session、HTTP 和原生 read 读取测试独占 messages.jsonl，并核对结果确实进入后续模型请求。受控对端提供无 Chat 的派发／成功报告、业务失败和已保存但材料失败、显式 fail／retry 的独立执行、recover 拒绝及旧报告完成拒绝；它检查错误和实际效果不丢失、confirmed=false 原样透传、非法身份不发送、无隐式下游派发。`captures/`、`sessions/` 和 `host.json` 保留 provider 请求、原生 frames／stderr／HTTP；每次运行使用独占目录，关闭并等待所属宿主退出、销毁回环连接后清理临时部署。受控工具调用不是模型自主决定，受控拒绝也不是后端门禁证明；不证明真实 TypeScript 脚本业务、P34/P35、H1/H2 已通过。
 
 跨仓验收复用正常 manager 入口和上述专项，不复制第二套工具或后端验收。完整回归的 `HERDR_BOT_REPO`、独立绝对 `CARGO_TARGET_DIR`、`HERDR_BOT_BINARY`（safe_shutdown_shell）和 `HERDR_BOT_METADATA` 必须由参与后端的隔离验收提供，并先构建安全壳与 herdr-fixture；缺失时保留失败，不回落生产可执行文件运行关机检查。真实会话另须留证：dispatch 返回时业务尚未结束；自动通知／collect 后按报告 ID 读取；生命周期结束时 node 仍待显式 complete；失败先 fail，修复并经原确认 retry 后有新 execution、无新 Chat，旧 true 不放行新执行。保存两仓构建／锁文件身份、原生会话工具、实际配置／文件／报告及清理结果，最终真实模型／人工 H1/H2 确认由跨仓验收独立完成。
 
@@ -130,22 +130,21 @@ python scripts/accept-workflow-nesting-roles.py `
   --evidence-dir $NEW_EXCLUSIVE_EVIDENCE
 ```
 
-两宿主各执行两套 manager／zone／原始业务字面样例、重复 Map 调用和保留旧 execution；真实原生 Session 自动注入身份，模型使用正常 run／collect／report，后端实际决定子 Run／父 execution 授权。逐阶段观察 unfinished 拒绝、显式 finish、继续报告、manual 独立发送确认、父层最新报告验收与 complete、真实 Tab 精确关闭和内部保留；受控 dock 不能替代这些证据。`--hosts declared` 另执行入口中固定业务夹具的混合宿主声明，保留 parent／child／worker 各自 OMP/Pi，不表示生产业务已验收，也不代替双宿主完整矩阵。
+两宿主各执行两套 manager／zone／原始业务字面样例、重复 Map 调用和保留旧 execution；真实原生 Session 自动注入身份，模型使用正常 run／collect／report，后端实际决定子 Run／父 execution 授权。逐阶段观察 unfinished 拒绝、显式 finish、继续报告、父 execution 人工成果独立批准、父层最新报告验收与 complete、真实 Tab 精确关闭和内部保留；受控 dock 不能替代这些证据。`--hosts declared` 另执行入口中固定业务夹具的混合宿主声明，保留 parent／child／worker 各自 OMP/Pi，不表示生产业务已验收，也不代替双宿主完整矩阵。
 
 依赖、实际模型和隔离／清理任一不可用均非零，不重试业务决策、跳过宿主或读取用户认证。保留的独占证据包含两仓源码／锁文件身份、安装入口／OS 进程、模型／工具／HTTP、原始用户批准、原生历史与文件字节；实际执行结果才决定是否通过。本节仅说明可复跑入口，不宣称当前环境的验收结果；普通 `bun test tests/workflow-chat`、同载 dock、typecheck 和 canonical 全仓检查仍须分别运行并报告。
 
-### report_policy 真实模型冒烟（OMP 与 Pi 分别执行）
+### 成果批准运维核对（OMP 与 Pi 分别执行）
 
-使用上节对应宿主的自动入口和合法后端派发，不在任意独立启动的无关联 Session 中伪造身份。升级共享定义后创建新 node Chat；已有 Chat 的持久化指引不热更新。
+使用合法后端派发与对应宿主正常自动入口，升级后创建新 Chat/Run，不使用用户历史，不补写旧 Run。
 
-1. 在 Map 中给一个可独立交付的小任务设置 `report_policy: manual`，由 manager 正常 dispatch。任务示例：在指定绝对目录写一份 UTF-8 文本，正文为 `report-policy-smoke`，交付地址、读取方法和限制。核对实际派发输入有独立 `report_policy: manual` 控制段。
-2. 等模型调用 report：原生确认界面应显示本次完整 body、can_complete 和 outputs；批准前不得出现 `/api/workflow/node/report` 请求或新增报告（只读 context 查询允许）。manager 不得仅凭等待确认就 complete。
-3. 分别选择“否”、关闭/取消、等待配置的确认超时，核对无报告请求、工具返回未发送、无自动补发。超时后迟到选择不能补发；无 UI 模式也不能发送 manual 报告。默认 20 秒，可在 toolkit 的 `reportConfirmationTimeoutMs` 中修改后重启；使用独立于 HTTP 的预算。
-4. 明确要求修改正文为 `report-policy-smoke-revised` 后重新调用 report，确认界面须展示修改后的实际内容，旧批准不可复用。在界面明确选择“是”后，核对恰一份报告及其 body、canComplete、outputs 与展示内容一致。自然语言业务批准不是发送批准。
-5. 补充、更正或再次发送均须新确认；已保存但辅助通知失败不应重报。报告请求发出后发生网络错误须保留保存状态不明，不能宣称未发送。
-6. 用新执行验证 `auto` 不弹窗直接报告；历史执行缺策略由后端读作 auto。修改当前 Map 不改变已派发执行的冻结策略；嵌套双角色外报读取父 execution 的策略，不读取内部 Run 的策略。
+1. 以 `auto_approved:false` 的普通工作节点验证：模型正常成果先调用无参数 approve；原生确认严格询问“当前会话的成果是否已达到预期，可以交接并推进后续流程？”。确认实际呈现时核对 Herdr 原生等待状态提醒；普通完成音不变。只在明确 Yes 后提交后端批准；聊天同意不能代替。
+2. 分别核对拒绝、取消、超时、无 UI 均未批准且不将执行标为 failed，可继续工作和 report，无自动新确认。只有后续用户主动请求才再次确认。升级时须在部署配置中加入 `approveConfirmationTimeoutMs`（默认 60000 毫秒）；`reportConfirmationTimeoutMs` 和普通 HTTP `requestTimeoutMs` 默认仍为 20000 和 30000 毫秒。RPC 客户端须处理原生确认请求/响应。
+3. 等确认期间公开查询、报告和无依赖分支仍可继续；如发生 retry，旧 Yes 只能提交捕获的旧 execution，不能批准新执行。保留后端真实拒绝。
+4. `auto_approved:true` 必须仍由工具主动 approve，派发本身不批准；不打开确认，也不新增等待提醒。核对后端 `autoApproved` 冻结模式、`approved` 事实与 `approvalSource`；持久失败不得声称成功。
+5. 两种模式的 report 随时可发，不再确认；批准提交不生成报告或后端通知，也不自动推进。正常成果 approve 后 report，进度／失败／问题可先 report，批准不等于 manager 验收。chief 委派／报告确认不变。
 
-OMP/Pi 分别验证实际交互，保留界面、用户选择、实际 HTTP 与报告标识。受控模型只能证明工具门禁机制，不证明真实模型业务职责遵从。RPC 必须有实现确认请求/响应的客户端；无响应按超时处理。toolkit 与 herdr-bot 须配套升级，后端提供只读 `/api/workflow/node/context`；查询失败不默认 auto。门禁仅约束 report 工具，不增加后端审批状态或直接 HTTP 防绕过保证。can_complete 不代替发送批准；人工补齐仍须当前执行最新 true 报告，不存在无报告人工完成旁路。
+`bun test tests/workflow-chat/node-approval.test.ts tests/workflow-chat/free-report.test.ts` 仅是工具协议/受控 adapter 机制检查。`bun test tests/harness-dock/native-node-report.test.ts` 验证真实宿主自由报告及不确定结果处理，不代替双宿主原生批准、真实持久门禁或真实模型职责验收。配对安全后端和隔离数据必须显式选择，不使用生产后端进行关机检查。
 
 ### 文件交接跨仓自动验收
 

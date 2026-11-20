@@ -8,7 +8,40 @@ type ReportResult = WorkflowResponse & { readonly message?: string };
 export class NodeReports {
 	constructor(private readonly requests: WorkflowRequests) {}
 
-	async report(sessionId: string, params: unknown, signal?: AbortSignal, confirm?: ToolExecutionDelivery["confirm"]): Promise<ReportResult> {
+	async approve(sessionId: string, params: unknown, signal?: AbortSignal, confirm?: ToolExecutionDelivery["confirm"]): Promise<WorkflowResponse> {
+		if (!params || typeof params !== "object" || Array.isArray(params) || Object.keys(params).length) {
+			return { isError: true, body: { error: "approve 不接受参数；执行身份由公共 Session 与后端确定。" } };
+		}
+		const pendingSignal = this.requests.interactionSignal(sessionId, signal);
+		const context = await this.requests.post(sessionId, "/api/workflow/node/context", {}, pendingSignal);
+		if (context.isError) return context;
+		const body = context.body;
+		if (!body || typeof body !== "object" || !("autoApproved" in body) || typeof body.autoApproved !== "boolean"
+			|| !("executionId" in body) || typeof body.executionId !== "string" || !body.executionId) {
+			return { isError: true, body: { error: { kind: "protocol", response: body }, guidance: "无法核实本次执行的冻结批准模式；不默认自动，不自动重试。" } };
+		}
+		const payload = { executionId: body.executionId, source: body.autoApproved ? "auto" : "manual" };
+		const result = body.autoApproved
+			? await this.requests.post(sessionId, "/api/workflow/node/approve", payload, pendingSignal)
+			: await this.requests.postConfirmed(sessionId, "/api/workflow/node/approve", payload, {
+				title: "成果批准", message: "当前会话的成果是否已达到预期，可以交接并推进后续流程？", includePayload: false,
+				timeoutMs: this.requests.approveConfirmationTimeoutMs, notifyOnWait: true,
+			}, pendingSignal, confirm);
+		if (result.notSent) return { ...result, body: {
+			...(result.body as Record<string, unknown>), approved: false,
+			guidance: "本次未批准，不表示执行失败。可继续工作或报告；仅用户后续主动请求时重新确认，不自动重试。",
+		} };
+		if (result.isError) return result;
+		const receipt = result.body;
+		if (!receipt || typeof receipt !== "object" || !("approved" in receipt) || receipt.approved !== true
+			|| !("executionId" in receipt) || receipt.executionId !== payload.executionId
+			|| !("approvalSource" in receipt) || receipt.approvalSource !== payload.source) {
+			return { ...result, isError: true, body: { error: { kind: "protocol", response: receipt }, guidance: "批准结果不确定；请核实后端事实，不声称成功或回滚，不自动重试。" } };
+		}
+		return result;
+	}
+
+	async report(sessionId: string, params: unknown, signal?: AbortSignal): Promise<ReportResult> {
 		if (!params || typeof params !== "object" || Array.isArray(params)
 			|| !("body" in params) || typeof params.body !== "string"
 			|| !("can_complete" in params) || typeof params.can_complete !== "boolean"
@@ -27,32 +60,12 @@ export class NodeReports {
 				return { body: null, message: "report outputs 必须是 {id,path} 数组；id 必须非空且不重复，path 必须是文件绝对地址字符串。", isError: true };
 			}
 		}
-		// Capture the exact wire payload before the first await; approval cannot authorize later mutations.
+		// Capture report content before the first await; later caller mutations cannot alter the send.
 		const payload = {
 			body: params.body, canComplete: params.can_complete,
 			...("outputs" in params ? { outputs: (params.outputs as { id: string; path: string }[]).map(({ id, path }) => ({ id, path })) } : {}),
 		};
-		const pendingSignal = this.requests.interactionSignal(sessionId, signal);
-		const notSent = (reason: string): ReportResult => ({ isError: false, body: {
-			sent: false, saved: false, reason,
-			guidance: "报告未发送。结束本轮，等待用户重新要求发送；不要自动重试、补发、反复询问或绕过 report。",
-		} });
-		if (signal?.aborted) return notSent("cancelled");
-		const context = await this.requests.post(sessionId, "/api/workflow/node/context", {}, pendingSignal);
-		if (context.isError) return { ...context, body: {
-			...(context.body && typeof context.body === "object" ? context.body : { context: context.body }),
-			sent: false, saved: false, reason: "report-policy-unavailable",
-			guidance: "无法核实本次执行的报告策略，报告未发送；不要自动重试或假定 auto。",
-		} };
-		const policy = context.body && typeof context.body === "object" && "reportPolicy" in context.body ? context.body.reportPolicy : undefined;
-		if (policy !== "auto" && policy !== "manual") return { ...notSent("report-policy-unavailable"), isError: true };
-		if (pendingSignal.aborted) return notSent("cancelled");
-		const result = policy === "manual"
-			? await this.requests.postConfirmed(sessionId, "/api/workflow/node/report", payload, {
-				title: "发送报告？（仅批准本次报告发送）",
-				message: `以下为本次待发送报告的完整内容；业务批准不等于发送批准。\n\nbody:\n${payload.body}\n\ncan_complete: ${payload.canComplete}`,
-			}, pendingSignal, confirm)
-			: await this.requests.post(sessionId, "/api/workflow/node/report", payload, pendingSignal);
+		const result = await this.requests.post(sessionId, "/api/workflow/node/report", payload, signal);
 		return workflowReportResult(result);
 	}
 }

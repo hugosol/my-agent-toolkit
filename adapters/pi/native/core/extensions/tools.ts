@@ -2,6 +2,7 @@ import type { ToolParameterSchema } from "../../../../../framework/interface/too
 import type { BoundTool } from "../../../../../framework/runtime/port";
 import { defineAdapterDelivery } from "../../../../../framework/runtime/adapter-authoring";
 import { toolConfirmation } from "../../../../../framework/runtime/tool-confirmation";
+import { toolOutputComponent } from "../../../../tool-output";
 import type { PiExtensionApi } from "./types";
 
 /** Pi coerces typed scalar/array values. Leave those raw for the shared business guards. */
@@ -22,15 +23,32 @@ export function piToolParameters(schema: ToolParameterSchema): unknown {
 
 export function registerPiTool(pi: PiExtensionApi): (tool: BoundTool) => void {
 	const register = pi.registerTool;
-	return tool => register.call(pi, {
-		name: tool.name, label: tool.label, description: tool.description,
-		parameters: piToolParameters(tool.parameters),
-		async execute(callId, params, signal, _onUpdate, ctx) {
-			const result = await tool.execute(params, defineAdapterDelivery("tool", {
-				callId, sessionId: ctx.sessionManager.getSessionId(), ...(signal === undefined ? {} : { signal }),
-				confirm: toolConfirmation(ctx.hasUI && typeof ctx.ui.confirm === "function" ? ctx.ui.confirm.bind(ctx.ui) : undefined, signal),
-			}));
-			return result;
-		},
-	});
+	return tool => {
+		const display = tool.displayOutput;
+		const renderResult: Parameters<typeof register>[0]["renderResult"] = display &&
+			((result, options) => toolOutputComponent(display(result.details), result, options));
+		register.call(pi, {
+			name: tool.name, label: tool.label, description: tool.description,
+			parameters: piToolParameters(tool.parameters),
+			...(tool.directOnly ? { exposure: "model-only" as const } : {}),
+			...(renderResult && { renderResult }),
+			async execute(callId, params, signal, onUpdate, ctx) {
+				const result = await tool.execute(params, defineAdapterDelivery("tool", {
+					callId, sessionId: ctx.sessionManager.getSessionId(), ...(signal === undefined ? {} : { signal }),
+					...(onUpdate === undefined ? {} : { onUpdate: (details: unknown) => onUpdate({ content: [], details }) }),
+					confirm: toolConfirmation(
+						ctx.hasUI && typeof ctx.ui.confirm === "function" ? (title, message, options) => {
+							// Pi installs its selector synchronously; unlike OMP it has no presentation callback.
+							const answer = ctx.ui.confirm!(title, message, options);
+							options.onTimeoutStart();
+							return answer;
+						} : undefined,
+						signal,
+						(active, label) => pi.events?.emit("herdr:blocked", { active, label }),
+					),
+				}));
+				return result;
+			},
+		});
+	};
 }

@@ -29,12 +29,15 @@ test("P10/P11/P13 finish obeys all-node completion and retains terminal facts", 
 	try {
 		const denied = await scene.dock.call({ action: "finish" });
 		expect(denied).toMatchObject({ code: "nodes-incomplete", changed: false, canFinish: false, snapshot: { status: "running" } });
-		await scene.dispatch("A"); await scene.dispatch("B");
-		await scene.report("node-native-A", "alpha 已可交接。", true);
+		const a = await scene.dispatch("A"); const b = await scene.dispatch("B");
+		await scene.approve("node-native-A", a.snapshot.nodes.A.execution.id);
+		await scene.approve("node-native-B", b.snapshot.nodes.B.execution.id);
+		await scene.report("node-native-A", "alpha 已可交接。", true, [scene.handoff]);
 		await scene.report("node-native-B", "beta 已可交接。", true);
 		await scene.dock.call({ action: "complete", nodeId: "A", reason: "alpha 已交接" });
 		await scene.dock.call({ action: "complete", nodeId: "B", reason: "beta 已交接" });
-		await scene.dispatch("C");
+		const c = await scene.dispatch("C");
+		await scene.approve("node-native-C", c.snapshot.nodes.C.execution.id);
 		await scene.report("node-native-C", "C 已完成汇合；仅测试协议。", true);
 		await scene.dock.call({ action: "pause" });
 		const last = await scene.dock.call({ action: "complete", nodeId: "C", reason: "C 已使用两份材料并可交接；此处只测试协议，不声称真实模型质量。" });

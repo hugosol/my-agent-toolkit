@@ -275,6 +275,44 @@ describe("a session that is not its own owner reconciles nothing (F5)", () => {
 	});
 });
 
+// S2 / P16: a subscriber sees input initialization for the named session while its
+// extension initialization is still pending. Treating ready as start or reconciling it
+// as another boundary would publish early or reset the state seeded at start.
+test("session ready names the initialized input session without re-running extension startup", async () => {
+	const double = portDouble();
+	const owner: OwnerReference = { kind: "owner", key: "main:session-ready" };
+	const session = { sessionId: "native-input-session", kind: "main", unavailable: [] } as const;
+	const initialization = Promise.withResolvers<void>();
+	const seen: string[] = [];
+	double.bind(CODEBASE_TOOLS, {
+		initialize: async () => {
+			seen.push("extension-initializing");
+			await initialization.promise;
+			seen.push("extension-initialized");
+		},
+		subscriptions: [{ scope: "owner", events: {
+			session_start: delivery => void seen.push(`start:${delivery.session.sessionId}`),
+			session_ready: delivery => void seen.push(`ready:${delivery.session.sessionId}`),
+			session_end: delivery => void seen.push(`end:${delivery.session.sessionId}`),
+		} }],
+	});
+
+	double.deliverSession(owner, { session, statePayloads: [{ enabled: true }] });
+	await Promise.resolve();
+	expect(seen).toEqual(["start:native-input-session", "extension-initializing"]);
+	const ready = double.deliverSession(owner, { session, event: { kind: "session_ready" } });
+	expect(ready.markers).toEqual([]);
+	expect(double.run("codebase-tools", { owner }).persisted).toEqual([{ enabled: false }]);
+	expect(seen).toEqual(["start:native-input-session", "extension-initializing", "ready:native-input-session"]);
+	initialization.resolve();
+	await initialization.promise;
+	double.deliverSession(owner, { session, event: end("disposed") });
+	expect(seen).toEqual([
+		"start:native-input-session", "extension-initializing", "ready:native-input-session",
+		"extension-initialized", "end:native-input-session",
+	]);
+});
+
 describe("a session whose facts were re-reported crossed no boundary (P24)", () => {
 	test("the facts reach a subscriber and nothing the framework owns moves for them", () => {
 		const double = portDouble();

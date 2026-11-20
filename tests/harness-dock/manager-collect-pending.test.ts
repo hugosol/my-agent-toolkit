@@ -16,10 +16,10 @@ test("P17/P18 collect keeps real handoff pending across reads, completion and in
 			expect(JSON.stringify(result)).not.toContain("REPORT_BODY_");
 			return result;
 		}
-		async function report(sessionId: string, body: string, can_complete: boolean) {
+		async function report(sessionId: string, body: string, can_complete: boolean, outputs?: { id: string; path: string }[]) {
 			// The real CLI refuses auxiliary input; saved reports must remain collectible.
 			scene.backend.behavior(sessionId, scene.backend.root.path, true);
-			const result = await scene.backend.post("/api/workflow/node/report", { sessionId, body, canComplete: can_complete });
+			const result = await scene.backend.post("/api/workflow/node/report", { sessionId, body, canComplete: can_complete, ...(outputs ? { outputs } : {}) });
 			expect(result.saved).toBe(true);
 			expect(result.notification.status).toBe("failed");
 			return result.report;
@@ -33,7 +33,7 @@ test("P17/P18 collect keeps real handoff pending across reads, completion and in
 
 		const first = await scene.dispatch("A");
 		expect(first.results[0].status).toBe("running");
-		const a = await report("node-native-A", "REPORT_BODY_A before handoff; E:/alpha.txt; test only", true);
+		const a = await report("node-native-A", "REPORT_BODY_A before handoff; E:/alpha.txt; test only", true, [scene.handoff]);
 		const notified = await collect("notification", { A: a.id });
 		expect(notified.snapshot.nodes.A.status).toBe("running");
 		expect(notified.snapshot.nodes.A.execution.id).toBe(a.executionId);
@@ -45,6 +45,7 @@ test("P17/P18 collect keeps real handoff pending across reads, completion and in
 		expect((await scene.detail()).pendingReports).toEqual({ A: a.id });
 		expect((await collect("timeout", { A: a.id })).snapshot).toEqual(notified.snapshot);
 
+		await scene.approve("node-native-A", first.snapshot.nodes.A.execution.id);
 		const completedA = await scene.dock.call({ action: "complete", nodeId: "A", reason: "已核实 alpha 材料，只读交接；原 Chat 继续收尾。" });
 		expect(completedA.pendingReports).toEqual({});
 		const aLate = await report("node-native-A", "REPORT_BODY_A_LATE harmless cleanup after completed", false);
@@ -84,9 +85,11 @@ test("P17/P18 collect keeps real handoff pending across reads, completion and in
 		expect(history.pendingReports).toEqual({ B: new2.id });
 		expect((await collect("timeout", { B: new2.id })).snapshot).toEqual(history.snapshot);
 
+		await scene.approve("node-native-B-new", newExecution.id);
 		await scene.dock.call({ action: "complete", nodeId: "B", reason: "只核实并交接新执行材料，不借用旧执行结果。" });
 		const third = await scene.dispatch("C");
 		expect(third.results[0].status).toBe("running");
+		await scene.approve("node-native-C", third.snapshot.nodes.C.execution.id);
 		const c = await report("node-native-C", "REPORT_BODY_C result ready", true);
 		await collect("notification", { C: c.id });
 		await scene.dock.call({ action: "complete", nodeId: "C", reason: "C 依赖已满足，结果已核实可交接。" });

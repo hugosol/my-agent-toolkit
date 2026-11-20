@@ -3,5 +3,7 @@ endpoint: http://127.0.0.1:18787
 requestTimeoutMs: 30000
 # Native report/delegation approval wait; independent of HTTP budgets.
 reportConfirmationTimeoutMs: 20000
+# Native manual node result approval wait; independent of report/delegation and HTTP budgets.
+approveConfirmationTimeoutMs: 60000
 # Backend defaults to 5400 seconds; leave a whole-exchange margin (91 minutes).
 collectTimeoutMs: 5460000

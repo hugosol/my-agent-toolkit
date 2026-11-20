@@ -7,6 +7,8 @@
  * the port the assembly builds from them. They live here rather than in the entry because every
  * feature module reads the same facts and none of them may depend on the assembly that wires them.
  */
+import type { ToolExecutionResult } from "../../../../../framework/interface/tool";
+import type { NativeToolOutputOptions } from "../../../../tool-output";
 import type { OmpViewedSessionFacts } from "./viewed-session";
 import type { OmpUiContext } from "./ui";
 import type { OmpSessionEvent, OmpSessionEventType } from "./lifecycle";
@@ -90,6 +92,8 @@ export interface OmpSessionContext {
 	};
 	/** Whether a UI is available; feedback falls back to stderr when it is not. */
 	readonly hasUI: boolean;
+	/** The native mode distinguishes a real interactive terminal from an RPC UI. */
+	readonly mode?: "tui" | "rpc" | "json" | "print";
 	/** The session's UI channel, the surface both feedback and the marker area use. */
 	readonly ui: OmpUiContext;
 	/**
@@ -273,16 +277,16 @@ export interface OmpMessageEndEvent {
  * The native submission event: one input admitted to a session, published before the harness decides
  * what the submission is.
  *
- * Only the one field this mapping reads is named. `source` is the harness's own attribution of who
- * submitted it — the interactive editor, its RPC client, or an extension submitting on its own
- * behalf — which is the one distinction the framework's input fact carries. The text and the images
- * are the harness's own material for the submission it is about to make and are deliberately not
- * read here: an input fact is not the prompt's content.
+ * The framework observes only `source`. Native extension assemblies may also read and replace
+ * the text; returning only `text` leaves attached images and normal submission untouched.
  */
 export interface OmpInputEvent {
 	readonly type: "input";
 	readonly source: "interactive" | "rpc" | "extension";
+	readonly text: string;
 }
+
+type OmpInputResult = { readonly text?: string; readonly handled?: boolean };
 
 /**
  * The native surface this adapter uses, as the OMP loader hands it to an extension
@@ -293,7 +297,12 @@ export interface OmpExtensionApi {
 	setLabel(label: string): void;
 	registerTool: (tool: {
 		name: string; label: string; description: string; parameters: unknown; loadMode: "essential";
-		execute(callId: string, params: unknown, signal: AbortSignal | undefined, onUpdate: unknown, ctx: OmpSessionContext): Promise<{ readonly content: readonly { readonly type: "text"; readonly text: string }[]; readonly details?: unknown; readonly isError?: boolean }>;
+		execute(callId: string, params: unknown, signal: AbortSignal | undefined, onUpdate: ((result: ToolExecutionResult) => void) | undefined, ctx: OmpSessionContext): Promise<ToolExecutionResult>;
+		renderResult?: (result: ToolExecutionResult, options: NativeToolOutputOptions) => { render(width: number): readonly string[]; invalidate(): void };
+		describeResult?: (result: ToolExecutionResult, options: NativeToolOutputOptions) => {
+			preview: "children";
+			body: readonly { k: "code"; key: string; p: { text: string; numbers: false; wrap: boolean; preview?: { lines: number } } }[];
+		} | undefined;
 	}) => void;
 	/** Registers a custom command the user can run as `/<name>`. */
 	registerCommand(
@@ -347,7 +356,7 @@ export interface OmpExtensionApi {
 	 * fact; the framework's input hook is where that distinction is mapped, and registering for it is
 	 * what makes the harness publish the fact for this binding at all.
 	 */
-	on(event: "input", handler: (event: OmpInputEvent, ctx: OmpSessionContext) => void): void;
+	on(event: "input", handler: (event: OmpInputEvent, ctx: OmpSessionContext) => OmpInputResult | void | Promise<OmpInputResult | void>): void;
 	/**
 	 * The bound session's actual effective thinking level, as the harness's own session reports it.
 	 *
@@ -373,8 +382,8 @@ export interface OmpExtensionApi {
 	 * This is the one native surface a fact reaches the adapter on outside any delivery of its own:
 	 * the frames stating what each subagent execution had run when they were emitted, which is the
 	 * only route that carries a kept-alive subagent's follow-up turns. The bus is the harness's own
-	 * and is shared with every extension in the process; the adapter reads two channels from it and
-	 * publishes nothing on it. Optional: a surface that publishes no bus is observed on the
+	 * and is shared with every extension in the process; the adapter reads provider channels and
+	 * publishes opt-in native confirmation attention through `herdr:blocked`. Optional: a surface that publishes no bus is observed on the
 	 * delegation tool's payloads alone, and an execution only the frames state is then unreported
 	 * rather than guessed.
 	 */
@@ -384,6 +393,7 @@ export interface OmpExtensionApi {
 /** The minimal event-bus surface this adapter subscribes on: one channel's own handler, and the unsubscribe back. */
 export interface OmpEventBus {
 	on(channel: string, handler: (data: unknown) => void): () => void;
+	emit?(channel: string, data: unknown): void;
 }
 
 /** The native contribution payload a run-initiation handler may return. */

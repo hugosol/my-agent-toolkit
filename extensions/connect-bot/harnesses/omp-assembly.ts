@@ -25,13 +25,14 @@
  * that relative path belongs to — its own module location does, so the root it derives is supplied
  * to the adapter as a plain directory string.
  */
-import { type OmpExtensionApi, ompAdapter } from "../../../adapters/omp";
+import { type OmpExtensionApi, type OmpSessionContext, ompAdapter } from "../../../adapters/omp";
 import { type DirectedCommandImplementation } from "../../../framework/interface/command";
 import { type StartupDelivery, defineImplementation } from "../../../framework/interface";
 import { createConnectBotCommand } from "../shared-logic/command/command";
 import { CONNECT_BOT } from "../definition";
 import type { ManagedTimers } from "../shared-logic/managed-timer";
 import { PanelRegistrations } from "../shared-logic/panel/registration";
+import { LaunchReports } from "../shared-logic/panel/launch-reports";
 import type { SessionFacts } from "../shared-logic/session/session";
 import { applyRoundEdge } from "../shared-logic/session/state-machine";
 import { EXTENSION_REPOSITORY_ROOT } from "./startup-modes";
@@ -43,8 +44,10 @@ import { EXTENSION_REPOSITORY_ROOT } from "./startup-modes";
  * protocol needs are read here, where reaching the native surface is allowed.
  */
 interface ConnectBotSessionContext {
+	readonly mode?: OmpSessionContext["mode"];
 	readonly sessionManager: {
 		getSessionId(): string;
+		getSessionFile?(): string | undefined;
 		getSessionName?(): string | undefined;
 	};
 	/** The session's working directory. */
@@ -201,6 +204,7 @@ export function connectBotOmp(startupPolicy: string): (pi: OmpExtensionApi) => v
 		const observed = observeSessionContext(pi);
 		const implementation = defineImplementation<{
 			readonly registrations: PanelRegistrations;
+			readonly launch: LaunchReports;
 			readonly command: DirectedCommandImplementation;
 			readonly enable: (delivery: StartupDelivery) => void;
 		}>({
@@ -220,6 +224,7 @@ export function connectBotOmp(startupPolicy: string): (pi: OmpExtensionApi) => v
 				);
 				return {
 					registrations,
+					launch: new LaunchReports(),
 					command: command.command,
 					// The startup delivery runs inside the native session-start handler, so the context
 					// is captured here as values and as one bound idle query; the register receipt may
@@ -238,9 +243,19 @@ export function connectBotOmp(startupPolicy: string): (pi: OmpExtensionApi) => v
 				{
 					scope: "owner",
 					events: {
-						// The session leaving: the one boundary this extension acts on. A start needs no handler —
-						// the session taking over starts unarmed, which is what "not armed" already means.
-						session_end: (state, delivery) => state.registrations.ownerEnded(delivery),
+						session_start: (state, delivery) => state.launch.started(delivery, () => {
+							const ctx = observed.current();
+							if (ctx.mode !== "tui") return undefined;
+							return {
+								agentType: "omp", cwd: ctx.cwd,
+								sessionId: ctx.sessionManager.getSessionId(), sessionFile: ctx.sessionManager.getSessionFile?.(),
+							};
+						}),
+						session_ready: (state, delivery) => state.launch.ready(delivery),
+						session_end: (state, delivery) => {
+							state.launch.ended(delivery);
+							state.registrations.ownerEnded(delivery);
+						},
 						round_start: (_state, delivery) => applyRoundEdge(delivery.owner, "round_start"),
 						round_end: (_state, delivery) => applyRoundEdge(delivery.owner, "round_end"),
 					},

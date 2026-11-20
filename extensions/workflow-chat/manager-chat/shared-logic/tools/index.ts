@@ -1,6 +1,7 @@
 import type { ToolDeclaration, ToolParameterSchema } from "../../../../../framework/interface/tool";
 import { workflowToolResult } from "../../../common/tool-result";
 import type { ManagerActions } from "../actions";
+import { displayScriptOutput } from "../script-output";
 
 type ManagerToolState = { readonly operations: ManagerActions };
 
@@ -29,11 +30,11 @@ export const MANAGER_TOOLS: readonly ToolDeclaration<ManagerToolState>[] = [
 				required: ["action", "nodeId", "confirmed", "reason"], additionalProperties: false,
 			},
 			{
-				type: "object", properties: { action: { type: "string", enum: ["retry"] }, nodeId: string, confirmed, reason: string },
+				type: "object", properties: { action: { type: "string", enum: ["retry"] }, nodeId: string, confirmed, reason: string, zoneId: { type: "string", description: "动态 zone 节点每次重试必须重新指定已登记的 zone ID；固定 zone 节点不得提供。" } },
 				required: ["action", "nodeId", "confirmed", "reason"], additionalProperties: false,
 			},
 			{
-				type: "object", properties: { action: { type: "string", enum: ["dispatch"] }, nodes },
+				type: "object", properties: { action: { type: "string", enum: ["dispatch"] }, nodes, zoneIds: { type: "object", properties: {}, additionalProperties: true, description: "动态节点 ID → 本次已登记 zone ID；每次派发显式提供，不填固定或未选节点。根据上游 report 决定，不自动继承。" } },
 				required: ["action", "nodes"], additionalProperties: false,
 			},
 			{
@@ -74,10 +75,15 @@ export const MANAGER_TOOLS: readonly ToolDeclaration<ManagerToolState>[] = [
 	},
 	{
 		name: "collect", label: "Collect",
-		description: "等待或立即收取后端原因、快照与报告标识待办；不含报告正文，不清除交接待办。",
+		description: "直接调用，勿从 codemode/eval 包装；等待或立即收取后端原因、快照与报告标识待办。脚本日志仅在用户可见的工具行中显示；不含报告正文，不清除交接待办。",
+		directOnly: true,
+		displayOutput: displayScriptOutput,
 		parameters: { type: "object", properties: {}, required: [], additionalProperties: false },
 		async execute(state, params, delivery) {
-			return workflowToolResult(await state.operations.collect(delivery.sessionId, params, delivery.signal));
+			const collected = await state.operations.collect(delivery.sessionId, params, delivery.signal,
+				scriptOutput => delivery.onUpdate?.({ scriptOutput }));
+			const result = workflowToolResult(collected);
+			return collected.scriptOutput ? { ...result, details: { httpStatus: collected.httpStatus, body: collected.body, scriptOutput: collected.scriptOutput } } : result;
 		},
 	},
 ];

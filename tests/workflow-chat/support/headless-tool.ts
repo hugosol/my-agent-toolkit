@@ -12,7 +12,7 @@ export async function headlessTool(host: "omp" | "pi", endpoint: string, role: "
 	const name = options.toolName ?? (role === "chief" ? "chief_delegate" : role === "chief-report" ? "chief_report" : "report");
 	if (host === "omp" && options.ompPackage === undefined) {
 		const dock = await promptDock(role, { headless: true, isolatedHome: true,
-			config: `endpoint: ${endpoint}\nrequestTimeoutMs: 2000\nreportConfirmationTimeoutMs: 2000\ncollectTimeoutMs: 3000\n` });
+			config: `endpoint: ${endpoint}\nrequestTimeoutMs: 2000\nreportConfirmationTimeoutMs: 2000\napproveConfirmationTimeoutMs: 60000\ncollectTimeoutMs: 3000\n` });
 		try {
 			dock.select(name, params);
 			await dock.session.prompt("Call report once, do not retry.");
@@ -45,7 +45,7 @@ export async function headlessTool(host: "omp" | "pi", endpoint: string, role: "
 		}
 		cpSync(join(REPO_ROOT, "node_modules/yaml"), join(deployment, "node_modules/yaml"), { recursive: true, dereference: true });
 		writeFileSync(join(deployment, "extensions/workflow-chat/config.yaml"),
-			`endpoint: ${endpoint}\nrequestTimeoutMs: 2000\nreportConfirmationTimeoutMs: 2000\ncollectTimeoutMs: 3000\n`);
+			`endpoint: ${endpoint}\nrequestTimeoutMs: 2000\nreportConfirmationTimeoutMs: 2000\napproveConfirmationTimeoutMs: 60000\ncollectTimeoutMs: 3000\n`);
 		if (host === "omp") {
 			cpSync(join(run.root.agentDir, "models.json"), join(run.root.agentDir, "models.yml"));
 			writeFileSync(join(run.root.agentDir, "config.yml"), "autoResume: false\nstartup:\n  setupWizard: false\n  showSplash: false\n  checkUpdate: false\nmarketplace:\n  autoUpdate: off\n");

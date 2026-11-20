@@ -532,6 +532,10 @@ export function bindExtension(
 		port.setLabel(definition.displayName);
 		port.onSession(session => {
 			if (!delivering) return;
+			if (session.event.kind === "session_ready") {
+				dispatchSessionEvent(definition, state, session, groups, seat, port.reportDiagnostic);
+				return;
+			}
 			// The framework's own record of this session: its identity and the owner it follows are
 			// what a consumer attaching later names it by, and they are recorded before anything this
 			// delivery runs, exactly as the framework's State behavior is applied before a handler.
@@ -614,7 +618,7 @@ export function bindExtension(
 				releaseViewed = undefined;
 				cleanupImplementation(definition.id, implementation, port.reportDiagnostic);
 			}
-		});
+		}, subscribesAny(groups, ["session_ready"]));
 		// The round axis is subscribed when this extension observes one of its edges, one of the Turn
 		// axis's, or one of the readings those transitions state — the activity axis, and a session
 		// reading in the framework's own observation source, whose activity those edges leave behind —

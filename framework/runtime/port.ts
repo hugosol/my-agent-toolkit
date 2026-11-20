@@ -621,9 +621,10 @@ export interface HarnessPort {
 	 *
 	 * Session events only. A per-user-turn run initiation is a separate semantic hook and
 	 * must never arrive here: a run does not change the session's identity, and a delivery
-	 * would reseed the session's State from its branch once per turn.
+	 * would reseed the session's State from its branch once per turn. Observe the separate native
+	 * input initialization fact only when a subscriber requests `observeReady`.
 	 */
-	onSession(handler: (session: SessionDelivery) => void): void;
+	onSession(handler: (session: SessionDelivery) => void, observeReady?: boolean): void;
 	/**
 	 * Registers the framework's round hook: one observation per native run-cycle fact the adapter
 	 * observes for the session this binding serves.

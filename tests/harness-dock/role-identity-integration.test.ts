@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { customMessages } from "./session-log";
 import { workflowBackend } from "../workflow-chat/support/backend";
 import { collectTransport } from "../workflow-chat/support/collect-transport";
@@ -16,7 +16,7 @@ test("P1/P2/P6 independent automatic roles use native identity and preserve real
 	try {
 	const transport = await collectTransport(backend.endpoint);
 	cleanup.unshift(() => transport.close());
-	const config = `endpoint: ${transport.endpoint}\nrequestTimeoutMs: 3000\nreportConfirmationTimeoutMs: 20000\ncollectTimeoutMs: 6000\n`;
+	const config = `endpoint: ${transport.endpoint}\nrequestTimeoutMs: 3000\nreportConfirmationTimeoutMs: 20000\napproveConfirmationTimeoutMs: 60000\ncollectTimeoutMs: 6000\n`;
 	const manager = await promptDock("manager", { config, observeIdentity: true });
 	cleanup.unshift(() => manager.close());
 	const node = await promptDock("node", { config, observeIdentity: true });
@@ -54,7 +54,7 @@ test("P1/P2/P6 independent automatic roles use native identity and preserve real
 		const unassociatedNode = await call(node, "report", { body: "not associated yet", can_complete: false });
 		expect(unassociatedManager).toMatchObject({ isError: true, details: { httpStatus: 403 }, body: { code: "manager-unassociated", message: "当前原生身份没有唯一的管理者归属。" } });
 		expect(unassociatedNode).toMatchObject({ isError: true, details: { httpStatus: 403 }, body: { code: "node-unassociated", message: "当前原生身份没有唯一的当前节点执行归属。" } });
-		for (const [dock, role, owned, absent] of [[manager, "manager", ["run", "collect"], ["report"]], [node, "node", ["report"], ["run", "collect"]]] as const) {
+		for (const [dock, role, owned, absent] of [[manager, "manager", ["run", "collect"], ["report", "approve"]], [node, "node", ["report", "approve"], ["run", "collect"]]] as const) {
 			const request = dock.capture.requests()[0]!.json as { tools: { function: { name: string; parameters: unknown } }[] };
 			const names = request.tools.map(tool => tool.function.name);
 			for (const name of owned) expect(names).toContain(name);
@@ -106,8 +106,12 @@ test("P1/P2/P6 independent automatic roles use native identity and preserve real
 		// create an unrelated manager Run with the node-only Session's identity.
 		// Dual-role authorization requires a persisted parent/execution link; sharing
 		// a native identity alone must still fail with the paired backend's exact refusal.
+		const inventory = join(backend.root.path, "workspaces.json");
+		const workspaces = JSON.parse(readFileSync(inventory, "utf8"));
+		workspaces.push({ workspace_id: "w-conflicting-manager", label: basename(node.root.workDir) });
+		writeFileSync(inventory, JSON.stringify(workspaces));
 		backend.behavior(nodeId, node.root.workDir);
-		const conflicting = await backend.post("/api/scheduler/maps/identity.json/runs", { managerTaskId: tasks.manager, zone: "test/manager", userInput: "Conflicting role association" });
+		const conflicting = await backend.post("/api/scheduler/maps/identity.json/runs", { managerTaskId: tasks.manager, zone: "test/node", userInput: "Conflicting role association" });
 		const crossRole = await call(node, "report", { body: "must not overwrite manager attribution", can_complete: false });
 		expect(crossRole).toMatchObject({ isError: true, details: { httpStatus: 403 }, body: { code: "node-role-invalid", message: "管理者身份没有唯一合法的父执行关联。" } });
 		const secondPath = join(backend.root.path, "runs", conflicting.id, "run.json");
@@ -121,11 +125,14 @@ test("P1/P2/P6 independent automatic roles use native identity and preserve real
 			expect(request.body.sessionId).toBe(id);
 			expect(Object.keys(request.body).sort()).toEqual(request.path.endsWith("/report") ? ["body", "canComplete", "sessionId"] : request.path.endsWith("/dispatch") ? ["nodes", "sessionId"] : ["sessionId"]);
 		}
-		// P2 constrains external connections: observe ALL role HTTP paths, including any
-		// accidental connect-bot registration, heartbeat, or websocket upgrade attempt.
-		expect(transport.calls.map(call => call.path)).toEqual([
-			"/api/workflow/manager/status", "/api/workflow/node/context", "/api/workflow/manager/status", "/api/workflow/manager/dispatch",
-			"/api/workflow/node/context", "/api/workflow/node/report", "/api/workflow/manager/collect", "/api/workflow/node/context", "/api/workflow/node/context", "/api/workflow/manager/status",
+		// P2 observes every role path, including accidental registration or heartbeat.
+		// Script polling has an independent lifetime; its exact count is not a business action.
+		const outputCalls = transport.calls.filter(call => call.path === "/api/workflow/manager/script-output");
+		expect(outputCalls.length).toBeGreaterThan(0);
+		expect(outputCalls.every(call => call.body.sessionId === managerId)).toBe(true);
+		expect(transport.calls.filter(call => call.path !== "/api/workflow/manager/script-output").map(call => call.path)).toEqual([
+			"/api/workflow/manager/status", "/api/workflow/node/report", "/api/workflow/manager/status", "/api/workflow/manager/dispatch",
+			"/api/workflow/node/report", "/api/workflow/manager/collect", "/api/workflow/node/report", "/api/workflow/node/report", "/api/workflow/manager/status",
 		]);
 		// One explicitly test-owned SSE reader checks the actual panel registry.
 		// Neither role registered a connect-bot reporting Session as a side effect.

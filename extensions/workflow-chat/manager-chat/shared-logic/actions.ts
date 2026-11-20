@@ -1,6 +1,7 @@
 import { WorkflowRequests, type WorkflowResponse } from "../../common/requests";
+import { collectWithScriptOutput, type ScriptOutputObservation } from "./script-output";
 
-type ActionResult = WorkflowResponse & { readonly message?: string };
+type ActionResult = WorkflowResponse & { readonly message?: string; readonly scriptOutput?: ScriptOutputObservation };
 
 /** Manager protocol and parameter rules, independent of the tool's harness. */
 export class ManagerActions {
@@ -13,25 +14,30 @@ export class ManagerActions {
 		const confirmation = input?.action === "recover" || input?.action === "retry";
 		const nodeAction = input?.action === "complete" || input?.action === "fail" || reconcile || confirmation;
 		const dispatch = input?.action === "dispatch";
-		const allowed = prepare ? ["action", "fileInputs", "confirmed", "reason"] : dispatch ? ["action", "nodes"] : reconcile ? ["action", "nodeId", "finding", "reason"] : confirmation ? ["action", "nodeId", "confirmed", "reason"] : nodeAction ? ["action", "nodeId", "reason"] : ["action"];
+		const allowed = prepare ? ["action", "fileInputs", "confirmed", "reason"] : dispatch ? ["action", "nodes", "zoneIds"] : reconcile ? ["action", "nodeId", "finding", "reason"] : input?.action === "retry" ? ["action", "nodeId", "confirmed", "reason", "zoneId"] : confirmation ? ["action", "nodeId", "confirmed", "reason"] : nodeAction ? ["action", "nodeId", "reason"] : ["action"];
 		if (!input || typeof input !== "object" || Array.isArray(input) || (!prepare && !dispatch && !nodeAction && input.action !== "status" && input.action !== "pause" && input.action !== "resume" && input.action !== "finish") ||
 			Object.keys(input).some(key => !allowed.includes(key)) ||
 			(prepare && (typeof input.confirmed !== "boolean" || typeof input.reason !== "string" || !Array.isArray(input.fileInputs) || input.fileInputs.some(file =>
 				!file || typeof file !== "object" || Array.isArray(file) || Object.keys(file).some(key => key !== "id" && key !== "path") || typeof file.id !== "string" || typeof file.path !== "string"))) ||
+			("zoneId" in input && (typeof input.zoneId !== "string" || !input.zoneId.trim())) ||
+			("zoneIds" in input && (!input.zoneIds || typeof input.zoneIds !== "object" || Array.isArray(input.zoneIds) || Object.values(input.zoneIds).some(zone => typeof zone !== "string" || !zone.trim()))) ||
 			(confirmation && typeof input.confirmed !== "boolean") ||
 			(reconcile && input.finding !== "uncertain" && input.finding !== "not_created" && input.finding !== "created") ||
 			(dispatch && (!Array.isArray(input.nodes) || input.nodes.some(node => typeof node !== "string"))) ||
 			(nodeAction && (typeof input.nodeId !== "string" || typeof input.reason !== "string"))) {
 			return { body: null, message: JSON.stringify({ error: { kind: "parameters", message: "run 参数不符合所选 action；不接受身份或不适用字段。" } }), isError: true };
 		}
-		const body = prepare ? { fileInputs: input.fileInputs, confirmed: input.confirmed, reason: input.reason } : dispatch ? { nodes: input.nodes } : reconcile ? { nodeId: input.nodeId, finding: input.finding, reason: input.reason } : confirmation ? { nodeId: input.nodeId, confirmed: input.confirmed, reason: input.reason } : nodeAction ? { nodeId: input.nodeId, reason: input.reason } : {};
+		const body = prepare ? { fileInputs: input.fileInputs, confirmed: input.confirmed, reason: input.reason } : dispatch ? { nodes: input.nodes, ...("zoneIds" in input ? { zoneIds: input.zoneIds } : {}) } : reconcile ? { nodeId: input.nodeId, finding: input.finding, reason: input.reason } : confirmation ? { nodeId: input.nodeId, confirmed: input.confirmed, reason: input.reason, ...("zoneId" in input ? { zoneId: input.zoneId } : {}) } : nodeAction ? { nodeId: input.nodeId, reason: input.reason } : {};
 		return this.requests.post(sessionId, "/api/workflow/manager/" + input.action, body, signal);
 	}
 
-	async collect(sessionId: string, params: unknown, signal?: AbortSignal): Promise<ActionResult> {
+	async collect(sessionId: string, params: unknown, signal?: AbortSignal, onScriptOutput?: (output: ScriptOutputObservation) => void): Promise<ActionResult> {
 		if (!params || typeof params !== "object" || Array.isArray(params) || Object.keys(params).length !== 0) {
 			return { body: null, message: JSON.stringify({ error: { kind: "parameters", message: "collect 不接受业务或身份字段。" } }), isError: true };
 		}
-		return this.requests.post(sessionId, "/api/workflow/manager/collect", {}, signal, true);
+		const collect = () => this.requests.post(sessionId, "/api/workflow/manager/collect", {}, signal, true);
+		if (!onScriptOutput) return collect();
+		return collectWithScriptOutput(collect, outputSignal => this.requests.post(sessionId, "/api/workflow/manager/script-output", {}, outputSignal),
+			this.requests.interactionSignal(sessionId, signal), onScriptOutput);
 	}
 }

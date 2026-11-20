@@ -15,8 +15,13 @@ test("P21 collect distinguishes backend expiry, cancellation, budget, broken str
 	let active: ServerResponse | undefined;
 	const sockets = new Set<Socket>();
 	const peer = createServer((incoming, response) => {
-		active = response;
 		incoming.resume();
+		if (incoming.url === "/api/workflow/manager/script-output") {
+			response.writeHead(200, { "content-type": "application/json" });
+			response.end(JSON.stringify({ runId: "fixture", observedAt: Date.now(), nodes: [] }));
+			return;
+		}
+		active = response;
 		response.setHeader("content-type", "application/json");
 		switch (outcome) {
 			case "expiry": response.end('{"reason":"timeout","snapshot":{"id":"backend-expired","status":"running"},"pendingReports":{}}'); break;

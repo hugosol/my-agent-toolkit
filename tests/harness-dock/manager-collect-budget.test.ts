@@ -17,7 +17,7 @@ test("P9/P17 collect outlives the ordinary budget and waits with ready plus runn
 		expect(result.ready).toEqual(["B"]);
 		expect(result.pendingReports).toEqual({});
 		expect(result).not.toHaveProperty("reports");
-		expect(scene.calls).toEqual([{ path: "/api/workflow/manager/collect", body: { sessionId: scene.managerId } }]);
+		expect(scene.calls.filter(call => call.path !== "/api/workflow/manager/script-output")).toEqual([{ path: "/api/workflow/manager/collect", body: { sessionId: scene.managerId } }]);
 	} finally { await scene.close(); }
 }, 300_000);
 
@@ -36,6 +36,6 @@ test("P9 collect's own shorter budget expires as a client error, not backend tim
 		expect(result).not.toHaveProperty("snapshot");
 		expect(result.guidance).toContain("不要自动重试");
 		expect((await scene.detail()).run).toEqual(dispatched.snapshot);
-		expect(scene.calls).toEqual([{ path: "/api/workflow/manager/collect", body: { sessionId: scene.managerId } }]);
+		expect(scene.calls.filter(call => call.path !== "/api/workflow/manager/script-output")).toEqual([{ path: "/api/workflow/manager/collect", body: { sessionId: scene.managerId } }]);
 	} finally { await scene.close(); }
 }, 300_000);

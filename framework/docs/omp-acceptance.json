@@ -305,6 +305,79 @@
         }
       ],
       "acceptedAt": "2026-11-14T07:07:56.939Z"
+    },
+    "full-repository": {
+      "schemaVersion": 1,
+      "harness": "omp",
+      "scope": "full-repository",
+      "startedAt": "2026-11-17T16:58:47.194Z",
+      "cli": {
+        "path": "D:\\nvm4w\\nodejs\\node_modules\\@oh-my-pi\\pi-coding-agent\\dist\\cli.js",
+        "command": [
+          "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe",
+          "D:\\nvm4w\\nodejs\\node_modules\\@oh-my-pi\\pi-coding-agent\\dist\\cli.js"
+        ],
+        "source": "locally selected installed OMP"
+      },
+      "source": {
+        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-D1g6EG",
+        "head": "15b11cfe6827398e597606efa508120a6e1e3458",
+        "status": [],
+        "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "untrackedFiles": [],
+        "sha256": "a2d775ac665d2813afd96a07f8821f2782d14d6c607a6c3d8216f213e2341d5c"
+      },
+      "lockfiles": [
+        {
+          "path": "bun.lock",
+          "bytes": 11550,
+          "sha256": "28ce4c0d7b7d1d45a44e335a6647b0959c333875af42ca87ba63c87bcf4c2168"
+        }
+      ],
+      "runtime": {
+        "driver": {
+          "executable": "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe",
+          "node": "26.3.0",
+          "bun": "1.4.4"
+        },
+        "cli": {
+          "execPath": "D:\\Users\\hugos\\AppData\\Local\\nvm\\v24.18.0\\node_modules\\bun\\bin\\bun.exe",
+          "node": "26.3.0",
+          "bun": "1.4.4"
+        },
+        "artifact": {
+          "path": "D:\\nvm4w\\nodejs\\node_modules\\@oh-my-pi\\pi-coding-agent\\dist\\cli.js",
+          "bytes": 19021514,
+          "sha256": "dc99fbfed5ee3275efee2e3f441549f8863ff9da5a8d4f0740754033180597c9"
+        },
+        "platform": "win32",
+        "arch": "x64"
+      },
+      "reportedVersion": "omp/18.20.0",
+      "version": "18.20.0",
+      "status": "passed",
+      "complete": true,
+      "checks": [
+        "test --parallel=4"
+      ],
+      "detail": "Suite exit 0. JUnit confirms nonempty, unskipped execution of every expected file.",
+      "finishedAt": "2026-11-17T17:04:29.072Z",
+      "finishedSource": {
+        "repoRoot": "C:\\Users\\hugos\\AppData\\Local\\Temp\\hyper-ticket-D1g6EG",
+        "head": "15b11cfe6827398e597606efa508120a6e1e3458",
+        "status": [],
+        "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "untrackedFiles": [],
+        "sha256": "a2d775ac665d2813afd96a07f8821f2782d14d6c607a6c3d8216f213e2341d5c"
+      },
+      "finishedLockfiles": [
+        {
+          "path": "bun.lock",
+          "bytes": 11550,
+          "sha256": "28ce4c0d7b7d1d45a44e335a6647b0959c333875af42ca87ba63c87bcf4c2168"
+        }
+      ],
+      "acceptedAt": "2026-11-17T17:04:29.072Z"
     }
   }
 }

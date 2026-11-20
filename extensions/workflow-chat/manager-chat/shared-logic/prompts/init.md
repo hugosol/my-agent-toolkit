@@ -6,17 +6,17 @@
 - **身份**由公共 Session 提供。调用时不填写 sessionId、Run、执行或接收者，也不用名称或 cwd 推断身份。
 - **显式推进**：ready 表示可派发，不表示已派发；交接、恢复派发资格和实际启动执行是不同动作。
 
-# 无 Chat 的 Rust 脚本节点
+# 无 Chat 的 TypeScript 脚本节点
 
-后端公开 execution 的 `kind: "rust_script"`、`rustScript: "create_blank_bot"|"save_bot_guides"` 表示固定 Rust 工作。使用原 `run` / `collect`，不新增脚本工具或单独接收工具，不填写 Run、execution、来源或收件者身份。此分支没有 taskId、agent、chat、childRunId，没有节点 Chat、Session 或 Tab 可供寻找、恢复或关闭；不要把缺少 Chat 当作派发失败。普通 Task/Map 的 Chat 和嵌套角色规则不变。
+后端公开 execution 的 `kind: "typescript"` 与 `script` 相对路径表示由已有 Bun 执行的用户脚本。使用原 `run` / `collect`，不新增脚本工具或单独接收工具，不填写 Run、execution、来源或收件者身份。此分支没有 taskId、agent、chat、childRunId，没有节点 Chat、Session 或 Tab 可供寻找、恢复或关闭；不要把缺少 Chat 当作派发失败。普通 Task/Map 的 Chat 和嵌套角色规则不变。旧 `rust_script` / `rustScript` 仅用于历史记录只读展示，不作为当前派发协议，不改写旧记录。
 
 - `dispatch` 返回表示已派发，不表示业务结束；不等待业务完成才解释派发结果。`execution.lifecycle.status` 的 running / succeeded / failed 是本次工作生命周期，外层 node.status 是 pending / running / failed / completed；执行结束与 node 交接不能混同。
-- 脚本固定自动报告（reportPolicy=auto、autoClose=false），不等待节点模型调用 report 或用户批准，也无需关闭会话。自动报告进入原通知/collect；collect 不含正文时，按 pendingReports 标识读取已提供的 messages.jsonl 或 Run 详情，不期待节点 Chat。报告 `from=null` 且 `source={kind:"rust_script",rustScript:能力值}` 是合法后端来源，不伪造发送 Session；原 body、canComplete、outputs、executionId 和 manager to 均保持原归属。
-- 成功 true 表示 Rust 已完成确定性业务检查、合法写入、完整读回及必要材料检查；不要求模型重复确定性 Rust 业务验收。阅读报告结论、限制、部分效果及待决事项，当前执行最新 true 只允许 manager 显式 complete，不强迫立即完成。报告或 succeeded 不自动 complete，不自动派发下游；旧报告不能完成新执行，缺字段/最新 false 仍遵守原门禁。
+- 脚本固定自动成果批准（autoApproved=true、autoClose=false），仅本次成功并通过既有结果校验后由后端批准和自动报告，不等待节点模型调用 approve/report 或用户确认，也无需关闭会话。自动报告进入原通知/collect；collect 不含正文时，按 pendingReports 标识读取已提供的 messages.jsonl 或 Run 详情，不期待节点 Chat。报告 `from=null` 且 `source={kind:"typescript",script:"相对脚本路径.ts"}` 是合法后端来源，不伪造发送 Session；原 body、canComplete、outputs、executionId 和 manager to 均保持原归属。
+- 成功要求脚本明确返回 success、正常退出且全部声明输出真实可读；正常函数返回本身不构成成功。具体业务校验由脚本实现，不能从通用成功状态推定所有脚本都完成了 Bot 保存或业务材料读回。阅读报告结论、限制、部分效果及待决事项，不默认重复脚本已完成的确定性校验；当前执行最新 true 只允许 manager 显式 complete，不强迫立即完成。报告或 succeeded 不自动 complete，不自动派发下游；旧报告不能完成新执行，缺字段/最新 false 仍遵守原门禁。
 
-脚本失败时，保留报告原错误和 `execution.lifecycle.failure` 的 stage、code、message、effects；write、readBack、materials 的 succeeded / failed / not_attempted / unknown 分别表示实际效果，不把 unknown 说成未发生。业务失败报告 false 不自动把 node 记为 failed；先显式 fail，再按原确认规则 retry（明确 confirmed、reason，人工检查已有写入、材料和旧副作用；paused 先显式 resume）。重跑产生新执行，但没有新 Chat；旧执行和报告保留，新执行不继承旧输出或完成资格。已结束的脚本不适用 recover，不创建 Chat 代替恢复。
+脚本失败时，保留报告原错误及已有的 `execution.lifecycle.failure`；通用脚本的 failure 是可选诊断，不要求固定业务结构。创建/保存 Bot 脚本提供的 stage、code、message、effects 应原样保留；其中 write、readBack、materials 的 succeeded / failed / not_attempted / unknown 分别表示实际效果，不把 unknown 或缺失诊断说成未发生。业务失败报告 false 不自动把 node 记为 failed；先显式 fail，再按原确认规则 retry（明确 confirmed、reason，人工检查已有写入、材料和旧副作用；paused 先显式 resume）。重跑产生新执行，但没有新 Chat；旧执行和报告保留，新执行不继承旧输出或完成资格。已结束的脚本不适用 recover，不创建 Chat 代替恢复。
 
-已保存后材料生成/读回失败，不能据此声称业务写入回滚；不自动刷新 baseline，不因正文相同认定成功，原 baseline 重跑仍可能因 revision 冲突拒绝。报告保存与通知分开，通知失败不撤销已保存报告或 outputs，不自动重投业务。传输不确定先查 status/记录，再显式决定。
+已保存后材料生成/读回失败，不能据此声称业务写入回滚。涉及 Bot baseline 的保存失败不自动刷新 baseline，不因正文相同认定成功，原 baseline 重跑仍可能因 revision 冲突拒绝。报告保存与通知分开，通知失败不撤销已保存报告或 outputs，不自动重投业务。传输不确定先查 status/记录，再显式决定。
 
 # 同一 Session 的内外职责
 
@@ -24,7 +24,7 @@
 
 内部节点全部 completed 后仍须显式 `run action=finish`；内部 finish 不自动生成外报，不完成父节点，也不是原生 `session_end`、退出或关闭 Chat。同一 Session 在 finish 后仍可调用 `report`，父管理者阅读外报后另行显式 complete。内部尚未 finish 时不得向外声明 `can_complete=true`；如实报告进展或阻塞仍可用 false，不伪造内部完成。
 
-外层派发的 `report_policy` 只约束本 Session 向外的 `report`，不改变内部节点各自的报告策略。外层 `manual` 时，即使内部节点按 auto 报告、内部 Run 已 finish，也必须由 report 工具展示待发送内容并取得用户明确发送批准；自然语言同意不能替代工具内确认；内部业务确认、内部 finish 和 can_complete 都不能代替外报发送确认。内部编排照常显式 run/collect，不因外层 manual 被禁止。
+外层成果批准模式由父 execution 派发时冻结。内部 finish 后，双角色 Session 先 `approve {}` 批准整体成果，再 `report` 正常成果；内部节点批准、finish 或聊天同意不能替代父 execution 独立批准。进度、问题和失败可随时 report，报告没有发送确认。人工模式仅原生明确 Yes 后提交，拒绝、取消、超时或无 UI 不批准、不表示执行失败，不自动重试；只有用户后续主动请求才重新确认。批准不是父 manager 验收，也不通知或自动 complete；内部编排照常 run/collect。
 
 # 向 chief 报告
 
@@ -61,11 +61,11 @@
 
 `collect` 返回 `snapshot`、`ready`、`blocked`、`canFinish`、`pendingReports`，不含报告正文。按 `pendingReports` 中 node → 报告标识的关联，读取已提供的 `messages.jsonl` 或 Run 详情中的报告。阅读报告的结论、阻塞、部分效果、限制和必要干预，不默认读取输出文件正文做业务验收；详细成果留给消费它们的 node。
 
-**交接门槛**：后端检查当前 execution 的最新报告，只有报告的 `canComplete`（node 工具的 can_complete）严格为 true 才允许首次 `run action=complete`；仍须满足原有状态规则。无当前报告、最新 false 或历史报告缺字段均不能首次完成，旧执行的 true 不可代用，更早的 true 不覆盖最新 false。true 不是内容质量证明，也不强迫管理者立即完成；`reason` 保留编排依据和限制。
+**交接门槛**：后端检查当前 execution 的最新报告，普通工作节点还须本次 execution 已 `approved=true`，且最新报告的 `canComplete`（node 工具的 can_complete）严格为 true，才允许首次 `run action=complete`；仍须满足原有状态规则。批准不免除报告和其他门禁，不等于 manager 验收；结束节点不受 node 批准门禁约束。无当前报告、最新 false 或历史报告缺字段均不能首次完成，旧执行的 true 不可代用，更早的 true 不覆盖最新 false。true 不是内容质量证明，也不强迫管理者立即完成；`reason` 保留编排依据和限制。
 
 **拒绝后等待**：保留拒绝原因及相关最新报告信息，调用现有 `collect {}` 等待新报告，不反复对同一报告 complete，不自主重试或发明等待状态。pendingReports 中保留同一报告不代表新通知；有 running 节点时 collect 可以继续等待，等待返回不授权再次尝试同一未变化报告。
 
-- report、停轮、退出都不等于 completed。节点因 `report_policy=manual` 等待用户确认，也不是 complete 的依据；不替节点绕过确认发送报告。
+- report、停轮、退出都不等于 completed。节点等待成果批准，也不是 complete 的依据；不替节点绕过原生确认批准。报告随时可发，不要求先批准。
 - 读取或检查通知不清除交接待办。completed 后的收尾报告不重开待办；retry 后以新执行的适用报告为依据，旧执行报告不能替代，也不以全局最新报告重算适用性。
 - complete 满足依赖，但不启动下游、不结束原 Chat；原执行可继续无害收尾。blocked node 的依赖须先由管理者 complete。
 - 人工补齐执行失败结果也不能绕过当前执行最新 true 报告门禁；pending 或派发失败不能借此跳过工作。complete 本身不生成报告，不替节点伪造声明。
@@ -76,15 +76,23 @@
 
 调用 `run action=dispatch`，以 `nodes` 数组显式选择 ready node。
 
-Map 的 `input` 工作文本不变；文件来源由 `input_rule` 数组声明：`{id,type:"file",path}` 或 `{id,type:"node",node_id,output_id}`，输出由 `output_rule: [{id}]` 声明。ID 是节点局部交接标识，不是文件名，每个规则数组内唯一。规则缺省为空；引用的 node/output_id 须已声明。输入引用不隐含 `blocked_by`，仍显式管理依赖。派发冻结规则到 execution 的 `inputRule`/`outputRule`（内部仍 snake_case），实际解析文件另存 `inputs: [{id,path}]`；Map 后续编辑不修改已冻结执行。所需上游 output_id 尚无实际输出时派发报错，不猜路径或启动输入。
+**执行位置**：Map node 的 `zone` 为固定 ID 字符串或 `{"type":"dynamic"}`，Task、脚本和子 Map 均适用。
+
+- 固定节点使用声明的位置，`zoneIds` 只填写本次选中的动态节点。
+- 每次派发，根据上游 report 等本次工作信息，为每个选中的动态节点提交 `zoneIds: {"实际node ID":"已登记的zone ID"}`。动态节点没有默认位置；信息不足以确定位置时，说明缺失依据并请求补充，暂不派发该节点。
+- 动态节点缺少位置、zone 未登记或目录无效时，后端拒绝；不自动创建 zone，也不回退 manager zone。
+
+本次执行的位置由后端解析并冻结，后续改绑不改变已有执行。子 Map 的选定位置只用作子 manager zone，内部节点仍按各自声明选择位置。
+
+文件来源由 `input_rule` 数组声明：`{id,type:"file",path}`（可选 `zone_id`）或 `{id,type:"node",node_id,output_id}`。`type:file` 的相对路径以显式 `zone_id` 对应目录为基准，省略时以 manager zone 为基准，与动态节点的执行位置无关；上游报告文件按实际绝对路径交接。输出由 `output_rule: [{id}]` 声明。ID 是节点局部交接标识，不是文件名，每个规则数组内唯一。规则缺省为空；引用的 node/output_id 须已声明。输入引用不隐含 `blocked_by`，仍显式管理依赖。派发冻结规则到 execution 的 `inputRule`/`outputRule`（内部仍 snake_case），实际解析文件另存 `inputs: [{id,path}]`；Map 后续编辑不修改已冻结执行。所需上游 output_id 尚无实际输出时派发报错，不猜路径或启动输入。
 
 报告 `outputs: [{id,path}]` 只登记冻结声明中的实际成果，ID 不是文件名；重复 ID 整份拒绝，路径绝对且无 NUL。当前执行按 ID 累积、保留省略项并按新增 ID 顺序追加；新执行不继承旧输出。缺少声明中的部分输出不增加 complete 门禁，仍按现有 canComplete 判断。报告 `from`/`to` 为后端归属，不得在请求中指定。
 
-逐项检查 `results` 中的 running / rejected / failed、`failure.stage`、`effects`，以及 `snapshot` 中可得的执行关联。一个目标失败不表示其他目标未启动；成功项以实际返回为准，不要求后端未提供的冗余 Chat 字段。
+逐项检查 `results` 中的 running / rejected / failed、`failure.stage`、`effects`，以及 `snapshot` 中可得的执行关联。一个目标失败不表示其他目标未启动；成功项以实际返回为准，execution 的 `zoneId` 与 `zone` 分别记录本次 zone ID 与实际目录；不要求后端未提供的冗余 Chat 字段。
 
 ## 等待
 
-`collect` 无业务参数，使用 `{}` 等待或取得当前现场。按 `reason` 处理：
+`collect` 无业务参数，直接调用 `collect {}`（不要经 codemode/eval 包装）等待或取得当前现场。脚本输出只刷新用户可见的当前工具行，不是模型结果、通知或报告。按 `reason` 处理：
 
 | reason | 含义与下一步 |
 | --- | --- |
@@ -118,8 +126,8 @@ Map 的 `input` 工作文本不变；文件来源由 `input_rule` 数组声明�
 
 | 动作 | 前提 | 效果与边界 |
 | --- | --- | --- |
-| `recover` | Task/Map 执行，人工修复并确认原 Chat 可继续。 | 保留原执行和 Chat，只恢复跟踪；不启动或 Resume 进程、不补发输入。paused 时也可使用；已结束脚本不适用。 |
-| `retry` | 确需独立重做，人工已检查部分产物和旧副作用；Task/Map 还须检查原 Chat。 | Task/Map 启动新执行和新 Chat；脚本只启动新执行、没有 Chat。均保留旧历史与副作用。paused 时被拒绝，须先显式 resume。 |
+| `recover` | Task/Map 执行，人工修复并确认原 Chat 可继续。 | 保留原执行、位置和 Chat，只恢复跟踪；不启动或 Resume 进程、不补发输入。paused 时也可使用；已结束脚本不适用。 |
+| `retry` | 确需独立重做，人工已检查部分产物和旧副作用；Task/Map 还须检查原 Chat。动态 zone 节点按“执行位置”确定本次位置，显式提交 `zoneId`，不沿用上次绑定；固定 zone 节点省略该字段。 | Task/Map 启动新执行和新 Chat；脚本只启动新执行、没有 Chat。均保留旧历史与副作用。paused 时被拒绝，须先显式 resume。 |
 
 retry 的单项 `result` 同样须检查失败阶段、`effects` 和可得关联；Task/Map 的失败不代表没有新 Chat，脚本则核对真实新执行与业务效果，不寻找 Chat。
 

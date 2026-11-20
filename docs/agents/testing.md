@@ -6,7 +6,10 @@ Run repository checks with Bun **1.4.4**, selected by `packageManager` in the ro
 `package.json`. The dock checks the executing Bun against that declaration.
 `framework/docs/harness-baseline.json` retains the historical acceptance environment
 (Bun 1.4.2); it is not the current test-runtime selector. Changing the test runtime
-does not promote a new harness/provider support combination.
+does not promote a new harness/provider support combination. If TypeScript 7
+reports its platform package missing despite an existing install, restore the
+lockfile-pinned optional dependency with `bun install --frozen-lockfile --force`;
+do not substitute another compiler or change the typecheck entrypoint.
 
 Use the smallest relevant scope while iterating; broaden it at ticket completion and final integration. Explicit task acceptance requirements take precedence over these defaults. Tests supplement, rather than replace, exercising the changed behavior through its smoke or real-host observation seam.
 
@@ -81,7 +84,7 @@ For real-backend persistence failure checks, block the destination record path i
 
 ## Chief report compatibility acceptance
 
-The paired Herdr entrypoint `scripts/accept-chief-reports.py` owns full dual-host report acceptance. Its explicit worktrees, backend, isolated paths/model configuration and new evidence directory are required; controlled provider outcomes are only protocol/fault evidence, not GPT-6-luna responsibility evidence. `native-chief-report.test.ts` remains the native confirmation enabling regression; do not copy it into another test to claim model behavior. Its controlled peers route only `POST /api/chief/reports` before parsing or counting report submissions; unrelated host discovery requests receive 404 rather than being parsed as report JSON. The `chief-delegation.test.ts` peers likewise accept only the two delegation POST routes before parsing or counting, so native model discovery is not mistaken for a dispatch. Real-model acceptance must observe the actual `chief_delegate` invocation and result for a complete explicit dispatch request; a final answer merely announcing an attempt is not a tool attempt or startup evidence.
+The paired Herdr entrypoint `scripts/accept-chief-reports.py` owns full dual-host report acceptance. Its explicit worktrees, backend, isolated paths/model configuration and new evidence directory are required; controlled provider outcomes are only protocol/fault evidence, not GPT-6-luna responsibility evidence. `native-chief-report.test.ts` remains the native confirmation enabling regression; do not copy it into another test to claim model behavior. Its controlled peers route only `POST /api/chief/reports` before parsing or counting report submissions; unrelated host discovery requests receive 404 rather than being parsed as report JSON. The `native-chief-reception.test.ts` peer likewise accepts only its exact receive POST route before parsing JSON or recording calls. The `chief-delegation.test.ts` peers likewise accept only the two delegation POST routes before parsing or counting, so native model discovery is not mistaken for a dispatch. Real-model acceptance must observe the actual `chief_delegate` invocation and result for a complete explicit dispatch request; a final answer merely announcing an attempt is not a tool attempt or startup evidence.
 
 `bun test tests/harness-dock/chief-report-backend-faults.test.ts` exercises both real native tools against the paired backend: an actual blocked journal destination, definite external Herdr refusal after save, and TCP response loss only after the real backend commits. Tool feedback and public readback distinguish these outcomes without retry. After the first save, both installed native chief readers successively acquire current authority and read the same persisted report ID and complete object, rather than two controlled HTTP copies. `nested-role-completion.test.ts` now covers ordinary and actual chief-delegated outer Maps with a current chief present, retaining inner/outer manager recipients and completion gates. `node-report-contract.test.ts` also keeps both hosts' saved reports after real notification failure; its 46-second real-clock quiet window covers the shipped 30-second request/startup and 10+30+5-second lifecycle budgets. These independent process clocks cannot use test-process fake timers.
 
@@ -90,6 +93,109 @@ Set `WORKFLOW_PROMPT_EVIDENCE_DIR`, `WORKFLOW_DUAL_EVIDENCE_DIR` and `CHIEF_REPO
 ## Chief Map confirmation-unavailable acceptance
 
 `bun test tests/harness-dock/chief-map-unavailable.test.ts` exercises both installed hosts' actual no-UI modes with a complete Map preview, explicit manager, separate internal zone and named material. The provider and HTTP peer are controlled mechanical conditions: the test proves no commit without native confirmation, not GPT-6-luna routing, backend authorization or a real Run. Each invocation owns its peer, host session and deployment; the helper awaits host exit before the 2.1-second platform-clock observation (native request/confirmation budgets are 2 seconds). `CHIEF_MAP_UNAVAILABLE_HOST=omp` or `pi` selects a diagnostic subset, not complete two-host acceptance. The cross-repository business entry is the participating Herdr checkout's `scripts/accept-chief-map.py`; no other acceptance result substitutes for its Map/capability scenarios. That entry supplies `CHIEF_MAP_UNAVAILABLE_OMP_PACKAGE` so the mechanical case uses the same declared installed OMP package as the business cases, rather than silently substituting the frozen dock version. Without that explicit override the existing OMP dock path is unchanged. `WORKFLOW_PROMPT_EVIDENCE_DIR` retains actual native sessions/captures; the shared print-mode helper also retains stdout/stderr, CLI identity, PID and awaited exit, with original and cleanup errors separately recorded.
+
+## Native node approval/report acceptance
+
+The paired Herdr worktree's `scripts/accept-node-approval-report.py` owns the
+isolated dual-host mechanical approval/report acceptance. Supply both worktrees,
+that Herdr worktree's production backend, explicit installation paths, a new
+evidence directory, and the explicit model configuration
+`{"mode":"controlled","scope":"ticket-10-native-mechanics"}`. Controlled choices
+exercise the installed hosts and shipped tools, not real-model business judgment.
+The runner also executes the existing chief delegation/report and free node-report
+docks; paired regression uses the current safe shutdown shell and
+`HERDR_BOT_METADATA` names the worktree's `meta-data/task-options.toml`.
+
+`scripts/node-approval-concurrent.ts` is an acceptance-only caller, not a product
+CLI: the paired runner supplies its owned JSON configuration. It uses the
+installed host's public `switch_session` on an exact copy of that invocation's
+native history, starts in that history's actual owned cwd (OMP RPC refuses a
+cross-cwd switch), verifies the switch was not cancelled and the recovered public
+Session identity, then calls the shipped zero-argument approve concurrently with
+the original native process. A
+transparent HTTP arrival gate forwards both requests to the actual backend;
+serial repetition cannot pass. Both actual histories, RPC frames, receipt/error,
+external effects and process exits are retained. No host is installed, no
+identity is fabricated and no backend response is substituted. Native TUI Yes
+selection and the exact node question remain separately observed in both hosts.
+Keep the existing quiet-window policy for this cross-repository runner as well.
+
+## Native approval lifecycle acceptance
+
+The participating Herdr worktree owns `scripts/accept-node-approval-lifecycle.py`
+for P3/P10/P11/P14/P16/P24/P28's S2 partitions. Its explicit worktrees, current
+production binary, isolated installation paths, authorized model configuration
+and new evidence directory are mandatory. The existing Codex wrapper supports
+`--scenario node-approval-lifecycle` with an explicitly authorized readonly auth
+file; it uses the actual adapter and checks canonical `serverModel=gpt-6-luna`,
+without copying credentials or retrying decisions.
+
+The runner compares actual native role/tool catalogs and zero-argument approval,
+keeps real confirmation pending across bounded public work and fail/retry,
+returns the old native Yes only after the new execution exists, actually exits
+and restores node processes, and separately restarts the backend without old-Run
+reclaim or input replay. Real material edits preserve approval. Actual nested
+Runs finish before their dual-role manager submits independent overall parent
+approval in each frozen mode; manual requires observed native Yes, and parent
+completion remains explicit. No Run or identity fixtures substitute these facts.
+
+Paired regression uses the current safe shutdown shell, not the business backend,
+with explicit worktree metadata and `OMP_BASELINE_RECORD_ROOT` for relocated
+baseline references. The affected named docks are `native-node-report.test.ts`,
+`node-report-contract.test.ts` and `nested-role-completion.test.ts`. The complete
+suite is run with CPU/available-memory-derived workers; noncanonical runner
+arguments do not publish a new complete installed-OMP scope. Per-host native
+histories, actual UI return/selection, HTTP, real files and held-process exit
+observations remain distinct from CLI safety or controlled-provider evidence.
+`scripts/node-approval-identity-fault.ts` is an acceptance-only caller reusing the
+existing native RPC/session facilities. A clearly labeled controlled provider
+supplies extra identity fields to the actual installed adapter on an exact owned
+history copy; original Session identity, raw calls/results and real backend
+readback prove rejection or stripping cannot select another Run/execution. This
+is not model-judgment or Chat-recovery acceptance. OMP's injected i/intent and the
+adapters' intentionally open wire schemas are not business identity selectors.
+
+For stale Yes, the invocation-owned observer deterministically holds the new
+worker before its first business model request through six public `context`
+handlers awaited in registration order; `before_agent_start` only marks its
+owned input. Each hook waits at most 25 seconds, below the installed OMP's
+existing 30-second handler budget, without holding a provider HTTP request.
+Record the actual Session/PID, phase and absence of business requests. Snapshot
+the pre-Yes business/HTTP/actual notification send baseline, then return old Yes.
+Release only after the 91-second no-effect window (60 seconds for approval,
+30 seconds for HTTP, 1 second of margin). Attribute the new worker's initial
+work after release separately from old Yes. The transparent
+`recovery_herdr_proxy` forwards and records installed Herdr without its fault
+flag. Managers may read an already-sent report through readonly status/collect.
+Their final response is not required inside the approval confirmation window.
+Preserve earlier reports and verify zero initial work through the gate rather
+than prompt wording. Explicit Chat arguments route the shared confirmation observer;
+the caller never temporarily rebinds the primary worker, including on failure.
+Both entrypoints offer explicit diagnostic `--cases` selection from
+`persistence,nested-auto,nested-manual,lifecycle` (default all). Selected and
+missing partitions remain visible; subsets always exit nonzero and never
+certify the ticket. Each new explicit native input first observes any legitimate
+current turn finish, then retains the existing 10-second admission check; no
+product timeout or model decision is retried. A terminal actual completion
+failure leaves remaining hosts unverified rather than reusing its failed transport.
+Registration is observation, not assistant-round completion: reuse the existing
+pure native Session/OS observations. A manager may legitimately have collect in
+flight while child work must advance. The paired Python `CollectRegistrationFixture`
+regression exercises that client boundary against installed Pi and the production
+HTTP backend, with an explicitly labeled local mechanical model; it certifies no
+P partition or real-model behavior. Actual S2 handoff still requires the managers'
+own native approval and separate parent completion, never HTTP-filled success.
+Missing host/coverage/authorization, failed checks or cleanup remain nonzero.
+
+Native operations may use direct tools or the installed host's write-to-xd route.
+Decode only matching native xdev execution receipts with the original JSON payload;
+documentation help is not execution, and renderer arguments cannot hide supplied identity fields.
+The driver requests missing operations, observes already-completed legitimate native work,
+and does not require autonomous model orchestration or replay completed actions.
+The persistence fixture publicly pauses new dispatches after starting its actual node;
+approval, reporting, restoration and restart remain real. In-flight lifecycle cases stay running.
+The Herdr entrypoint documents hash-bound case composition and guarded reuse of a wholly
+successful repository-check phase; failures and excluded hosts retain their original records.
 
 ## Store disposable results
 
