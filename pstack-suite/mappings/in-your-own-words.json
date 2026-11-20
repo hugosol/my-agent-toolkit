@@ -1,0 +1,9 @@
+[
+  {
+    "name": "use-omp-manual-invocation",
+    "reason": "OMP attaches the hidden skill through its native /skill:<name> command; preserve manual invocation.",
+    "anchor": "Use for /in-your-own-words.",
+    "find": "/in-your-own-words",
+    "replace": "/skill:in-your-own-words"
+  }
+]
