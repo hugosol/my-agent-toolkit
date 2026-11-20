@@ -3,7 +3,7 @@ import { readFileSync, unlinkSync } from "node:fs";
 import { errorMessage, fileAt, readFile, writeFile } from "./files";
 import { parseJson, record, relativePath } from "./inputs";
 
-const ledger = "generated-ownership.json";
+const resourceLedger = "generated-ownership.json";
 
 interface Delivery {
   output: string;
@@ -14,7 +14,7 @@ export function sha256(bytes: Buffer): string {
   return createHash("sha256").update(bytes).digest("hex");
 }
 
-function loadOwnership(root: string): Map<string, string> {
+function loadOwnership(root: string, ledger: string): Map<string, string> {
   const bytes = readFile(root, ledger);
   if (!bytes) return new Map();
   const data = record(parseJson(bytes, ledger), ledger);
@@ -30,8 +30,8 @@ function loadOwnership(root: string): Map<string, string> {
   }));
 }
 
-export function check(root: string, delivery: readonly Delivery[]): string[] {
-  const owned = loadOwnership(root);
+export function check(root: string, delivery: readonly Delivery[], ledger = resourceLedger): string[] {
+  const owned = loadOwnership(root, ledger);
   const differences: string[] = [];
   for (const { output, bytes } of delivery) {
     const path = `generated/${output}`;
@@ -45,8 +45,8 @@ export function check(root: string, delivery: readonly Delivery[]): string[] {
   return differences;
 }
 
-export function build(root: string, delivery: readonly Delivery[], effects: string[]) {
-  const owned = loadOwnership(root);
+export function build(root: string, delivery: readonly Delivery[], effects: string[], ledger = resourceLedger) {
+  const owned = loadOwnership(root, ledger);
   const previous = new Map(owned);
   const spellings = new Map([...previous.keys()].map(path => [path.toLowerCase(), path]));
   const desired = new Set(delivery.map(file => file.output));

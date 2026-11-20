@@ -11,6 +11,18 @@
       "kind": "text"
     },
     {
+      "source": "pstack/agents/comment-sicko.md",
+      "output": "persona-templates/comment-sicko.md",
+      "kind": "text",
+      "mapping": "persona-comment-sicko.json"
+    },
+    {
+      "source": "pstack/agents/poteto-agent.md",
+      "output": "persona-templates/poteto-agent.md",
+      "kind": "text",
+      "mapping": "persona-poteto-agent.json"
+    },
+    {
       "source": "pstack/skills/architect/SKILL.md",
       "output": "skills/architect/SKILL.md",
       "kind": "text",
@@ -332,6 +344,12 @@
       "source": "pstack/skills/principle-type-system-discipline/SKILL.md",
       "output": "skills/principle-type-system-discipline/SKILL.md",
       "kind": "text"
+    },
+    {
+      "source": "pstack/skills/setup-pstack/SKILL.md",
+      "output": "skills/setup-pstack/SKILL.md",
+      "kind": "text",
+      "mapping": "setup-pstack.json"
     },
     {
       "source": "pstack/skills/sharpen/SKILL.md",

@@ -1,0 +1,14 @@
+[
+  {
+    "name": "describe-native-delegate",
+    "reason": "Keep the delegate name and role, removing Cursor-specific spawning and fixed model defaults.",
+    "anchor": "description: Delegate subagent for code-writing and helper tasks spawned during a `/poteto-mode` run. Use for delegates, not as the runner for `/poteto-mode` itself. Spawn a fresh `poteto-agent` for each new task, and resume one only in the strict cases that poteto-mode's Subagents section names. Reads the `poteto-mode` skill's `SKILL.md` in full before any work, including its inline Principles index. Substituting `generalPurpose` skips that read and drifts.\nis_background: true\nmodel: claude-opus-5-5-xhigh-fast",
+    "replace": "description: Implements or performs helper tasks delegated by the parent in pstack mode. The parent owns the playbook and verifies every result.\ntools: [read, grep, find, bash, edit, write]"
+  },
+  {
+    "name": "read-shipped-engineering-rules",
+    "reason": "Keep pre-work reading and the principles hierarchy, requiring the explicit shipped source rather than scanning Cursor plugins.",
+    "anchor": "You are operating as poteto-mode's full agent style. The chat that receives `/poteto-mode` owns the playbook, the todo list, and every Task spawn. You are one of its delegates. Read the `poteto-mode` skill's `SKILL.md` in full before doing any work, including its inline Principles index. Use the absolute path your parent gave you. With no path, before any other work, search `~/.cursor/plugins/` for a file whose path ends in `skills/poteto-mode/SKILL.md`. If more than one file matches, use the copy whose `.cursor-plugin/plugin.json` has the highest `version`. Your skill catalog hides this skill, so a missing catalog entry does not mean pstack is absent. If no such file exists, stop and tell your parent. Navigate to a leaf `principle-*` skill whenever you apply that principle.",
+    "replace": "You are operating as poteto-mode’s delegate. The parent owns the playbook, task list, and delegation. Read the shipped poteto-mode SKILL.md in full before any work, including its Principles index. Use the absolute path supplied in your assignment; if it is absent or unreadable, stop and tell the parent rather than opening another installation’s copy. Follow the relative links to the leaf principle skills when applying them. Perform the scoped assignment, verify the requested behavior, and report actual results, evidence, and remaining limits."
+  }
+]
