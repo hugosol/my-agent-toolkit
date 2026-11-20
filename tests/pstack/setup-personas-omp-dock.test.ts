@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { startCaptureServer } from "../harness-dock/capture-server";
 import { DOCK_CAPTURE_BASE_URL_ENV, DOCK_MODEL_SELECTOR } from "../harness-dock/fixtures/extension-root/provider";
@@ -223,7 +223,18 @@ test("pstack setup updates fresh native role resolution without affecting unrela
       }
     } finally {
       capture.stop();
-      rmSync(run.path, { recursive: true, force: true, maxRetries: 5 });
+      // Bun on Windows can return a sharing error immediately despite maxRetries.
+      // Wait only for release of this owned directory, never repeat a role action.
+      for (let attempt = 0; ; attempt++) {
+        try {
+          run.dispose();
+          break;
+        } catch (error) {
+          const code = (error as NodeJS.ErrnoException).code;
+          if (process.platform !== "win32" || attempt === 5 || (code !== "EPERM" && code !== "EBUSY")) throw error;
+          await Bun.sleep(100 * (attempt + 1));
+        }
+      }
     }
   }
 }, 180_000);

@@ -33,7 +33,7 @@ Windows 比较示例：`bun run pstack:upstream -- --local "C:/src/cursor/plugin
 | Persona | 上游 `pstack/agents/` → `generated/persona-templates/`；pstack MIT | `poteto-agent` 和 `comment-sicko` 的原生文件由明确确认的套件绑定生成至 `generated/agents/`；无绑定时没有占位 persona。 |
 | 脚本 | 上游技能内的 `scripts/`；pstack MIT | 可执行资产单独登记、保留相对路径，并说明运行依赖、写入与副作用；指令引用不代表脚本已随包提供。 |
 | 资料 | 上游技能内 `references/`，或 `pstack/docs/`；pstack MIT | 随实际消费项登记。当前包括决策日志 TSV 模板与 TypeScript 模式参考。 |
-| 必要外部技能 | Cursor Team Kit 的 `cursor-team-kit/skills/{deslop,control-cli,control-ui}/SKILL.md`；[该来源的 MIT 授权](https://github.com/cursor/plugins/blob/aaeb0ea3a0584995aa8f55ce44c6c5259414b896/cursor-team-kit/LICENSE) | 外部依赖资源适配时分别登记源文件与授权，不加载整个插件。当前核心路由仅在实际技能存在时使用相应方法。 |
+| 必要外部技能 | Cursor Team Kit 1.2.0 的 `cursor-team-kit/skills/{deslop,control-cli,control-ui}/SKILL.md`；[单独的 MIT 授权](generated/licenses/cursor-team-kit.txt) | 仅交付这三个技能，不加载整个插件。使用原生 `/skill:deslop`、`/skill:control-cli`、`/skill:control-ui` 显式读取。 |
 
 直接打开生成文件可阅读方法；文件存在不能证明任务调用、运行取证或其他工具机制已经接上。纯本地方法与需要后续资产的工作流分开；不在清单的专题见[待迁移说明](MIGRATION-BACKLOG.md)。
 
@@ -89,6 +89,15 @@ bun run pstack:check
 ## 验证
 
 `bun run test:pstack` 是 pstack 特性的测试分区，包含隔离文件系统上的维护命令及已安装 OMP 对真实适配样例的原生读取。OMP 从现有安装选择（或显式指定 `OMP_CLI`），不安装宿主，不使用生产会话或模型凭据。受控 provider 只证明实际发出的请求包含显式调用的技能正文，不评价模型行为。其他 pstack 自动用例放入同一分区；TypeScript 变更也运行 `bun run typecheck`。只检查确认与原生角色时，运行 `bun test tests/pstack/setup-personas.test.ts tests/pstack/setup-personas-omp-dock.test.ts`；设置 `PSTACK_SETUP_EVIDENCE_DIR` 可保留实际 OMP 调用、模型请求和退出记录。
+
+### Windows CLI 与 UI 驱动
+
+Cursor Team Kit 固定提交中，这三个技能各只有一个 `SKILL.md`；没有独立脚本。`deslop` 保留原文，是基于 Git diff 的清理方法，不自行改代码。`control-cli` 和 `control-ui` 原文内嵌的是平台范例；交付版分别提供可直接复制运行的 Windows Bun 伪终端探针和 Python Playwright 探针。项目已有驱动时优先复用。
+
+- [`control-cli`](generated/skills/control-cli/SKILL.md)：用 Bun 1.4.4 启动自有终端命令，等明确提示再输入一行，保留原始终端转录、子进程 PID 和退出结果。
+- [`control-ui`](generated/skills/control-ui/SKILL.md)：需要已有的 Chromium（Chrome 或 Edge）以及安装了 Playwright 的 Python。连接测试专用的 loopback 调试端口和新 profile，以 URL 和页面根节点定位目标，执行一次真实点击，记录前后截图和可访问性转录。
+
+仅跑本分区：`bun run test:pstack -- -t 'external drivers'`。可用 `PSTACK_CHROMIUM` 和 `PSTACK_PYTHON` 指定已安装的可执行文件，用 `PSTACK_EXTERNAL_DRIVERS_EVIDENCE_DIR` 保留原始结果和截图。测试不会安装宿主或浏览器，不接触用户现有的浏览器、会话或凭据。找不到依赖或目标时失败；不会将不同页面当成成功目标。
 
 ### 项目验证与工程核查
 
