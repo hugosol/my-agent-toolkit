@@ -1,0 +1,20 @@
+[
+  {
+    "name": "measure-host-load",
+    "reason": "Name an existing Windows load/core observation without labeling CPU utilization a Unix load average.",
+    "anchor": "Check the load average with `uptime` and the core count with `nproc`.",
+    "replace": "Check machine load and logical core count before starting. On Linux use `uptime` and `nproc`. On Windows PowerShell use `(Get-CimInstance Win32_Processor | Measure-Object -Property NumberOfLogicalProcessors -Sum).Sum` for cores and `Get-CimInstance Win32_PerfFormattedData_PerfOS_Processor -Filter \"Name='_Total'\" | Select-Object -ExpandProperty PercentProcessorTime` for system CPU utilization (not load average); use Task Manager to identify competing processes."
+  },
+  {
+    "name": "link-performance-playbooks",
+    "reason": "Make baseline and repeated-measurement methods directly readable without switching hosts.",
+    "anchor": "Vet the **Perf issue** playbook's baseline",
+    "replace": "Vet the [Perf issue](../poteto-mode/playbooks/perf-issue.md) playbook's baseline"
+  },
+  {
+    "name": "link-hillclimb-playbook",
+    "reason": "Keep the repeated-measurement harness guidance directly reachable.",
+    "anchor": "Vet the **Hillclimb** playbook's harness",
+    "replace": "Vet the [Hillclimb](../poteto-mode/playbooks/hillclimb.md) playbook's harness"
+  }
+]

@@ -19,17 +19,46 @@
     {
       "source": "pstack/skills/benchmark-checklist/SKILL.md",
       "output": "skills/benchmark-checklist/SKILL.md",
-      "kind": "text"
+      "kind": "text",
+      "mapping": "benchmark-checklist.json"
     },
     {
       "source": "pstack/skills/blast-radius/SKILL.md",
       "output": "skills/blast-radius/SKILL.md",
-      "kind": "text"
+      "kind": "text",
+      "mapping": "blast-radius.json"
     },
     {
       "source": "pstack/skills/bro/SKILL.md",
       "output": "skills/bro/SKILL.md",
       "kind": "text"
+    },
+    {
+      "source": "pstack/skills/create-formal-verification-skill/SKILL.md",
+      "output": "skills/create-formal-verification-skill/SKILL.md",
+      "kind": "text",
+      "mapping": "create-formal-verification-skill.json"
+    },
+    {
+      "source": "pstack/skills/create-verification-skill/references/feature-map-example/README.md",
+      "output": "skills/create-verification-skill/references/feature-map-example/README.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/create-verification-skill/references/feature-map-example/create-note.md",
+      "output": "skills/create-verification-skill/references/feature-map-example/create-note.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/create-verification-skill/references/feature-map-example/search.md",
+      "output": "skills/create-verification-skill/references/feature-map-example/search.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/create-verification-skill/SKILL.md",
+      "output": "skills/create-verification-skill/SKILL.md",
+      "kind": "text",
+      "mapping": "create-verification-skill.json"
     },
     {
       "source": "pstack/skills/figure-it-out/SKILL.md",
@@ -54,6 +83,18 @@
       "output": "skills/ketchup/SKILL.md",
       "kind": "text",
       "mapping": "ketchup.json"
+    },
+    {
+      "source": "pstack/skills/maintain-formal-verification-skill/SKILL.md",
+      "output": "skills/maintain-formal-verification-skill/SKILL.md",
+      "kind": "text",
+      "mapping": "maintain-formal-verification-skill.json"
+    },
+    {
+      "source": "pstack/skills/maintain-verification-skill/SKILL.md",
+      "output": "skills/maintain-verification-skill/SKILL.md",
+      "kind": "text",
+      "mapping": "maintain-verification-skill.json"
     },
     {
       "source": "pstack/skills/no-comments/SKILL.md",
@@ -300,7 +341,8 @@
     {
       "source": "pstack/skills/tdd/SKILL.md",
       "output": "skills/tdd/SKILL.md",
-      "kind": "text"
+      "kind": "text",
+      "mapping": "tdd.json"
     },
     {
       "source": "pstack/skills/teach/SKILL.md",

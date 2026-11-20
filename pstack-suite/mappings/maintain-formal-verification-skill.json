@@ -1,0 +1,27 @@
+[
+  {
+    "name": "use-omp-manual-invocation",
+    "reason": "Use the native OMP command for this hidden skill.",
+    "anchor": "Use for /maintain-formal-verification-skill,",
+    "replace": "Use for /skill:maintain-formal-verification-skill,"
+  },
+  {
+    "name": "link-formal-creation",
+    "reason": "Keep the corresponding creation method reachable from the installed skill.",
+    "anchor": "`/create-formal-verification-skill` generated",
+    "replace": "[`/skill:create-formal-verification-skill`](../create-formal-verification-skill/SKILL.md) generated"
+  },
+  {
+    "name": "locate-explicit-project-skill",
+    "reason": "Accept the explicit project skill file even when it is outside Suite discovery.",
+    "anchor": "Read each one you find, or the one the user named.",
+    "replace": "Read the supplied project `SKILL.md` by its explicit path, or read each candidate you find in the project (usually `verification/verify-*/SKILL.md`). The Suite skill catalog is not a project file index."
+  },
+  {
+    "name": "name-native-creation-entry",
+    "reason": "Use the native creation command when no project verification exists.",
+    "anchor": "If no verify skill exists, stop and point at `/create-formal-verification-skill`.",
+    "find": "/create-formal-verification-skill",
+    "replace": "/skill:create-formal-verification-skill"
+  }
+]

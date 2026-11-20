@@ -1,0 +1,26 @@
+[
+  {
+    "name": "use-omp-manual-invocation",
+    "reason": "Use the native OMP command for this hidden skill.",
+    "anchor": "Use for /create-formal-verification-skill,",
+    "replace": "Use for /skill:create-formal-verification-skill,"
+  },
+  {
+    "name": "keep-project-output-outside-suite",
+    "reason": "Name the project-owned location and its explicit read path without claiming automatic registration.",
+    "anchor": "Write a project-local skill with frontmatter that names the area and says when to use it. Without frontmatter, the skill never registers.",
+    "replace": "Write `verification/verify-<area>/SKILL.md` in the project with frontmatter that names the area and says when to use it. Hand off its absolute path so an OMP session can explicitly `read` it. Keep it out of the generated pstack package; it is not automatically registered in the Suite. Specify the existing verifier executable, pinned version and runtime prerequisites in the project instructions."
+  },
+  {
+    "name": "use-native-statechart-reference",
+    "reason": "Use the native skill name, preserving the relative resource and not copying the runner invocation.",
+    "anchor": "If the check is a TLA+ model, tell the next agent to read every result with the pstack [`/statechart`](../statechart/SKILL.md) skill. It shows each invariant violation the checker finds as its shortest path in plain words. When the check passes, `/statechart` draws a chart of how the system moves between states. Refer to `/statechart` by name.",
+    "replace": "If the check is a TLA+ model, tell the next agent to read every result with the pstack [`/skill:statechart`](../statechart/SKILL.md) skill. It shows each invariant violation the checker finds as its shortest path in plain words. When the check passes, `/skill:statechart` draws a chart of how the system moves between states. Refer to `/skill:statechart` by name."
+  },
+  {
+    "name": "link-formal-maintenance",
+    "reason": "Carry the project file path into the installed formal maintenance procedure.",
+    "anchor": "Point the user at `/maintain-formal-verification-skill` for bringing the verification back in line after changes that did not recheck it.",
+    "replace": "Point the user at [`/skill:maintain-formal-verification-skill`](../maintain-formal-verification-skill/SKILL.md) with the project `SKILL.md` path for bringing the verification back in line after changes that did not recheck it."
+  }
+]

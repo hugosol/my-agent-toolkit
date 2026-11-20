@@ -65,6 +65,22 @@ Windows 比较示例：`bun run pstack:upstream -- --local "C:/src/cursor/plugin
 
 `bun run test:pstack` 是 pstack 特性的测试分区，包含隔离文件系统上的维护命令及已安装 OMP 对真实适配样例的原生读取。OMP 从现有安装选择（或显式指定 `OMP_CLI`），不安装宿主，不使用生产会话或模型凭据。受控 provider 只证明实际发出的请求包含显式调用的技能正文，不评价模型行为。其他 pstack 自动用例放入同一分区；TypeScript 变更也运行 `bun run typecheck`。
 
+### 项目验证与工程核查
+
+| 要做什么 | OMP 入口 |
+| --- | --- |
+| 创建项目行为验证指引和 feature map | [`/skill:create-verification-skill`](generated/skills/create-verification-skill/SKILL.md) |
+| 逐项核查行为、修复指引或驱动漂移 | [`/skill:maintain-verification-skill`](generated/skills/maintain-verification-skill/SKILL.md) |
+| 选择性质及工具、建立可失败的形式检查 | [`/skill:create-formal-verification-skill`](generated/skills/create-formal-verification-skill/SKILL.md) |
+| 检查模型与代码同步，区分漂移和缺陷 | [`/skill:maintain-formal-verification-skill`](generated/skills/maintain-formal-verification-skill/SKILL.md) |
+| 确立失败回归、证明影响面、审查测量口径 | [`/skill:tdd`](generated/skills/tdd/SKILL.md)、[`/skill:blast-radius`](generated/skills/blast-radius/SKILL.md)、[`/skill:benchmark-checklist`](generated/skills/benchmark-checklist/SKILL.md)及[数字核查原则](generated/skills/principle-explain-the-number/SKILL.md) |
+
+新项目产物保存在项目目录，例如 `verification/verify-<app>/SKILL.md`。交接时提供绝对路径，在 OMP 中显式 `read`；项目文件不会自动加入 Suite 默认技能集合。创建指引要求实际执行自己的步骤、捕获证据并清理自有资源；维护时不得以重写文档掩盖产品缺陷。
+
+**包内资产与运行前提：**这些创建、维护和核查技能的上游目录仅交付 Markdown（包括 [Notes feature map 示例](generated/skills/create-verification-skill/references/feature-map-example/README.md)），没有捆绑生成器、验证驱动或基准脚本。示例中的 Notes 应用、`control-notes` 和 `notes` 不随包交付。行为验证使用目标项目的实际启动命令、测试数据和 UI/CLI/API 驱动；宽影响面复核若用 arena，需要其配置完毕的工作流及角色。TDD 与性能核查使用项目现有测试、测量和分析工具。形式验证使用目标项目明确选定的验证器；TLA+ 的可执行套件资产与外部 Bun、Java、TLC 前提见[下节](#windows-statechart)。有引用不等于已执行。
+
+本分区使用 `bun run test:pstack --test-name-pattern=P34`；设定 `PSTACK_VERIFICATION_EVIDENCE_DIR` 为本次独占证据位置可保留原生 OMP 读取的请求、事件、退出和清理记录。测试不评价模型生成的验证方案或自主执行质量。
+
 ### Windows statechart
 
 在 OMP 中显式调用 `/skill:statechart`，并提供自有的 `.tla`、TLC `.cfg` 与可选的视图模块。也可直接从 toolkit 根运行：

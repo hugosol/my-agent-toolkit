@@ -1,0 +1,8 @@
+[
+  {
+    "name": "name-native-invocation",
+    "reason": "Expose the explicit OMP entry without changing when the focused regression method applies.",
+    "anchor": "# TDD Bug Fix",
+    "replace": "# TDD Bug Fix\n\nManual entry: `/skill:tdd`."
+  }
+]
