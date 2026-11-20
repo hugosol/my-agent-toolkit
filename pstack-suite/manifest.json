@@ -79,6 +79,12 @@
       "mapping": "in-your-own-words.json"
     },
     {
+      "source": "pstack/skills/ketchup-video/SKILL.md",
+      "output": "skills/ketchup-video/SKILL.md",
+      "kind": "text",
+      "mapping": "ketchup-video.json"
+    },
+    {
       "source": "pstack/skills/ketchup/SKILL.md",
       "output": "skills/ketchup/SKILL.md",
       "kind": "text",
