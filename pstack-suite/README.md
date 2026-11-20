@@ -35,7 +35,15 @@ Windows 比较示例：`bun run pstack:upstream -- --local "C:/src/cursor/plugin
 | 资料 | 上游技能内 `references/`，或 `pstack/docs/`；pstack MIT | 随实际消费项登记。当前包括决策日志 TSV 模板与 TypeScript 模式参考。 |
 | 必要外部技能 | Cursor Team Kit 的 `cursor-team-kit/skills/{deslop,control-cli,control-ui}/SKILL.md`；[该来源的 MIT 授权](https://github.com/cursor/plugins/blob/aaeb0ea3a0584995aa8f55ce44c6c5259414b896/cursor-team-kit/LICENSE) | 外部依赖资源适配时分别登记源文件与授权，不加载整个插件。当前核心路由仅在实际技能存在时使用相应方法。 |
 
-直接打开生成文件可阅读方法；文件存在不证明持续模式、任务调用、运行取证或其他工具机制已经接上。纯本地方法与需要后续资产的工作流分开；不在清单的专题见[待迁移说明](MIGRATION-BACKLOG.md)。
+直接打开生成文件可阅读方法；文件存在不能证明任务调用、运行取证或其他工具机制已经接上。纯本地方法与需要后续资产的工作流分开；不在清单的专题见[待迁移说明](MIGRATION-BACKLOG.md)。
+
+## OMP 持续模式
+
+直接运行原生 pstack 会话时，显式加载 [`pstack-suite/omp.ts`](omp.ts)，并把绝对的 `pstack-suite/generated/skills` 路径加入 OMP 的 `skills.customDirectories`。普通 OMP 扩展目录不自动加载此入口。新进程首次打开没有保存值的会话时默认开启。输入 `/poteto-mode` 切换开关；开启时编辑器上方显示 `◈ Poteto mode`，关闭时移除该行。两种切换都给出提示，原生会话记录保留该值；退出后用 `omp --resume <会话文件>` 及相同的入口和配置恢复。
+
+首次启用的请求带上[生成的工程规则](generated/skills/poteto-mode/SKILL.md)及绝对来源路径，后续启用轮次只添加简短提醒。关闭只停止新增贡献，不移除已有会话历史。`/skill:poteto-mode` 是原生单次技能调用，即使持续模式关闭也能显式读取正文，并且不会改开关。隐藏技能不会列在模型的默认技能目录中；可以使用明确的 `/skill:<name>` 或 `skill://<name>`。读取技能正文后，从原生读取结果给出的源文件位置解析配套相对路径；子代理的 kickoff 明确传递资源路径，不依赖父会话正文。
+
+开关仅更新本地会话状态、提示贡献和界面。开启不会执行或授权合并、部署、对外业务操作；项目、宿主及外部系统的授权要求仍适用。这不是用来拦截后续模型操作的权限控制。
 
 ## 更新流程
 
@@ -64,6 +72,52 @@ Windows 比较示例：`bun run pstack:upstream -- --local "C:/src/cursor/plugin
 ## 验证
 
 `bun run test:pstack` 是 pstack 特性的测试分区，包含隔离文件系统上的维护命令及已安装 OMP 对真实适配样例的原生读取。OMP 从现有安装选择（或显式指定 `OMP_CLI`），不安装宿主，不使用生产会话或模型凭据。受控 provider 只证明实际发出的请求包含显式调用的技能正文，不评价模型行为。其他 pstack 自动用例放入同一分区；TypeScript 变更也运行 `bun run typecheck`。
+
+### H1：真实 OMP TUI 开关与恢复
+
+下面使用已安装的 OMP 和本地受控 provider。实际 TUI 的显示只由操作者确认；RPC 的 marker 事件、请求及日志不是屏幕验收。先完成自动检查：`bun run test:pstack --test-name-pattern 'Pstack native mode'`。如需留存自动证据，运行前把 `PSTACK_MODE_EVIDENCE_DIR` 指向本次独占证据目录；其中有双向切换前后 JSONL、RPC frames、请求内容、进程退出和 Git 副作用对照。
+
+1. 在 toolkit 根目录打开 PowerShell 7。用第一个终端启动只监听动态回环端口的受控 provider，保持它运行，并记下输出的目录：
+
+   ```powershell
+   $env:PSTACK_H1_ROOT = Join-Path (Get-Location) ".scratch/pstack-omp-suite/evidence/h1-$([Guid]::NewGuid().ToString('N'))"
+   bun -e 'import { startCaptureServer } from "./tests/harness-dock/capture-server"; const root = process.env.PSTACK_H1_ROOT; const server = startCaptureServer({ dir: `${root}/requests` }); await Bun.write(`${root}/capture-url.txt`, server.baseUrl); console.log(root);'
+   ```
+
+2. 在第二个终端从同一 toolkit 根目录运行下列命令。配置、日志、工作目录和会话均落在独占目录，不读取生产会话。使用默认 TUI，不重定向屏幕或 stdin：
+
+   ```powershell
+   $repo = (Get-Location).Path
+   $root = Read-Host '输入第一个终端输出的证据目录'
+   $env:DOCK_CAPTURE_BASE_URL = (Get-Content -Raw "$root/capture-url.txt").Trim()
+   $env:HOME = $env:USERPROFILE = "$root/home"
+   $env:PI_CODING_AGENT_DIR = "$root/home/.omp/agent"
+   'OMP_PROFILE','PI_PROFILE','OMPCODE','PI_CONFIG_DIR','PI_CONFIG_FILES','XDG_DATA_HOME','XDG_CONFIG_HOME','XDG_STATE_HOME','XDG_CACHE_HOME' | ForEach-Object { Remove-Item "Env:$_" -ErrorAction SilentlyContinue }
+   Get-ChildItem Env: | Where-Object Name -Like 'OMP_AUTH_BROKER_*' | ForEach-Object { Remove-Item "Env:$($_.Name)" }
+   New-Item -ItemType Directory -Force -Path $env:PI_CODING_AGENT_DIR,"$root/work","$root/sessions" | Out-Null
+   $skillDir = ConvertTo-Json -Compress "$repo/pstack-suite/generated/skills"
+   Set-Content -Encoding utf8 "$env:PI_CODING_AGENT_DIR/config.yml" "skills:`n  customDirectories:`n    - $skillDir"
+   $nativeArgs = @('--offline','--no-title','--no-tools','--no-extensions','--cwd',"$root/work",'--session-dir',"$root/sessions",'--model','dock-gateway/dock-model','-e',"$repo/tests/harness-dock/fixtures/extension-root/provider.ts",'-e',"$repo/pstack-suite/omp.ts")
+   Set-Location "$root/work"
+   omp --version | Tee-Object "$root/omp-version.txt"
+   omp @nativeArgs
+   $LASTEXITCODE | Set-Content "$root/first-exit.txt"
+   ```
+
+3. 新会话在输入首轮之前应显示 `◈ Poteto mode`。发一条普通消息。输入 `/poteto-mode`，记录通知 `Poteto mode disabled` 和标记消失。再切换，记录 `Poteto mode enabled` 和标记返回。再切到关闭，发一条普通消息，空输入时用 `Ctrl+D` 正常退出。对照前后截图和通知，不用模型回答判断开关。
+4. 仍在第二个终端。复制唯一会话的原生 JSONL 后，启动独立进程并恢复原文件：
+
+   ```powershell
+   $sessions = @(Get-ChildItem "$root/sessions" -Recurse -Filter '*.jsonl' -File)
+   if ($sessions.Count -ne 1) { throw '隔离目录必须正好有一个原生会话' }
+   $session = $sessions[0].FullName
+   Copy-Item $session "$root/before-resume.jsonl"
+   omp @nativeArgs --resume $session
+   $LASTEXITCODE | Set-Content "$root/resume-exit.txt"
+   Copy-Item $session "$root/after-resume.jsonl"
+   ```
+
+5. 恢复后首条输入前后均应没有 `◈ Poteto mode`，且早先的消息仍可见。发一条新消息后正常退出。停止第一个终端的 provider（`Ctrl+C`）。保留截图、两份 JSONL、两次退出状态、`home/.omp/logs/` 下的 OMP 原生日志及本地请求。若未生成某个日志文件，记录该事实，不用 RPC 记录冒充 TUI 观察。不要上传 `/record` 或使用生产配置。H1 只有操作者回传并确认实际显示后才通过。
 
 ### Windows statechart
 
