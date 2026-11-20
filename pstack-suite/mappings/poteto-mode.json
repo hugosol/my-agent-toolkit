@@ -21,7 +21,7 @@
     "name": "gate-optional-workflow-routing",
     "reason": "Keep the primary engineering triggers linked to shipped skills and condition fan-out, bakeoffs and adversarial review on the corresponding actual workflows.",
     "anchor": "- Code → name the data shape first. Across a function boundary → **architect**. Fan-out → **swarm**. Bakeoff → **arena**. Contested design → **interrogate**.",
-    "replace": "- Code → name the data shape first. Across a function boundary → read [architect](../architect/SKILL.md). For fan-out, bakeoffs, or adversarial review, route to swarm, arena, or interrogate respectively only when that workflow and its roles are loaded (see Subagents)."
+    "replace": "- Code → name the data shape first. Across a function boundary → read [architect](../architect/SKILL.md). Fan-out → [swarm](../swarm/SKILL.md). Bakeoff → [arena](../arena/SKILL.md). Adversarial review → [interrogate](../interrogate/SKILL.md). Read the matching leaf and check its confirmed seats before delegating (see Subagents)."
   },
   {
     "name": "gate-external-control-methods",

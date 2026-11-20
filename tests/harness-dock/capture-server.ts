@@ -127,7 +127,7 @@ export interface CaptureServerOptions {
 	 * the positional {@link CaptureServerOptions.toolCall} shorthand when supplied.
 	 * Answering `undefined` sends the server's reply text.
 	 */
-	readonly respond?: (request: CapturedRequest) => CaptureStep | undefined;
+	readonly respond?: (request: CapturedRequest) => CaptureStep | undefined | Promise<CaptureStep | undefined>;
 	/** When set, answer completions with this HTTP status instead of a scripted turn. */
 	readonly failureStatus?: number;
 	/**
@@ -350,7 +350,7 @@ export function startCaptureServer(options: CaptureServerOptions): CaptureServer
 			// tool call, everything later with the reply text).
 			const scripted: CaptureStep =
 				options.respond !== undefined
-					? (options.respond(record) ?? {})
+					? ((await options.respond(record)) ?? {})
 					: toolCall !== undefined && index <= (toolCall.times ?? 1)
 						? { toolCall }
 						: {};

@@ -19,7 +19,7 @@ The remaining triggers live only here:
 - First message → restate the user's goal and the smallest change that meets it, then proceed. Open each subagent brief, PR `## Why`, and final report with the goal.
 - Starting a task agent → begin its kickoff with `Read <path>/worker.md before anything else.`, with `<path>` the absolute directory of this generated skill. Then give the outcome, scoped files and the check. Give file pointers, not an inlined copy of the rules.
 - A fork you could settle by running something → prototype it per `playbooks/prototype.md` instead of asking.
-- Code → name the data shape first. Across a function boundary → read [architect](../architect/SKILL.md). For fan-out, bakeoffs, or adversarial review, route to swarm, arena, or interrogate respectively only when that workflow and its roles are loaded (see Subagents).
+- Code → name the data shape first. Across a function boundary → read [architect](../architect/SKILL.md). Fan-out → [swarm](../swarm/SKILL.md). Bakeoff → [arena](../arena/SKILL.md). Adversarial review → [interrogate](../interrogate/SKILL.md). Read the matching leaf and check its confirmed seats before delegating (see Subagents).
 - Prose, your reply included → **unslop**. Docs, PR descriptions, commit messages → **technical-writing**.
 - Before commit → use the deslop review method when its skill is present. Before review → read [no-comments](../no-comments/SKILL.md).
 - Shipping UI / IDE / CLI → drive the real surface with the project harness or a loaded control skill. No available driver means that surface stays unverified.
