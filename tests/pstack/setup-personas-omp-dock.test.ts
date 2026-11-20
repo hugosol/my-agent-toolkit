@@ -1,6 +1,6 @@
 import { dlopen, ptr } from "bun:ffi";
 import { expect, test } from "bun:test";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { startCaptureServer } from "../harness-dock/capture-server";
 import { DOCK_CAPTURE_BASE_URL_ENV, DOCK_MODEL_SELECTOR } from "../harness-dock/fixtures/extension-root/provider";
@@ -62,36 +62,55 @@ interface Completion {
 
 const ROLE_LIFECYCLE_TIMEOUT_MS = 180_000;
 
-async function awaitWorkingDirectoryRelease(cwd: string, deadline: number): Promise<void> {
+async function awaitFixtureRelease(root: string, cwd: string, daemonDir: string, deadline: number): Promise<void> {
   if (process.platform !== "win32") return;
   const kernel = dlopen("kernel32.dll", {
     CreateFileW: { args: ["ptr", "u32", "u32", "ptr", "u32", "u32", "ptr"], returns: "u64" },
     CloseHandle: { args: ["u64"], returns: "bool" },
     GetLastError: { args: [], returns: "u32" },
   });
-  const path = Buffer.from(`${cwd}\0`, "utf16le");
   const DELETE_ACCESS = 0x10000;
   const SHARE_READ_WRITE_DELETE = 7;
   const OPEN_EXISTING = 3;
   const OPEN_DIRECTORY = 0x02000000;
   const INVALID_HANDLE = 0xffff_ffff_ffff_ffffn;
+  const FILE_NOT_FOUND = 2;
+  const PATH_NOT_FOUND = 3;
   const SHARING_VIOLATION = 32;
   try {
-    // OMP's detached daemon inherits this cwd and closes its SQLite files before exiting.
-    // Probe the cwd lease without deleting anything; the RPC parents' exits do not release it.
-    for (;;) {
-      const handle = kernel.symbols.CreateFileW(ptr(path), DELETE_ACCESS, SHARE_READ_WRITE_DELETE, null, OPEN_EXISTING, OPEN_DIRECTORY, null);
-      if (handle !== INVALID_HANDLE) {
-        if (!kernel.symbols.CloseHandle(handle)) throw new Error(`Could not close the cwd probe handle for ${cwd}`);
-        return;
+    // A detached OMP daemon can outlive the RPC clients. Its SQLite handle
+    // and inherited cwd are independent: a successful cwd probe says nothing
+    // about the database's delete sharing. Observe both before the single rm.
+    const database = join(daemonDir, "daemon.db");
+    const blocked: string[] = [];
+    async function awaitDeleteSharing(target: string, isDirectory: boolean, optional: boolean) {
+      const path = Buffer.from(`${target}\0`, "utf16le");
+      for (;;) {
+        const handle = kernel.symbols.CreateFileW(ptr(path), DELETE_ACCESS, SHARE_READ_WRITE_DELETE, null, OPEN_EXISTING, isDirectory ? OPEN_DIRECTORY : 0, null);
+        if (handle !== INVALID_HANDLE) {
+          if (!kernel.symbols.CloseHandle(handle)) throw new Error(`Could not close the delete-sharing probe handle for ${target}`);
+          break;
+        }
+        const error = kernel.symbols.GetLastError();
+        if (optional && (error === FILE_NOT_FOUND || error === PATH_NOT_FOUND)) break;
+        const remaining = deadline - performance.now();
+        if (error !== SHARING_VIOLATION || remaining <= 0) {
+          throw new Error(`OMP fixture path did not release delete sharing: ${target} (Windows error ${error})`);
+        }
+        if (blocked[blocked.length - 1] !== target) blocked.push(target);
+        // Windows exposes no notification for delete-sharing release on a path.
+        await Bun.sleep(Math.min(25, remaining));
       }
-      const error = kernel.symbols.GetLastError();
-      const remaining = deadline - performance.now();
-      if (error !== SHARING_VIOLATION || remaining <= 0) {
-        throw new Error(`OMP fixture cwd did not become removable: ${cwd} (Windows error ${error})`);
-      }
-      await Bun.sleep(Math.min(25, remaining));
     }
+    for (const target of [database, `${database}-wal`, `${database}-shm`]) {
+      await awaitDeleteSharing(target, false, true);
+    }
+    await awaitDeleteSharing(cwd, true, false);
+    await awaitDeleteSharing(root, true, false);
+    for (const entry of readdirSync(root, { recursive: true, withFileTypes: true })) {
+      await awaitDeleteSharing(join(entry.parentPath, entry.name), entry.isDirectory(), true);
+    }
+    if (blocked.length) console.log(JSON.stringify({ fixtureDeleteSharingReleased: blocked }));
   } finally {
     kernel.close();
   }
@@ -134,7 +153,8 @@ test("pstack setup updates fresh native role resolution without affecting unrela
       }
     },
   });
-  const env = { HOME: run.agentDir, USERPROFILE: run.agentDir, [VIEWED_CAPTURE_BASE_URL_ENV]: capture.baseUrl };
+  const daemonDir = join(run.agentDir, ".omp", "run", "daemon");
+  const env = { HOME: run.agentDir, USERPROFILE: run.agentDir, OMP_DAEMON_DIR: daemonDir, [VIEWED_CAPTURE_BASE_URL_ENV]: capture.baseUrl };
   const processes: ControlledSession[] = [];
   const commands: unknown[] = [];
   try {
@@ -262,7 +282,7 @@ test("pstack setup updates fresh native role resolution without affecting unrela
       }
     } finally {
       capture.stop();
-      await awaitWorkingDirectoryRelease(cwd, deadline);
+      await awaitFixtureRelease(run.path, cwd, daemonDir, deadline);
       run.dispose();
     }
   }
