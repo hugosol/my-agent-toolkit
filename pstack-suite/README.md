@@ -30,12 +30,29 @@ Windows 比较示例：`bun run pstack:upstream -- --local "C:/src/cursor/plugin
 | 技能及原则 | `pstack/skills/<name>/SKILL.md` → `generated/skills/<name>/SKILL.md`；[pstack MIT](generated/LICENSE) | [核心路由](generated/skills/poteto-mode/SKILL.md) 与[帮助](generated/skills/poteto-help/SKILL.md) 列出实际资源；带隐藏标记的技能按需读取或显式 `/skill:<name>`，不在默认提示中展开。 |
 | Playbooks | `skills/poteto-mode/playbooks/`，保留相对布局；pstack MIT | 具体步骤由路由按需打开，不是独立的 slash 命令。 |
 | Worker | [skills/poteto-mode/worker.md](generated/skills/poteto-mode/worker.md)；pstack MIT | Worker kickoff 传递该文件的绝对路径；worker 与持续模式都以同一份生成的 `skills/poteto-mode/SKILL.md` 为工程规则来源。 |
-| Persona | 上游 `pstack/agents/`；pstack MIT | 与 worker 规则分开。只有完成 OMP 原生 persona 适配和角色绑定生成后才登记实际 persona；上游角色名称不等于已加载 persona。 |
+| Persona | 上游 `pstack/agents/` → `generated/persona-templates/`；pstack MIT | `poteto-agent` 和 `comment-sicko` 的原生文件由明确确认的套件绑定生成至 `generated/agents/`；无绑定时没有占位 persona。 |
 | 脚本 | 上游技能内的 `scripts/`；pstack MIT | 可执行资产单独登记、保留相对路径，并说明运行依赖、写入与副作用；指令引用不代表脚本已随包提供。 |
 | 资料 | 上游技能内 `references/`，或 `pstack/docs/`；pstack MIT | 随实际消费项登记。当前包括决策日志 TSV 模板与 TypeScript 模式参考。 |
 | 必要外部技能 | Cursor Team Kit 的 `cursor-team-kit/skills/{deslop,control-cli,control-ui}/SKILL.md`；[该来源的 MIT 授权](https://github.com/cursor/plugins/blob/aaeb0ea3a0584995aa8f55ce44c6c5259414b896/cursor-team-kit/LICENSE) | 外部依赖资源适配时分别登记源文件与授权，不加载整个插件。当前核心路由仅在实际技能存在时使用相应方法。 |
 
 直接打开生成文件可阅读方法；文件存在不证明持续模式、任务调用、运行取证或其他工具机制已经接上。纯本地方法与需要后续资产的工作流分开；不在清单的专题见[待迁移说明](MIGRATION-BACKLOG.md)。
+
+## 首次模型设置与更新
+
+未绑定也可在新 OMP 会话中调用 [`/skill:setup-pstack`](generated/skills/setup-pstack/SKILL.md)。该技能读取实际模型清单并展示待确认的角色、席位与推理选项；不替使用者选默认绑定。以会话所用的 OMP 入口、相同模型配置 overlay 和 provider 扩展执行 `omp models --json`，保存目录输出为 `omp-models.json`。
+
+确认提议前不写入包；取消用 `bun run pstack:setup -- --cancel`。确认后先停止所有使用这份包的 pstack 会话（也包括 setup 会话），在 toolkit 根目录运行：
+
+```sh
+bun run pstack:setup -- --confirm proposal.json --catalog omp-models.json
+bun run pstack:check
+```
+
+`proposal.json` 是按角色名索引的 JSON；目前核心角色为 `poteto-agent` 和 `comment-sicko`，各需一个 `model`（完整 `provider/model` 或 `inherit-parent`）和 `thinking`（模型支持的等级、不高于 `xhigh`，或保留模型默认值的 `default`）。`inherit-parent` 要求 `thinking: "inherit"`，原生 persona 显式使用 `@default`。操作者设置仍可能覆盖原生选择；应查看实际解析，而不是仅凭绑定声称正确。
+
+确认的配置保存在 `pstack-suite/models.local.json` 的 `roles` 字段；用提议文件与确认命令更新，不直接改已保存记录。`generated/roles.local.json` 提供已生成的绑定清单，`generated/agents/` 下的 Markdown 由 OMP 原生读取。这些文件与其本地所有权记录不提交 Git，不复制到全局或项目 OMP 配置。套件 `build` 只消费已确认的配置，`check` 校对两组交付字节与所有权。若文件发布失败，检查已报告的效果；修复阻塞后可用 `pstack:build` 根据已保存的绑定恢复交付。
+
+重新发起会话后，以套件选中的 OMP 原生扩展目录 `pstack-suite/generated` 发现 persona；直接启动时同样可用 `omp -e /absolute/toolkit/pstack-suite/generated`。通过原生 `task` 的 `agent` 传递角色名，不传单次调用模型。执行者提交有证据的 scoped 工作；注释审查者报告发现，父会话编辑。后者只声明读取类 built-in，不构成 OS、MCP 或附加扩展工具沙箱。本流程不提供热重载或强制停用检测。
 
 ## 更新流程
 
@@ -63,7 +80,7 @@ Windows 比较示例：`bun run pstack:upstream -- --local "C:/src/cursor/plugin
 
 ## 验证
 
-`bun run test:pstack` 是 pstack 特性的测试分区，包含隔离文件系统上的维护命令及已安装 OMP 对真实适配样例的原生读取。OMP 从现有安装选择（或显式指定 `OMP_CLI`），不安装宿主，不使用生产会话或模型凭据。受控 provider 只证明实际发出的请求包含显式调用的技能正文，不评价模型行为。其他 pstack 自动用例放入同一分区；TypeScript 变更也运行 `bun run typecheck`。
+`bun run test:pstack` 是 pstack 特性的测试分区，包含隔离文件系统上的维护命令及已安装 OMP 对真实适配样例的原生读取。OMP 从现有安装选择（或显式指定 `OMP_CLI`），不安装宿主，不使用生产会话或模型凭据。受控 provider 只证明实际发出的请求包含显式调用的技能正文，不评价模型行为。其他 pstack 自动用例放入同一分区；TypeScript 变更也运行 `bun run typecheck`。只检查确认与原生角色时，运行 `bun test tests/pstack/setup-personas.test.ts tests/pstack/setup-personas-omp-dock.test.ts`；设置 `PSTACK_SETUP_EVIDENCE_DIR` 可保留实际 OMP 调用、模型请求和退出记录。
 
 ### Windows statechart
 
