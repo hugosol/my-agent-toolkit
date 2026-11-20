@@ -83,7 +83,7 @@ bun "<absolute poteto-mode directory>/scripts/watch-pr/cli.ts" --queued-stack --
 
 `--help` 列出所有选项。默认输出 JSON；轮询输出 NDJSON，`--pretty` 输出便于阅读的报告。`QUEUE` 是观察列表，不是 forge 入列成功；`queued` 是 GitHub 观察到的队列条目，`auto-merge-requested` 单独报告。`MERGED` 和 `COMPLETE` 给出已观察到的实际 base；合入父分支不代表已到 trunk。后续查询失败时，错误和此前观察到的合并会同时保留在输出中。watcher 的 GitHub 请求只读，不创建、回复、入队、fetch、推送、合并或删除；PR 写操作由相应 playbook 的独立工具完成。Origin 走各 playbook 的原生命令，不用 GitHub watcher。
 
-Windows 机械检查：`bun run test:pstack --test-name-pattern='P38|P36 installed OMP reads Shipping'`。设置 `PSTACK_FORGE_EVIDENCE_DIR` 可保存命令、退出、forge 请求、消费到的状态文本及本次 Git/OMP 清理证据。受控 forge 响应不代表真实 GitHub 或 Origin 已验收，也不评价模型的 shipping 决策。
+Windows 机械检查：`bun test tests/pstack/forge-delivery.test.ts`。设置 `PSTACK_FORGE_EVIDENCE_DIR` 可保存命令、退出、forge 请求、消费到的状态文本及本次 Git/OMP 清理证据。受控 forge 响应不代表真实 GitHub 或 Origin 已验收，也不评价模型的 shipping 决策。
 
 ## 更新流程
 
