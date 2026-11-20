@@ -48,6 +48,9 @@ These are explicit OMP commands. Read the leaf before giving a recommendation an
 | Restate the last reply plainly | [`/skill:bro`](../bro/SKILL.md) |
 | Assess what else a change can break | [`/skill:blast-radius`](../blast-radius/SKILL.md) |
 | Design types and boundaries before code | [`/skill:architect`](../architect/SKILL.md) |
+| Run parallel slices, a race, or both | [`/skill:swarm`](../swarm/SKILL.md) |
+| Synthesize the best of multiple independent candidates | [`/skill:arena`](../arena/SKILL.md) |
+| Keep only adversarial findings a rerun proves | [`/skill:interrogate`](../interrogate/SKILL.md) |
 | Pin a bug with a failing test when a cheap local seam exists | [`/skill:tdd`](../tdd/SKILL.md) |
 | Apply TypeScript guidance | [`/skill:typescript-best-practices`](../typescript-best-practices/SKILL.md) |
 | Review comments and encode constraints | [`/skill:no-comments`](../no-comments/SKILL.md) |

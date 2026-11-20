@@ -51,8 +51,8 @@ export function compareUpstream(root: string, local: string, manifest: Manifest)
   console.log(`Snapshot: ${repository} @ ${revision} (${version})\nLocal baseline: ${local}`);
   let different = false;
   const compared = new Set<string>();
-  for (const { source, kind } of manifest.files) {
-    if (compared.has(source)) continue;
+  for (const { source, kind, origin } of manifest.files) {
+    if (origin === "runtime" || compared.has(source)) continue;
     compared.add(source);
     const snapshot = readFile(root, `upstream/${source}`);
     if (!snapshot) throw new Error(`upstream/${source}: missing pinned snapshot input`);
