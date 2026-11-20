@@ -1,0 +1,23 @@
+[
+  {
+    "name": "resolve-suite-role",
+    "reason": "Remove hard-coded Cursor model names; only use a configured OMP role, per the generated shared rules.",
+    "anchor": "4. Delegate code-writing to a subagent using your configured feature model (default `claude-opus-5-5-xhigh-fast`) with a specific scope (file paths, named data shape and its organizing structure per **principle-model-the-domain**, a state machine over scattered booleans, a table/registry over branching, a typed model over repeated shape assumptions, chosen before the delegate writes logic, and success criteria). Pick each subagent's reasoning level for the job, per the Subagents section. When the implementation admits multiple valid shapes (error handling, abstraction layer, test structure), delegate via the **arena** skill instead so the runners surface the alternatives and the cross-judge guards the pick. Mandatory: no skip-with-reason escape, and Laziness Protocol does not override it (the gain is review separation, not lines saved). A subagent forbidden to spawn satisfies this by owning the diff directly with the same review separation. No \"standing by\" reply that waits on a nested agent. Surgical edits, re-ground against the source for upstream-derived files. Port shared-primitive improvements to all consumers and verify each. Commit liberally.",
+    "find": "using your configured feature model (default `claude-opus-5-5-xhigh-fast`)",
+    "replace": "using the configured feature role under poteto-mode Subagents"
+  },
+  {
+    "name": "gate-escalation-through-installed-workflows",
+    "reason": "Preserve competing designs and cross-judgment but do not advertise a working panel until the corresponding workflow is installed.",
+    "anchor": "4. Delegate code-writing to a subagent using your configured feature model (default `claude-opus-5-5-xhigh-fast`) with a specific scope (file paths, named data shape and its organizing structure per **principle-model-the-domain**, a state machine over scattered booleans, a table/registry over branching, a typed model over repeated shape assumptions, chosen before the delegate writes logic, and success criteria). Pick each subagent's reasoning level for the job, per the Subagents section. When the implementation admits multiple valid shapes (error handling, abstraction layer, test structure), delegate via the **arena** skill instead so the runners surface the alternatives and the cross-judge guards the pick. Mandatory: no skip-with-reason escape, and Laziness Protocol does not override it (the gain is review separation, not lines saved). A subagent forbidden to spawn satisfies this by owning the diff directly with the same review separation. No \"standing by\" reply that waits on a nested agent. Surgical edits, re-ground against the source for upstream-derived files. Port shared-primitive improvements to all consumers and verify each. Commit liberally.",
+    "find": "delegate via the **arena** skill instead so the runners surface the alternatives and the cross-judge guards the pick.",
+    "replace": "use the arena method if its workflow and roles are loaded so runners surface alternatives and the cross-judge guards the pick. If no panel is available, report the missing panel and do not present a single attempt as a bakeoff."
+  },
+  {
+    "name": "require-real-contested-review",
+    "reason": "Do not imply contested review is available without the native workflow.",
+    "anchor": "7. If the design is contested, `interrogate` before shipping.",
+    "find": "If the design is contested, `interrogate` before shipping.",
+    "replace": "If the design is contested, use interrogate before shipping if that review workflow is loaded; otherwise record the missing review as a delivery gap."
+  }
+]

@@ -1,0 +1,14 @@
+[
+  {
+    "name": "native-read-only-exploration",
+    "reason": "Keep one-pass evidence-driven explanation; use a scoped native task and spell out the difference between a read-only brief and a host permission.",
+    "anchor": "Spawn one Task subagent with `subagent_type: generalPurpose` and `readonly: true` that explores and explains in one pass. Give it the user's question and this brief:",
+    "replace": "Use one OMP task with a loaded exploration persona and actually read-only tools, if available. Otherwise perform the same read-only pass in this session. Either way, use the user's question and this brief:"
+  },
+  {
+    "name": "attribute-actual-explanation-evidence",
+    "reason": "Retain the one-pass explanation without inventing a subagent result when the task was executed locally.",
+    "anchor": "Present the subagent's output. Light edits for clarity or context from the conversation are fine. Do not substantially rewrite it.",
+    "replace": "Present the explanation. If a worker produced it, light edits for clarity or conversation context are fine; do not substantially rewrite it."
+  }
+]

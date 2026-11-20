@@ -11,10 +11,327 @@
       "kind": "text"
     },
     {
+      "source": "pstack/skills/architect/SKILL.md",
+      "output": "skills/architect/SKILL.md",
+      "kind": "text",
+      "mapping": "architect.json"
+    },
+    {
+      "source": "pstack/skills/benchmark-checklist/SKILL.md",
+      "output": "skills/benchmark-checklist/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/blast-radius/SKILL.md",
+      "output": "skills/blast-radius/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/bro/SKILL.md",
+      "output": "skills/bro/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/figure-it-out/SKILL.md",
+      "output": "skills/figure-it-out/SKILL.md",
+      "kind": "text",
+      "mapping": "figure-it-out.json"
+    },
+    {
+      "source": "pstack/skills/how/SKILL.md",
+      "output": "skills/how/SKILL.md",
+      "kind": "text",
+      "mapping": "how.json"
+    },
+    {
       "source": "pstack/skills/in-your-own-words/SKILL.md",
       "output": "skills/in-your-own-words/SKILL.md",
       "kind": "text",
       "mapping": "in-your-own-words.json"
+    },
+    {
+      "source": "pstack/skills/ketchup/SKILL.md",
+      "output": "skills/ketchup/SKILL.md",
+      "kind": "text",
+      "mapping": "ketchup.json"
+    },
+    {
+      "source": "pstack/skills/no-comments/SKILL.md",
+      "output": "skills/no-comments/SKILL.md",
+      "kind": "text",
+      "mapping": "no-comments.json"
+    },
+    {
+      "source": "pstack/skills/poteto-help/SKILL.md",
+      "output": "skills/poteto-help/SKILL.md",
+      "kind": "text",
+      "mapping": "poteto-help.json"
+    },
+    {
+      "source": "pstack/skills/poteto-mode/playbooks/bug-fix.md",
+      "output": "skills/poteto-mode/playbooks/bug-fix.md",
+      "kind": "text",
+      "mapping": "playbook-bug-fix.json"
+    },
+    {
+      "source": "pstack/skills/poteto-mode/playbooks/feature.md",
+      "output": "skills/poteto-mode/playbooks/feature.md",
+      "kind": "text",
+      "mapping": "playbook-feature.json"
+    },
+    {
+      "source": "pstack/skills/poteto-mode/playbooks/hillclimb.md",
+      "output": "skills/poteto-mode/playbooks/hillclimb.md",
+      "kind": "text",
+      "mapping": "playbook-hillclimb.json"
+    },
+    {
+      "source": "pstack/skills/poteto-mode/playbooks/investigation.md",
+      "output": "skills/poteto-mode/playbooks/investigation.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/poteto-mode/playbooks/multi-phase-plan.md",
+      "output": "skills/poteto-mode/playbooks/multi-phase-plan.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/poteto-mode/playbooks/opening-a-pr.md",
+      "output": "skills/poteto-mode/playbooks/opening-a-pr.md",
+      "kind": "text",
+      "mapping": "playbook-opening-a-pr.json"
+    },
+    {
+      "source": "pstack/skills/poteto-mode/playbooks/pause-safely.md",
+      "output": "skills/poteto-mode/playbooks/pause-safely.md",
+      "kind": "text",
+      "mapping": "playbook-pause-safely.json"
+    },
+    {
+      "source": "pstack/skills/poteto-mode/playbooks/perf-issue.md",
+      "output": "skills/poteto-mode/playbooks/perf-issue.md",
+      "kind": "text",
+      "mapping": "playbook-perf-issue.json"
+    },
+    {
+      "source": "pstack/skills/poteto-mode/playbooks/prototype.md",
+      "output": "skills/poteto-mode/playbooks/prototype.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/poteto-mode/playbooks/refactoring.md",
+      "output": "skills/poteto-mode/playbooks/refactoring.md",
+      "kind": "text",
+      "mapping": "playbook-refactoring.json"
+    },
+    {
+      "source": "pstack/skills/poteto-mode/playbooks/runtime-forensics.md",
+      "output": "skills/poteto-mode/playbooks/runtime-forensics.md",
+      "kind": "text",
+      "mapping": "playbook-runtime-forensics.json"
+    },
+    {
+      "source": "pstack/skills/poteto-mode/playbooks/session-pickup.md",
+      "output": "skills/poteto-mode/playbooks/session-pickup.md",
+      "kind": "text",
+      "mapping": "playbook-session-pickup.json"
+    },
+    {
+      "source": "pstack/skills/poteto-mode/playbooks/trace-forensics.md",
+      "output": "skills/poteto-mode/playbooks/trace-forensics.md",
+      "kind": "text",
+      "mapping": "playbook-trace-forensics.json"
+    },
+    {
+      "source": "pstack/skills/poteto-mode/playbooks/visual-parity.md",
+      "output": "skills/poteto-mode/playbooks/visual-parity.md",
+      "kind": "text",
+      "mapping": "playbook-visual-parity.json"
+    },
+    {
+      "source": "pstack/skills/poteto-mode/SKILL.md",
+      "output": "skills/poteto-mode/SKILL.md",
+      "kind": "text",
+      "mapping": "poteto-mode.json"
+    },
+    {
+      "source": "pstack/skills/poteto-mode/worker.md",
+      "output": "skills/poteto-mode/worker.md",
+      "kind": "text",
+      "mapping": "poteto-mode-worker.json"
+    },
+    {
+      "source": "pstack/skills/principle-attack-the-premise/SKILL.md",
+      "output": "skills/principle-attack-the-premise/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-boundary-discipline/SKILL.md",
+      "output": "skills/principle-boundary-discipline/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-build-the-lever/SKILL.md",
+      "output": "skills/principle-build-the-lever/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-encode-lessons-in-structure/SKILL.md",
+      "output": "skills/principle-encode-lessons-in-structure/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-exhaust-the-design-space/SKILL.md",
+      "output": "skills/principle-exhaust-the-design-space/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-experience-first/SKILL.md",
+      "output": "skills/principle-experience-first/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-explain-the-number/SKILL.md",
+      "output": "skills/principle-explain-the-number/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-fix-root-causes/SKILL.md",
+      "output": "skills/principle-fix-root-causes/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-foundational-thinking/SKILL.md",
+      "output": "skills/principle-foundational-thinking/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-guard-the-context-window/SKILL.md",
+      "output": "skills/principle-guard-the-context-window/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-laziness-protocol/SKILL.md",
+      "output": "skills/principle-laziness-protocol/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-make-operations-idempotent/SKILL.md",
+      "output": "skills/principle-make-operations-idempotent/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-migrate-callers-then-delete-legacy-apis/SKILL.md",
+      "output": "skills/principle-migrate-callers-then-delete-legacy-apis/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-minimize-reader-load/SKILL.md",
+      "output": "skills/principle-minimize-reader-load/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-model-the-domain/SKILL.md",
+      "output": "skills/principle-model-the-domain/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-never-block-on-the-human/SKILL.md",
+      "output": "skills/principle-never-block-on-the-human/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-outcome-oriented-execution/SKILL.md",
+      "output": "skills/principle-outcome-oriented-execution/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-prove-it-works/SKILL.md",
+      "output": "skills/principle-prove-it-works/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-redesign-from-first-principles/SKILL.md",
+      "output": "skills/principle-redesign-from-first-principles/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-separate-before-serializing-shared-state/SKILL.md",
+      "output": "skills/principle-separate-before-serializing-shared-state/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-sequence-verifiable-units/SKILL.md",
+      "output": "skills/principle-sequence-verifiable-units/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-subtract-before-you-add/SKILL.md",
+      "output": "skills/principle-subtract-before-you-add/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-test-behavior-not-implementation/SKILL.md",
+      "output": "skills/principle-test-behavior-not-implementation/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-type-system-discipline/SKILL.md",
+      "output": "skills/principle-type-system-discipline/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/sharpen/SKILL.md",
+      "output": "skills/sharpen/SKILL.md",
+      "kind": "text",
+      "mapping": "sharpen.json"
+    },
+    {
+      "source": "pstack/skills/show-me-your-work/references/decision-log-template.tsv",
+      "output": "skills/show-me-your-work/references/decision-log-template.tsv",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/show-me-your-work/SKILL.md",
+      "output": "skills/show-me-your-work/SKILL.md",
+      "kind": "text",
+      "mapping": "show-me-your-work.json"
+    },
+    {
+      "source": "pstack/skills/tdd/SKILL.md",
+      "output": "skills/tdd/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/teach/SKILL.md",
+      "output": "skills/teach/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/technical-writing/SKILL.md",
+      "output": "skills/technical-writing/SKILL.md",
+      "kind": "text",
+      "mapping": "technical-writing.json"
+    },
+    {
+      "source": "pstack/skills/typescript-best-practices/references/patterns.md",
+      "output": "skills/typescript-best-practices/references/patterns.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/typescript-best-practices/SKILL.md",
+      "output": "skills/typescript-best-practices/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/unslop/SKILL.md",
+      "output": "skills/unslop/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/why/SKILL.md",
+      "output": "skills/why/SKILL.md",
+      "kind": "text"
     }
   ]
 }

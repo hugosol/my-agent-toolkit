@@ -1,0 +1,15 @@
+[
+  {
+    "name": "check-contested-design-panel",
+    "reason": "Retain comparative design while distinguishing a loaded panel from an independent sketch.",
+    "anchor": "For a large or contested design, run the **arena** skill instead of sketching alone.",
+    "replace": "For a large or contested design, read and apply the arena method instead of sketching alone when its workflow and roles are loaded. If unavailable, label independent panel evidence missing."
+  },
+  {
+    "name": "advertise-omp-manual-invocation",
+    "reason": "Use OMP native invocation in skill metadata while preserving the hidden marker and trigger wording.",
+    "anchor": "description: \"Sketch types, signatures, and module structure before code, then stay in the loop while implementation fills in. Use for /architect, 'architect this', 'design this', or non-trivial work where jumping to code would lock in the wrong shape.\"",
+    "find": "/architect",
+    "replace": "/skill:architect"
+  }
+]

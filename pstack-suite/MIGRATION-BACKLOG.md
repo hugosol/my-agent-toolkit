@@ -2,7 +2,7 @@
 
 本文记录设计讨论中暂缓的能力，不代表已经迁移、永久删除或已授权接入外部系统。当前目标为仅 OMP 的 pstack 专用 Suite；上游内容通过快照与映射生成，持续模式复用 toolkit 框架。
 
-上游参考：`E:/Developer/myhub/agent-skills/cursor/plugins/pstack`，调查 manifest 版本 `0.15.46`。以下源路径均相对该目录。
+上游参考：[cursor/plugins 的固定 pstack 源树](https://github.com/cursor/plugins/tree/aaeb0ea3a0584995aa8f55ce44c6c5259414b896/pstack)，版本 `0.15.46`。以下源路径均相对该目录。本文是来源说明，不是命令目录；这些专题没有默认路由或 pstack 占位技能。OMP 中没有对应的本包技能附件，普通模型回复也不表示已执行。当前入口见[生成的帮助](generated/skills/poteto-help/SKILL.md)与[核心路由](generated/skills/poteto-mode/SKILL.md)。
 
 ## 1. Benny：Slack 问题自动分流与修复
 
@@ -32,7 +32,7 @@
 
 ## 4. 历史与学习增强
 
-来源：`skills/recall/`、`automate-me/`、`reflect/`、`correct/`。
+来源：`skills/recall/`、`skills/automate-me/`、`skills/reflect/`、`skills/correct/`。
 
 - recall：从当前项目历史会话及外部记录恢复背景。
 - automate-me：提炼反复出现的工作习惯并生成个人模式。
@@ -43,9 +43,9 @@
 
 ### 与核心交接的边界
 
-- 不因此删除普通会话上下文、`show-me-your-work` 决策日志或 `pause-safely` 交接说明。
-- `skills/poteto-mode/playbooks/session-pickup.md` 有 Cursor transcript/云 URL 读取分支；其跨会话读取适配属于待迁移范围，不能保留失效路径并宣称可用。
-- 基于分支和明确交接材料的续接与通用历史检索分开处理；最终可用入口及路由需在生成清单中明确，不以本文件替代功能验收。
+- 暂缓范围不包含当前会话上下文、[决策日志](generated/skills/show-me-your-work/SKILL.md)、[安全暂停](generated/skills/poteto-mode/playbooks/pause-safely.md)、自有 `wip:` 提交或明确的交接笔记。
+- 上游 `skills/poteto-mode/playbooks/session-pickup.md` 有 Cursor transcript/云 URL 读取分支；通用跨会话查找与云接管没有迁入默认路由。它们需要明确的数据范围、访问权限与可验证的会话定位。
+- [本地续接](generated/skills/poteto-mode/playbooks/session-pickup.md) 读取明确提供的分支、WIP、日志或交接笔记并核实状态。这是可读方法，不是自动历史检索或宿主恢复机制的验收证明。
 
 ## 更新规则
 
