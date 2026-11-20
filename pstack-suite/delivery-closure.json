@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "sources": {
+    "pstack": {
+      "repository": "https://github.com/cursor/plugins",
+      "revision": "aaeb0ea3a0584995aa8f55ce44c6c5259414b896",
+      "version": "0.15.46",
+      "license": "MIT",
+      "license_output": "LICENSE",
+      "selected_tree_sha256": "4bd2a5cf6e99ede65bca06a237ebf22fd7a6f5b6bd4e5989572d6d69292b00b1",
+      "license_sha256": "bc957ca6bee02792566a1a028d105e02e247c6e77cf057061674273da77b200e"
+    },
+    "cursor-team-kit": {
+      "repository": "https://github.com/cursor/plugins",
+      "revision": "aaeb0ea3a0584995aa8f55ce44c6c5259414b896",
+      "version": "1.2.0",
+      "license": "MIT",
+      "license_output": "licenses/cursor-team-kit.txt",
+      "selected_tree_sha256": "a426c1f8edd1c6545997bff015bdff1a5c0d830d371ab0543f3d6ecb7f77c04e",
+      "license_sha256": "702f5f331b56aff0e33d8c7826df5202559f894145eb70355c6477b55b5bb8a0"
+    }
+  },
+  "external_skills": ["deslop", "control-cli", "control-ui"],
+  "excluded_skills": ["benny", "make-bot-ui", "recall", "automate-me", "reflect", "correct"],
+  "package_files": [
+    "delivery-closure.json",
+    "manifest.json",
+    "generated-ownership.json",
+    "README.md",
+    "MIGRATION-BACKLOG.md",
+    "omp.ts",
+    "maintenance/cli.ts",
+    "maintenance/delivery.ts",
+    "maintenance/files.ts",
+    "maintenance/inputs.ts",
+    "maintenance/models.ts",
+    "maintenance/reports.ts"
+  ],
+  "references": [
+    {"source":"omp.ts","literal":"../adapters/omp","kind":"toolkit","target":"adapters/omp/index.ts"},
+    {"source":"omp.ts","literal":"../extensions/pstack/definition","kind":"toolkit","target":"extensions/pstack/definition.ts"},
+    {"source":"generated/skills/poteto-mode/SKILL.md","literal":"../<name>/SKILL.md","kind":"principle-index","target":"generated/skills"},
+    {"source":"generated/persona-templates/poteto-agent.md","literal":"Read the shipped poteto-mode SKILL.md","kind":"package","target":"generated/skills/poteto-mode/SKILL.md"},
+    {"source":"generated/skills/poteto-mode/SKILL.md","literal":"Read <path>/worker.md","kind":"package","target":"generated/skills/poteto-mode/worker.md"},
+    {"source":"generated/skills/statechart/scripts/statechart.ts","literal":"import.meta.dirname, \"worker.ts\"","kind":"package","target":"generated/skills/statechart/scripts/worker.ts"},
+    {"source":"generated/skills/statechart/scripts/statechart.ts","literal":"import.meta.dirname, \"janitor.ts\"","kind":"package","target":"generated/skills/statechart/scripts/janitor.ts"},
+    {"source":"generated/skills/poteto-mode/SKILL.md","literal":"playbooks/prototype.md","kind":"package","target":"generated/skills/poteto-mode/playbooks/prototype.md"},
+    {"source":"generated/skills/poteto-mode/playbooks/multi-phase-plan.md","literal":"playbooks/prototype.md","kind":"package","target":"generated/skills/poteto-mode/playbooks/prototype.md"},
+    {"source":"generated/skills/poteto-mode/playbooks/perf-issue.md","literal":"playbooks/hillclimb.md","kind":"package","target":"generated/skills/poteto-mode/playbooks/hillclimb.md"},
+    {"source":"generated/skills/poteto-mode/playbooks/hillclimb.md","literal":"playbooks/perf-issue.md","kind":"package","target":"generated/skills/poteto-mode/playbooks/perf-issue.md"},
+    {"source":"generated/skills/poteto-mode/playbooks/autopilot-full.md","literal":"playbooks/shipping.md","kind":"package","target":"generated/skills/poteto-mode/playbooks/shipping.md"},
+    {"source":"generated/skills/poteto-mode/playbooks/autopilot-stack.md","literal":"playbooks/opening-a-pr.md","kind":"package","target":"generated/skills/poteto-mode/playbooks/opening-a-pr.md"},
+    {"source":"generated/skills/poteto-mode/playbooks/babysit.md","literal":"/scripts/watch-pr/cli.ts","kind":"package","target":"generated/skills/poteto-mode/scripts/watch-pr/cli.ts"},
+    {"source":"generated/skills/poteto-mode/playbooks/shipping.md","literal":"/scripts/watch-pr/cli.ts","kind":"package","target":"generated/skills/poteto-mode/scripts/watch-pr/cli.ts"},
+    {"source":"generated/skills/poteto-mode/playbooks/babysit.md","literal":"../references/bugbot-triage.md","kind":"package","target":"generated/skills/poteto-mode/references/bugbot-triage.md"},
+    {"source":"generated/skills/poteto-mode/references/bugbot-triage.md","literal":"../playbooks/babysit.md","kind":"package","target":"generated/skills/poteto-mode/playbooks/babysit.md"},
+    {"source":"generated/skills/poteto-mode/playbooks/worktree-cleanup.md","literal":"scripts/worktree-audit.sh","kind":"package","target":"generated/skills/poteto-mode/scripts/worktree-audit.sh"},
+    {"source":"generated/skills/show-me-your-work/SKILL.md","literal":"references/decision-log-template.tsv","kind":"package","target":"generated/skills/show-me-your-work/references/decision-log-template.tsv"},
+    {"source":"generated/skills/show-me-your-work/SKILL.md","literal":"scripts/log.sh","kind":"package","target":"generated/skills/show-me-your-work/scripts/log.sh"},
+    {"source":"generated/skills/statechart/SKILL.md","literal":"/scripts/statechart.ts","kind":"package","target":"generated/skills/statechart/scripts/statechart.ts"},
+    {"source":"generated/skills/statechart/SKILL.md","literal":"references/render.md","kind":"package","target":"generated/skills/statechart/references/render.md"},
+    {"source":"generated/skills/typescript-best-practices/SKILL.md","literal":"references/patterns.md","kind":"package","target":"generated/skills/typescript-best-practices/references/patterns.md"},
+    {"source":"generated/skills/control-cli/SKILL.md","literal":"```javascript pstack-terminal","kind":"embedded","target":"terminal.mjs in an owned temporary workspace"},
+    {"source":"generated/skills/control-ui/SKILL.md","literal":"```python pstack-page","kind":"embedded","target":"page.py in an owned temporary workspace"},
+    {"source":"generated/skills/arena/SKILL.md","literal":"../../roles.local.json","kind":"setup-product","target":"generated/roles.local.json"},
+    {"source":"generated/skills/setup-pstack/SKILL.md","literal":"pstack-suite/models.local.json","kind":"setup-product","target":"models.local.json"},
+    {"source":"generated/skills/create-verification-skill/SKILL.md","literal":"verification/verify-<app>/SKILL.md","kind":"project-product","target":"user project verification skill and feature map"},
+    {"source":"generated/skills/create-formal-verification-skill/SKILL.md","literal":"verification/verify-<area>/SKILL.md","kind":"project-product","target":"user project formal verification skill and TLA+ specification"},
+    {"source":"generated/skills/maintain-verification-skill/SKILL.md","literal":"verification/verify-*/SKILL.md","kind":"project-product","target":"existing user project verification skill"},
+    {"source":"generated/skills/maintain-formal-verification-skill/SKILL.md","literal":"verification/verify-*/SKILL.md","kind":"project-product","target":"existing user project formal verification skill"}
+  ],
+  "runtime_prerequisites": {
+    "native mode, skill and role consumption": "Installed OMP and toolkit framework/adapter. No provisioning, provider authentication, or role defaults in this package check.",
+    "deslop": "Project Git checkout and a trusted base/ref (normally main) to obtain the real diff. No helper or separate extension.",
+    "control-cli": "Project foreground executable and test inputs; prefer project harness, or installed Bun 1.4.4 with Windows ConPTY for the embedded probe. POSIX tmux/PTY examples are alternatives, not Windows requirements.",
+    "control-ui": "Owned app/URL, installed Python Playwright and Chromium/Electron CDP target with an owned profile; use an existing project harness when available.",
+    "statechart": "Installed Bun, real Java 11+ and TLA+ Tools 1.7.4/tla2tools.jar; optional SVG rendering uses external Pele 1.9.0.",
+    "worktree audit and decision log": "Git Bash on Windows, Git checkout for audit, optional gh for PR metadata; an explicit remote audit base can fetch.",
+    "PR watcher": "Installed Bun and gh, explicit GitHub target or Git checkout for target inference. True forge provides state and owns its authorization.",
+    "ketchup video": "Installed FFmpeg with xfade, libass and libx264, FFprobe and a readable font. No bundled renderer."
+  },
+  "project_products": {
+    "setup": "Explicit operator proposal/catalog, confirmed local bindings, generated local roster and native personas; absent from an unconfigured distribution.",
+    "verification": "Project-owned verification skills, feature maps, specifications, graphs, reports, test/reproduction artifacts and cleanup observations.",
+    "CLI/UI": "Owned temporary executable probes, profiles and captured transcripts/screenshots; not distributed dependencies.",
+    "logging and delivery": "Project-owned TSV, WIP refs/notes, checkout audit observations, PR decisions and Git/forge state.",
+    "video": "Owned slide PNGs and subtitle source, actual MP4 and decoded samples.",
+    "parallel panels": "Independent project checkout or writable path per worker, verified outputs and actual task results."
+  }
+}
