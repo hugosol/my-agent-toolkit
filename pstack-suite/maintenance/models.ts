@@ -4,25 +4,36 @@ import { parseJson, record, type RenderedResource } from "./inputs";
 
 export const bindingsPath = "models.local.json";
 export const modelLedger = "models-ownership.local.json";
-const roles = ["poteto-agent", "comment-sicko"] as const;
+const coreRoles = ["poteto-agent", "comment-sicko"] as const;
+const panelRoles = {
+  "swarm-worker": "Work a specified swarm slice or race arm and report reproducible evidence.",
+  "arena-runner": "Produce and verify an independent candidate in the assigned workspace.",
+  "arena-judge": "Independently score candidate artifacts against the supplied rubric without editing them.",
+  "interrogate-reviewer": "Try to falsify the scoped change and report only findings demonstrated by a run.",
+} as const;
 const efforts = ["off", "minimal", "low", "medium", "high", "xhigh"];
+
+function panelRole(name: string): keyof typeof panelRoles | undefined {
+  if (!/^[a-z][a-z0-9]*(?:-[a-z0-9]+)+$/.test(name)) return;
+  return (Object.keys(panelRoles) as (keyof typeof panelRoles)[]).find(role => name.startsWith(`${role}-`));
+}
 // Native OMP uses @default alone in a persona to inherit the active parent model.
 const inheritSelector = "@default";
 
-type Role = typeof roles[number];
 interface Binding {
   model: string;
   thinking: string;
 }
-type Bindings = Record<Role, Binding>;
+type Bindings = Record<string, Binding>;
 
 function parseBindings(input: unknown, label: string): Bindings {
   const values = record(input, label);
-  for (const key of Object.keys(values)) {
-    if (!roles.some(role => role === key)) throw new Error(`${label}: unknown role ${key}`);
+  const seats = Object.keys(values).filter(key => !coreRoles.some(role => role === key));
+  for (const seat of seats) {
+    if (!panelRole(seat)) throw new Error(`${label}: unknown role ${seat}`);
   }
-  const bindings = {} as Bindings;
-  for (const role of roles) {
+  const bindings: Bindings = {};
+  for (const role of [...coreRoles, ...seats]) {
     const binding = record(values[role], role);
     if (Object.keys(binding).some(key => key !== "model" && key !== "thinking")) {
       throw new Error(`${role}: expected only model and thinking`);
@@ -80,11 +91,23 @@ export function modelResources(resources: readonly RenderedResource[], bindings:
     throw new Error("Static resources cannot use the models-owned generated/agents or generated/roles.local.json paths");
   }
   if (!bindings) return [];
-  const delivery = roles.map(role => {
+  function sourceTemplate(role: typeof coreRoles[number]): string {
     const output = `persona-templates/${role}.md`;
     const template = resources.find(resource => resource.output === output)?.bytes.toString("utf8");
     if (!template?.startsWith("---\n")) throw new Error(`${output}: missing persona template or frontmatter`);
-    const { model, thinking } = bindings[role];
+    return template;
+  }
+  const worker = sourceTemplate("poteto-agent");
+  const reviewer = sourceTemplate("comment-sicko");
+  const bodyStart = worker.indexOf("\n---\n", 4);
+  if (bodyStart < 0) throw new Error("persona-templates/poteto-agent.md: missing closing frontmatter");
+  const workerBody = worker.slice(bodyStart + "\n---\n".length);
+  const delivery = Object.entries(bindings).map(([role, { model, thinking }]) => {
+    const panel = panelRole(role);
+    const tools = panel === "arena-judge" ? "tools: [read, grep, find]\n" : "";
+    const template = panel
+      ? `---\nname: ${role}\ndescription: ${panelRoles[panel]}\nblocking: true\n${tools}---\n${workerBody}`
+      : role === "poteto-agent" ? worker : reviewer;
     const native = model === "inherit-parent" ? inheritSelector : model;
     const effort = thinking === "inherit" || thinking === "default" ? "" : `thinking-level: ${thinking}\n`;
     const bytes = Buffer.from(`---\nmodel: ${JSON.stringify(native)}\n${effort}${template.slice(4)}`);

@@ -56,11 +56,19 @@ bun run pstack:setup -- --confirm proposal.json --catalog omp-models.json
 bun run pstack:check
 ```
 
-`proposal.json` 是按角色名索引的 JSON；目前核心角色为 `poteto-agent` 和 `comment-sicko`，各需一个 `model`（完整 `provider/model` 或 `inherit-parent`）和 `thinking`（模型支持的等级、不高于 `xhigh`，或保留模型默认值的 `default`）。`inherit-parent` 要求 `thinking: "inherit"`，原生 persona 显式使用 `@default`。操作者设置仍可能覆盖原生选择；应查看实际解析，而不是仅凭绑定声称正确。
+`proposal.json` 是按角色名索引的 JSON；核心角色 `poteto-agent` 和 `comment-sicko` 必填。每条绑定选择一个 `model`（完整 `provider/model` 或 `inherit-parent`）和 `thinking`（模型支持的等级、不高于 `xhigh`，或保留模型默认值的 `default`）。`inherit-parent` 要求 `thinking: "inherit"`，原生 persona 显式使用 `@default`。
+
+可按需加入 `swarm-worker-<seat>`、`arena-runner-<seat>`、`arena-judge-<seat>` 或 `interrogate-reviewer-<seat>`，例如 `arena-runner-first`。后缀用小写字母、数字与连字符；每项生成一个独立 persona，不接受模型数组。`arena-judge-<seat>` 的提议字段顺序即候选裁判优先级。若不配置席位，技能仍可读取，不会替用户选择模型或使用占位角色。
 
 确认的配置保存在 `pstack-suite/models.local.json` 的 `roles` 字段；用提议文件与确认命令更新，不直接改已保存记录。`generated/roles.local.json` 提供已生成的绑定清单，`generated/agents/` 下的 Markdown 由 OMP 原生读取。这些文件与其本地所有权记录不提交 Git，不复制到全局或项目 OMP 配置。套件 `build` 只消费已确认的配置，`check` 校对两组交付字节与所有权。若文件发布失败，检查已报告的效果；修复阻塞后可用 `pstack:build` 根据已保存的绑定恢复交付。
 
 重新发起会话后，以套件选中的 OMP 原生扩展目录 `pstack-suite/generated` 发现 persona；直接启动时同样可用 `omp -e /absolute/toolkit/pstack-suite/generated`。通过原生 `task` 的 `agent` 传递角色名，不传单次调用模型。执行者提交有证据的 scoped 工作；注释审查者报告发现，父会话编辑。后者只声明读取类 built-in，不构成 OS、MCP 或附加扩展工具沙箱。本流程不提供热重载或强制停用检测。
+
+### 并行工作流
+
+[Swarm](generated/skills/swarm/SKILL.md) 做分片、同题竞速或混合；[arena](generated/skills/arena/SKILL.md) 对独立候选评分、选基底、综合并验证；[interrogate](generated/skills/interrogate/SKILL.md) 逐条复跑对抗评审的发现。三者共用 [原生 task 派发说明](generated/skills/arena/SKILL.md#native-panel-dispatch)。面板 persona 共用执行正文；单次 native task 可并行运行多个独立席位，等待各自返回终态。每个可写候选需独占产物路径或工作树；使用原生隔离时应关闭自动应用，分别读回保留的 patch 或分支。不创建 herdr Map，也不把工作树当安全沙箱。
+
+同一个 `-e …/pstack-suite/generated` 加载原生 task 的只读结果观察器。对已确认角色的终态结果，观察器追加 `pstack task facts`，区分配置的模型、原生有效选择器、实际模型身份、provider 路由、推理等级和已观察到的偏离；不改变任务或重新派发。没有可用实际值时报告未知。Provider 路由不一定等于模型厂商；只有以已知的实际模型和厂商资料核实后，才能计入跨厂商比较，不从席位名推断。模型效果、评分和综合质量不在机制验证范围内。
 
 ## 更新流程
 
@@ -70,7 +78,7 @@ bun run pstack:check
 2. 在 `mappings/` 调整适配；用 `pstack:preview` 单独审阅这些变化。因上游改写而重定位锚点，与有意改变本地行为分开审阅。
 3. **先停止使用同一包的 pstack 会话**，再运行 `pstack:build` 和 `pstack:check`。提交快照、清单、映射、生成文件及生成所有权记录的对应改动，然后新发起会话。本包不提供热加载、跨进程检测或并发发布；未更新时正常并行使用不受限制。
 
-清单每项的 `source` 相对于 `upstream/`，`output` 相对于 `generated/`，可选 `mapping` 相对于 `mappings/`。路径用 `/`，保留确切大小写。`kind: "text"` 声明 UTF-8 文本，只将 CRLF 转成 LF，原有 BOM、孤立 CR 和文件末尾换行保持原状；`kind: "binary"` 逐字节复制，不允许映射。Git 检出也不对快照或交付文件自动换行转换。
+清单每项的 `source` 默认相对于 `upstream/`，`output` 相对于 `generated/`，可选 `mapping` 相对于 `mappings/`。`origin: "runtime"` 标记由 toolkit 维护的运行时代码，`source` 相对于 `runtime/`；不应用映射，也不计入 `pstack:upstream` 的固定快照比较。路径用 `/`，保留确切大小写。`kind: "text"` 声明 UTF-8 文本，只将 CRLF 转成 LF，原有 BOM、孤立 CR 和文件末尾换行保持原状；`kind: "binary"` 逐字节复制，不允许映射。Git 检出也不对快照或交付文件自动换行转换。
 
 ### 一项操作对应一个行为
 
@@ -88,7 +96,7 @@ bun run pstack:check
 
 ## 验证
 
-`bun run test:pstack` 是 pstack 特性的测试分区，包含隔离文件系统上的维护命令及已安装 OMP 对真实适配样例的原生读取。OMP 从现有安装选择（或显式指定 `OMP_CLI`），不安装宿主，不使用生产会话或模型凭据。受控 provider 只证明实际发出的请求包含显式调用的技能正文，不评价模型行为。其他 pstack 自动用例放入同一分区；TypeScript 变更也运行 `bun run typecheck`。只检查确认与原生角色时，运行 `bun test tests/pstack/setup-personas.test.ts tests/pstack/setup-personas-omp-dock.test.ts`；设置 `PSTACK_SETUP_EVIDENCE_DIR` 可保留实际 OMP 调用、模型请求和退出记录。
+`bun run test:pstack` 是 pstack 特性的测试分区，包含隔离文件系统上的维护命令及已安装 OMP 对真实适配样例的原生读取。OMP 从现有安装选择（或显式指定 `OMP_CLI`），不安装宿主，不使用生产会话或模型凭据。受控 provider 只证明实际发出的请求包含显式调用的技能正文，不评价模型行为。其他 pstack 自动用例放入同一分区；TypeScript 变更也运行 `bun run typecheck`。只检查确认与原生角色时，运行 `bun test tests/pstack/setup-personas.test.ts tests/pstack/setup-personas-omp-dock.test.ts`；设置 `PSTACK_SETUP_EVIDENCE_DIR` 可保留实际 OMP 调用、模型请求和退出记录。面板分区用 `bun run test:pstack --test-name-pattern="native task"`；设置 `PSTACK_PANEL_EVIDENCE_DIR` 可留存本次独占 Git 回读、真实原生 task 结果、实际模型请求及进程退出记录。
 
 ### Windows CLI 与 UI 驱动
 
