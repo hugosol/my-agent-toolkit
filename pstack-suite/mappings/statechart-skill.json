@@ -1,0 +1,15 @@
+[
+  {
+    "name": "use-omp-manual-invocation",
+    "reason": "OMP exposes hidden skills through its native /skill:<name> command.",
+    "anchor": "Use for /statechart,",
+    "find": "/statechart",
+    "replace": "/skill:statechart"
+  },
+  {
+    "name": "run-with-explicit-dependencies",
+    "reason": "Use the shipped TypeScript entry on Windows without a POSIX launcher or an implicit host installation.",
+    "anchor": "```sh\n<skill dir>/scripts/statechart SPEC.tla [--config FILE] [--view FILE] [--out DIR]\n```\n\n`scripts/statechart.ts` is TypeScript, so run it with a runtime that can execute TypeScript. `scripts/statechart` is a POSIX shell script that picks one. On native Windows, run `node --disable-warning=ExperimentalWarning <skill dir>/scripts/statechart.ts` with Node 22.18 to 22.x, or Node 23.6 or later.\n\nThe first run installs TLC and Java with mise and needs the network.",
+    "replace": "```sh\nbun \"<skill dir>/scripts/statechart.ts\" SPEC.tla [--config FILE] [--view FILE] [--out DIR]\n```\n\nUse Bun 1.4.4, an existing Java runtime (Java 11 or later; Windows exercised with Oracle JDK 26), and the official [TLA+ Tools 1.7.4](https://github.com/tlaplus/tlaplus/releases/tag/v1.7.4) `tla2tools.jar` (TLC 2.19, revision `5a47802`). The jar SHA-256 is `936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88`. Set `TLA2TOOLS` to the jar's absolute path and optionally `JAVA` to the Java executable's absolute path (default: `java` on PATH). The command does not download or install dependencies. On Windows these are ordinary environment variables (for example, `$env:TLA2TOOLS = 'C:\\path\\to\\tla2tools.jar'` in PowerShell). A rule violation writes a chart and report but exits 1; an execution or input error exits 2 without publishing output."
+  }
+]
