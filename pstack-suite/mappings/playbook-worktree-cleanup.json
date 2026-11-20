@@ -1,0 +1,26 @@
+[
+  {
+    "name": "call-bundled-report-only-helper",
+    "reason": "Use Git Bash on Windows, state the fetch effect, and replace unsupported transcript discovery with explicit evidence.",
+    "anchor": "1. Snapshot and audit. Record `df -h /`, then run `scripts/worktree-audit.sh [-b <pr-base-ref>] [repo-path]` (principle-build-the-lever). Without `-b` it checks `MERGED` against `origin/HEAD`, so pass `-b origin/<branch>` when PRs target another branch. It reads paths from `git worktree list`, never hand-typed, since a hand-typed `myrepo-worktrees/x` misses one that lives at `.cursor/worktrees/myrepo/x` (principle-encode-lessons-in-structure). It classifies each worktree by size, age, merge state, uncommitted work, PR state, and the newest chat that touched it, then suggests a bucket. The transcript scan is slow, so background it.",
+    "replace": "1. Snapshot free space on the affected volume. From the parent of this playbook’s directory run `bash scripts/worktree-audit.sh [-b <pr-base-ref>] [--no-pr] [repo-path]` (Git Bash on Windows); elsewhere use the script’s absolute path. It reads linked paths from `git worktree list`, reports size, age, ancestry, local work, remote state and optional PR metadata, and suggests a bucket. `-b origin/<branch>` targets the actual PR base and can fetch it, updating Git metadata (`FETCH_HEAD`, the tracking ref and downloaded objects). Pass a verified local base to avoid the helper’s fetch, and `--no-pr` to skip forge queries. `LAST_CHAT` is not discovered."
+  },
+  {
+    "name": "check-explicit-usage-evidence",
+    "reason": "Leave transcript discovery deferred without losing the original active-use gate.",
+    "anchor": "3. Verify usage before deleting. For every `verify-recent-chat` row, or anything you doubt, fan subagents out to read the transcripts and report whether the chat is pinned or ongoing and which worktrees it touches (principle-guard-the-context-window, transcripts are bulk). A pinned chat spawns arena and repro trees into sibling worktrees via background subagents, and those are in use even when their names never hit the sidebar. Pick each subagent's reasoning level for the job, per the Subagents section.",
+    "replace": "3. Verify usage before deleting. Use the current conversation, user-provided active and pinned sessions, and explicitly supplied handoff records. Check adjacent arena and repro worktrees that may belong to those sessions. `-` in `LAST_CHAT` or `PR` is not clearance. If a candidate’s use or PR state cannot be resolved, hold it. Do not search unrelated sessions."
+  },
+  {
+    "name": "keep-cleanup-scoped-to-confirmed-paths",
+    "reason": "Keep the original deletion gate while avoiding broad pruning or a Windows-inapplicable simulator command.",
+    "anchor": "5. Prune the confirmed set. Per path, `git worktree remove --force <path>`. If the dir survives on ignored build artifacts, `rm -rf` it, then `git worktree prune`. Branch refs survive, so no commits are lost. Confirm with `df -h /` and re-list.\n6. Simulators and other reclaimers. Simulators are usually the next-biggest win. `xcrun simctl --set testing delete all` (XCTestDevices clones), `xcrun simctl delete unavailable`, and `xcrun simctl runtime list` then `runtime delete <id>` for old runtimes. More when needed: Xcode `DerivedData` and `iOS DeviceSupport`, `~/Library/Application Support/Cursor` (`state.vscdb.backup`, and `snapshots/roots/<root>` where a `<root>` named for a folder you opened as a workspace balloons), package caches (pnpm, uv, brew, yarn). Clear only caches the user has not said to keep.",
+    "replace": "5. Remove only the confirmed set by exact path with `git worktree remove <path>`. Use `--force` only for a specifically confirmed worktree with disposable local files. Do not delete branch refs, run a broad prune, or remove leftover files whose ownership is uncertain. Re-list the worktrees and check the same volume’s free space.\n6. Consider simulator and build caches only on a platform with the applicable tooling and within the requested cleanup scope. Name the resources and leave user evidence untouched."
+  },
+  {
+    "name": "report-platform-neutral-free-space",
+    "reason": "Report the same before/after evidence without requiring Unix root-volume syntax on Windows.",
+    "anchor": "**Reply:** `df -h /` before and after with space reclaimed, the worktrees pruned, and a one-line reason for each held back (in-use by which chat, or uncommitted work).",
+    "replace": "**Reply:** affected volume free space before and after, space reclaimed, the worktrees removed, and a one-line reason for each held back (active use, unresolved PR or history evidence, or uncommitted work)."
+  }
+]

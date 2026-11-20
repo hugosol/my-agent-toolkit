@@ -112,6 +112,7 @@ Read the matching playbook before acting. Track its steps in the session task li
 | Plan separate phases without implementing | [multi-phase-plan](playbooks/multi-phase-plan.md) | A checkable dependency-ordered plan |
 | Pause at an explicit request | [pause-safely](playbooks/pause-safely.md) | WIP checkpoint and resume note |
 | Resume from supplied worktree or handoff evidence | [session-pickup](playbooks/session-pickup.md) | Verified resume point |
+| Audit linked worktrees before a cleanup decision | [worktree-cleanup](playbooks/worktree-cleanup.md) | Advisory buckets and confirmed scope |
 | Publish a PR in scope | [opening-a-pr](playbooks/opening-a-pr.md) | Ready PR, not a merge |
 
 For a progress update on this chat, read [ketchup](../ketchup/SKILL.md). For long work, keep the [decision log](../show-me-your-work/SKILL.md).

@@ -190,6 +190,18 @@
       "mapping": "playbook-visual-parity.json"
     },
     {
+      "source": "pstack/skills/poteto-mode/playbooks/worktree-cleanup.md",
+      "output": "skills/poteto-mode/playbooks/worktree-cleanup.md",
+      "kind": "text",
+      "mapping": "playbook-worktree-cleanup.json"
+    },
+    {
+      "source": "pstack/skills/poteto-mode/scripts/worktree-audit.sh",
+      "output": "skills/poteto-mode/scripts/worktree-audit.sh",
+      "kind": "text",
+      "mapping": "worktree-audit.json"
+    },
+    {
       "source": "pstack/skills/poteto-mode/SKILL.md",
       "output": "skills/poteto-mode/SKILL.md",
       "kind": "text",
@@ -330,6 +342,11 @@
     {
       "source": "pstack/skills/show-me-your-work/references/decision-log-template.tsv",
       "output": "skills/show-me-your-work/references/decision-log-template.tsv",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/show-me-your-work/scripts/log.sh",
+      "output": "skills/show-me-your-work/scripts/log.sh",
       "kind": "text"
     },
     {
