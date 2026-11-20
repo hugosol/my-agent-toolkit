@@ -11,6 +11,28 @@
       "kind": "text"
     },
     {
+      "source": "cursor-team-kit/skills/control-cli/SKILL.md",
+      "output": "skills/control-cli/SKILL.md",
+      "kind": "text",
+      "mapping": "control-cli.json"
+    },
+    {
+      "source": "cursor-team-kit/skills/control-ui/SKILL.md",
+      "output": "skills/control-ui/SKILL.md",
+      "kind": "text",
+      "mapping": "control-ui.json"
+    },
+    {
+      "source": "cursor-team-kit/skills/deslop/SKILL.md",
+      "output": "skills/deslop/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "cursor-team-kit/LICENSE",
+      "output": "licenses/cursor-team-kit.txt",
+      "kind": "text"
+    },
+    {
       "source": "pstack/skills/architect/SKILL.md",
       "output": "skills/architect/SKILL.md",
       "kind": "text",
