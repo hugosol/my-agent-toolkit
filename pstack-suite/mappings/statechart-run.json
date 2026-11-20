@@ -1,0 +1,38 @@
+[
+  {
+    "name": "remove-mise-only-primitives",
+    "reason": "Remove the installer subprocess and version selectors; the caller supplies the existing Java and TLC artifacts.",
+    "anchor": "import { type ChildProcess, execFile, type ExecFileException, spawn } from \"node:child_process\";",
+    "replace": "import { type ChildProcess, spawn } from \"node:child_process\";"
+  },
+  {
+    "name": "remove-installer-selectors",
+    "reason": "The delivered command has an explicit jar dependency and never provisions the host.",
+    "anchor": "const TLC_TOOL =\n  \"http:tla2tools[url=https://github.com/tlaplus/tlaplus/releases/download/v1.7.4/tla2tools.jar,checksum=sha256:936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88]@1.7.4\";\nconst JAVA_TOOL = \"java@temurin-25\";\n",
+    "replace": ""
+  },
+  {
+    "name": "remove-installer-process",
+    "reason": "Java/TLC execution uses the existing file-backed runner; there is no installer subprocess.",
+    "anchor": "type ChildResult = {\n  status: number | null;\n  stdout: string;\n  stderr: string;\n  error: ExecFileException | undefined;\n};\n\nconst runChild = (file: string, args: string[], options: { cwd: string; env: NodeJS.ProcessEnv }) =>\n  new Promise<ChildResult>((resolve) => {\n    execFile(\n      file,\n      args,\n      { encoding: \"utf8\", maxBuffer: 1 << 30, windowsHide: true, ...options },\n      (error, stdout, stderr) =>\n        resolve({\n          status: error ? (typeof error.code === \"number\" ? error.code : null) : 0,\n          stdout,\n          stderr,\n          error: typeof error?.code === \"string\" ? error : undefined,\n        }),\n    );\n  });\n\n",
+    "replace": ""
+  },
+  {
+    "name": "require-explicit-tlc-jar",
+    "reason": "Resolve the caller's absolute jar before launching the checker, without invoking an installer.",
+    "anchor": "async function findTlc(cwd: string) {\n  const { TLA2TOOLS, JAVA } = process.env;\n  if (TLA2TOOLS) return { jar: TLA2TOOLS, java: JAVA || \"java\" };\n  const mise = (...args: string[]) =>\n    runChild(\"mise\", args, { cwd, env: { ...process.env, MISE_CEILING_PATHS: cwd } });\n  const where = () =>\n    Promise.all([mise(\"where\", TLC_TOOL), mise(\"which\", \"java\", \"--tool\", JAVA_TOOL)]);\n  let found = await where();\n  if (found.some((r) => r.status !== 0)) {\n    const r = await mise(\"install\", JAVA_TOOL, TLC_TOOL);\n    if (r.status !== 0)\n      throw new Error(\n        `Cannot find TLC: mise install failed: ${r.error?.message ?? r.stderr.trim()}\\nOr set TLA2TOOLS to the path of tla2tools.jar, and JAVA to a java binary (Java 11 or later).`,\n      );\n    found = await where();\n  }\n  return {\n    jar: path.join(found[0].stdout.trim(), \"tla2tools.jar\"),\n    java: JAVA || found[1].stdout.trim(),\n  };\n}",
+    "replace": "function findTlc() {\n  const { TLA2TOOLS, JAVA } = process.env;\n  if (!TLA2TOOLS || !path.isAbsolute(TLA2TOOLS) || !fs.statSync(TLA2TOOLS, { throwIfNoEntry: false })?.isFile())\n    throw new Error(\"Set TLA2TOOLS to the absolute path of an existing TLA+ Tools 1.7.4 tla2tools.jar.\");\n  return { jar: TLA2TOOLS, java: JAVA || \"java\" };\n}"
+  },
+  {
+    "name": "resolve-dependencies-before-checking",
+    "reason": "Explicit dependency resolution no longer runs an external installer.",
+    "anchor": "const tlc = await findTlc(dir);",
+    "replace": "const tlc = findTlc();"
+  },
+  {
+    "name": "trace-real-java-process-exits",
+    "reason": "On explicit opt-in, report the actual checker processes and raw exits without capturing their inherited environment or modifying normal output.",
+    "anchor": "    const settle = (code: number | null) =>\n      resolve({\n        status: error ? null : code,\n        stdout: files[0],\n        output: joined(files),\n        error,\n      });",
+    "replace": "    const settle = (code: number | null) => {\n      if (process.env.PSTACK_STATECHART_PROCESS_TRACE === \"1\")\n        console.error(`statechart java: ${JSON.stringify({ argv: [file, ...args], cwd: options.cwd, pid: child.pid, exit: code })}`);\n      resolve({\n        status: error ? null : code,\n        stdout: files[0],\n        output: joined(files),\n        error,\n      });\n    };"
+  }
+]
