@@ -1,7 +1,8 @@
 import { dirname, isAbsolute, parse } from "node:path";
 import { build, check } from "./delivery";
-import { errorMessage } from "./files";
+import { errorMessage, readFile, writeFile } from "./files";
 import { loadManifest, render } from "./inputs";
+import { bindingsPath, confirmedBindings, modelLedger, modelResources, savedBindings } from "./models";
 import { compareUpstream, preview } from "./reports";
 
 const root = dirname(import.meta.dir);
@@ -11,7 +12,10 @@ const args = rawArgs[0] === "--" ? rawArgs.slice(1) : rawArgs;
 
 const help = `pstack resource maintenance (run from the toolkit root)
 
-  bun run pstack:build                  Build from the pinned snapshot and named mappings.
+  bun run pstack:setup -- --confirm <proposal.json> --catalog <omp-models.json>
+                                        Save confirmed Suite bindings and generate native personas.
+  bun run pstack:setup -- --cancel      Leave settings and generated resources unchanged.
+  bun run pstack:build                  Build resources and rebuild saved Suite personas.
   bun run pstack:check                  Check delivery bytes and ownership without writing.
   bun run pstack:preview                Show named local edits and reasons without writing.
   bun run pstack:upstream -- --local <absolute-directory>
@@ -30,8 +34,8 @@ Exit codes:
   1  Check found delivery drift, or upstream found differences.
   2  Invalid invocation, input/mapping error, or filesystem failure.
 
-Stop pstack sessions using this package before building; start new sessions afterward.
-Build failures report completed file effects and can leave partial delivery. No
+Stop pstack sessions using this package before building or confirming setup; start new sessions afterward.
+Publication failures report completed file effects and can leave partial delivery. No
 command fetches upstream or touches running sessions. See pstack-suite/README.md.
 `;
 
@@ -48,20 +52,43 @@ function run(): number {
     return compareUpstream(root, local, loadManifest(root)) ? 1 : 0;
   }
 
+  if (command === "setup") {
+    if (args.length === 1 && args[0] === "--cancel") {
+      console.log("Setup cancelled; no files changed.");
+      return 0;
+    }
+    const [decision, proposal, catalogOption, catalog] = args;
+    if (args.length !== 4 || decision !== "--confirm" || catalogOption !== "--catalog") {
+      throw new Error("Use --confirm <proposal.json> --catalog <omp-models.json>, or --cancel; nothing saved.");
+    }
+    const bindings = confirmedBindings(proposal, catalog);
+    const delivery = modelResources(render(root, loadManifest(root).files), bindings);
+    const bytes = Buffer.from(`${JSON.stringify({ confirmed: true, roles: bindings }, null, 2)}\n`);
+    if (!readFile(root, bindingsPath)?.equals(bytes)) writeFile(root, bindingsPath, bytes, effects);
+    build(root, delivery, effects, modelLedger);
+    console.log(effects.length ? effects.join("\n") : "Model bindings already match.");
+    console.log("Start a new pstack session to use these bindings.");
+    return 0;
+  }
+
   if (command !== "build" && command !== "check" && command !== "preview") throw new Error(`Unknown command ${command}; use --help`);
   if (args.length) throw new Error(`Unexpected arguments for ${command}; use --help`);
   const delivery = render(root, loadManifest(root).files);
+  if (command === "preview") {
+    preview(delivery);
+    return 0;
+  }
+  const models = modelResources(delivery, savedBindings(root));
   if (command === "check") {
-    const differences = check(root, delivery);
+    const differences = [...check(root, delivery), ...check(root, models, modelLedger)];
     if (differences.length) {
       console.error(differences.join("\n"));
       return 1;
     }
     console.log("Generated resources match the snapshot and mappings.");
-  } else if (command === "preview") {
-    preview(delivery);
   } else {
     build(root, delivery, effects);
+    build(root, models, effects, modelLedger);
     console.log(effects.length ? effects.join("\n") : "Generated resources already match.");
   }
   return 0;
@@ -71,6 +98,6 @@ try {
   process.exitCode = run();
 } catch (error) {
   console.error(`pstack: ${errorMessage(error)}`);
-  if (command === "build") console.error(effects.length ? `File effects before failure:\n${effects.join("\n")}` : "No files changed.");
+  if (command === "build" || command === "setup") console.error(effects.length ? `File effects before failure:\n${effects.join("\n")}` : "No files changed.");
   process.exitCode = 2;
 }

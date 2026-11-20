@@ -24,7 +24,7 @@ Infer the need from the message and the conversation. A named situation, such as
 
 ## Get set up
 
-Use an OMP session configured for the pstack Suite. Check which resources and model bindings are actually installed before promising a workflow. If suite setup is loaded, use its native skill command to review and confirm role bindings; do not presume defaults or change global OMP models. Model changes take effect in a new session after the suite has been rebuilt with current sessions stopped.
+Use an OMP session configured for the pstack Suite. Check which resources and model bindings are actually installed before promising a workflow. Use [`/skill:setup-pstack`](../setup-pstack/SKILL.md) to review and confirm role bindings even before any roles are configured; do not presume defaults or change global OMP models. Model changes take effect in a new session after the suite has been rebuilt with current sessions stopped.
 
 Delegation and review panels consume extra model calls. Explain costs from the actual configured roles, not guesses about built-in models.
 
