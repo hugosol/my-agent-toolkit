@@ -1,1 +1,0 @@
-Real installed pi no-UI mode; controlled provider/peer. Not real-model routing evidence.
