@@ -88,7 +88,7 @@ bun run pstack:check
 
 ## 验证
 
-`bun run test:pstack` 是 pstack 特性的测试分区，包含隔离文件系统上的维护命令及已安装 OMP 对真实适配样例的原生读取。OMP 从现有安装选择（或显式指定 `OMP_CLI`），不安装宿主，不使用生产会话或模型凭据。受控 provider 只证明实际发出的请求包含显式调用的技能正文，不评价模型行为。其他 pstack 自动用例放入同一分区；TypeScript 变更也运行 `bun run typecheck`。只检查确认与原生角色时，运行 `bun test tests/pstack/setup-personas.test.ts tests/pstack/setup-personas-omp-dock.test.ts`；设置 `PSTACK_SETUP_EVIDENCE_DIR` 可保留实际 OMP 调用、模型请求和退出记录。面板分区用 `bun run test:pstack --test-name-pattern='P23 P29|P30'`；设置 `PSTACK_PANEL_EVIDENCE_DIR` 可留存本次独占 Git 回读、真实原生 task 结果、实际模型请求及进程退出记录。
+`bun run test:pstack` 是 pstack 特性的测试分区，包含隔离文件系统上的维护命令及已安装 OMP 对真实适配样例的原生读取。OMP 从现有安装选择（或显式指定 `OMP_CLI`），不安装宿主，不使用生产会话或模型凭据。受控 provider 只证明实际发出的请求包含显式调用的技能正文，不评价模型行为。其他 pstack 自动用例放入同一分区；TypeScript 变更也运行 `bun run typecheck`。只检查确认与原生角色时，运行 `bun test tests/pstack/setup-personas.test.ts tests/pstack/setup-personas-omp-dock.test.ts`；设置 `PSTACK_SETUP_EVIDENCE_DIR` 可保留实际 OMP 调用、模型请求和退出记录。面板分区用 `bun run test:pstack --test-name-pattern="native task"`；设置 `PSTACK_PANEL_EVIDENCE_DIR` 可留存本次独占 Git 回读、真实原生 task 结果、实际模型请求及进程退出记录。
 
 ### 项目验证与工程核查
 
