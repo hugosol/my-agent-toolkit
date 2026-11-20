@@ -200,6 +200,17 @@
       "kind": "text",
       "mapping": "playbook-opening-a-pr.json"
     },
+    { "source": "pstack/skills/poteto-mode/playbooks/babysit.md", "output": "skills/poteto-mode/playbooks/babysit.md", "kind": "text", "mapping": "playbook-babysit.json" },
+    { "source": "pstack/skills/poteto-mode/playbooks/shipping.md", "output": "skills/poteto-mode/playbooks/shipping.md", "kind": "text", "mapping": "playbook-shipping.json" },
+    { "source": "pstack/skills/poteto-mode/playbooks/autonomous-run.md", "output": "skills/poteto-mode/playbooks/autonomous-run.md", "kind": "text", "mapping": "playbook-autonomous-run.json" },
+    { "source": "pstack/skills/poteto-mode/playbooks/autopilot-full.md", "output": "skills/poteto-mode/playbooks/autopilot-full.md", "kind": "text", "mapping": "playbook-autopilot-full.json" },
+    { "source": "pstack/skills/poteto-mode/playbooks/autopilot-stack.md", "output": "skills/poteto-mode/playbooks/autopilot-stack.md", "kind": "text", "mapping": "playbook-autopilot-stack.json" },
+    { "source": "pstack/skills/poteto-mode/references/bugbot-triage.md", "output": "skills/poteto-mode/references/bugbot-triage.md", "kind": "text" },
+    { "source": "pstack/skills/poteto-mode/scripts/watch-pr/cli.ts", "output": "skills/poteto-mode/scripts/watch-pr/cli.ts", "kind": "text", "mapping": "watch-pr-cli.json" },
+    { "source": "pstack/skills/poteto-mode/scripts/watch-pr/github.ts", "output": "skills/poteto-mode/scripts/watch-pr/github.ts", "kind": "text", "mapping": "watch-pr-github.json" },
+    { "source": "pstack/skills/poteto-mode/scripts/watch-pr/policy.ts", "output": "skills/poteto-mode/scripts/watch-pr/policy.ts", "kind": "text", "mapping": "watch-pr-policy.json" },
+    { "source": "pstack/skills/poteto-mode/scripts/watch-pr/render.ts", "output": "skills/poteto-mode/scripts/watch-pr/render.ts", "kind": "text", "mapping": "watch-pr-render.json" },
+    { "source": "pstack/skills/poteto-mode/scripts/watch-pr/types.ts", "output": "skills/poteto-mode/scripts/watch-pr/types.ts", "kind": "text", "mapping": "watch-pr-types.json" },
     {
       "source": "pstack/skills/poteto-mode/playbooks/pause-safely.md",
       "output": "skills/poteto-mode/playbooks/pause-safely.md",

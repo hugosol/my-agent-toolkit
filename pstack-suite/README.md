@@ -70,6 +70,21 @@ bun run pstack:check
 
 同一个 `-e …/pstack-suite/generated` 加载原生 task 的只读结果观察器。对已确认角色的终态结果，观察器追加 `pstack task facts`，区分配置的模型、原生有效选择器、实际模型身份、provider 路由、推理等级和已观察到的偏离；不改变任务或重新派发。没有可用实际值时报告未知。Provider 路由不一定等于模型厂商；只有以已知的实际模型和厂商资料核实后，才能计入跨厂商比较，不从席位名推断。模型效果、评分和综合质量不在机制验证范围内。
 
+## 本地 PR 交付与观察
+
+[打开 PR](generated/skills/poteto-mode/playbooks/opening-a-pr.md)只负责创建 ready PR；[Babysit](generated/skills/poteto-mode/playbooks/babysit.md)最多驱动到 merge-ready，不合并、不 retarget、不 rebase；[Shipping](generated/skills/poteto-mode/playbooks/shipping.md)在操作者给定的交付范围内，要求独立验证、从栈底连续落地并回读真实目标分支。开启模式不是交付授权，也不新增统一逐项确认。[Autopilot-full](generated/skills/poteto-mode/playbooks/autopilot-full.md)只合入获授权队列中通过验证的项；[Autopilot-stack](generated/skills/poteto-mode/playbooks/autopilot-stack.md)交到 verified 即止，不合并。[Autonomous run](generated/skills/poteto-mode/playbooks/autonomous-run.md)使用活跃会话中的有界等待和本地 task，不承诺定时唤醒或退出后续跑。现有项目、宿主和 forge 门禁照常生效。
+
+GitHub watcher 使用已安装的 Bun、`gh` 和 Git（仅目标推断需要 Git）。从目标 checkout 执行；也可以用 `--owner`、`--repo` 和 `--pr`/`--stack-prs` 显式指定目标：
+
+```text
+bun "<absolute poteto-mode directory>/scripts/watch-pr/cli.ts" --pr 31 --status-only --pretty
+bun "<absolute poteto-mode directory>/scripts/watch-pr/cli.ts" --queued-stack --stack-prs 31,32 --timeout 300
+```
+
+`--help` 列出所有选项。默认输出 JSON；轮询输出 NDJSON，`--pretty` 输出便于阅读的报告。`QUEUE` 是观察列表，不是 forge 入列成功；`queued` 是 GitHub 观察到的队列条目，`auto-merge-requested` 单独报告。`MERGED` 和 `COMPLETE` 给出已观察到的实际 base；合入父分支不代表已到 trunk。后续查询失败时，错误和此前观察到的合并会同时保留在输出中。watcher 的 GitHub 请求只读，不创建、回复、入队、fetch、推送、合并或删除；PR 写操作由相应 playbook 的独立工具完成。Origin 走各 playbook 的原生命令，不用 GitHub watcher。
+
+Windows 机械检查：`bun run test:pstack --test-name-pattern='P38|P36 installed OMP reads Shipping'`。设置 `PSTACK_FORGE_EVIDENCE_DIR` 可保存命令、退出、forge 请求、消费到的状态文本及本次 Git/OMP 清理证据。受控 forge 响应不代表真实 GitHub 或 Origin 已验收，也不评价模型的 shipping 决策。
+
 ## 更新流程
 
 [manifest.json](manifest.json) 记录上游仓库、固定提交和版本，以及每个源文件及其确切交付位置。上游授权保留在[交付许可证](generated/LICENSE)。[待迁移事项](MIGRATION-BACKLOG.md) 不属于当前资源清单。

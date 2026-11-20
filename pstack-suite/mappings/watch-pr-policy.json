@@ -1,0 +1,58 @@
+[
+  {
+    "name": "observe-landing-with-snapshot",
+    "reason": "Thread the queued-mode read into the real forge adapter.",
+    "anchor": "  readonly pendingHistory: \"include\" | \"omit\";\n  readonly allowDraft: boolean;\n}): Promise<T.PrSnapshot> {\n  const facts = await args.reader.pullRequest(args.context);",
+    "replace": "  readonly pendingHistory: \"include\" | \"omit\";\n  readonly allowDraft: boolean;\n  readonly observeLanding: boolean;\n}): Promise<T.PrSnapshot> {\n  const facts = await args.reader.pullRequest(args.context, args.observeLanding);"
+  },
+  {
+    "name": "observe-landing-in-status-only-queued-mode",
+    "reason": "A short status-only read can also report an actual queue entry.",
+    "anchor": "          pendingHistory: \"include\",\n          allowDraft: args.options.allowDraft,",
+    "find": "          pendingHistory: \"include\",",
+    "replace": "          observeLanding: args.mode === \"queued-stack\",\n          pendingHistory: \"include\","
+  },
+  {
+    "name": "observe-real-queue-in-poll",
+    "reason": "A queued-stack poll observes, but never requests, enqueue or merge.",
+    "anchor": "      pendingHistory: \"omit\",\n      allowDraft: args.options.allowDraft,",
+    "find": "      pendingHistory: \"omit\",",
+    "replace": "      observeLanding: true,\n      pendingHistory: \"omit\","
+  },
+  {
+    "name": "retain-single-merge-destination",
+    "reason": "Preserve the actual base from the forge in every merged result.",
+    "anchor": "function readyContribution(",
+    "replace": "function observedMerge(facts: T.PullRequestFacts): T.MergedPr {\n  return { kind: \"merged-pr\", context: facts.context, mergedAt: facts.mergedAt, baseRefName: facts.baseRefName };\n}\n\nfunction readyContribution("
+  },
+  {
+    "name": "use-merge-facts-for-single-result",
+    "reason": "A single already merged PR still has a destination.",
+    "anchor": "  if (row.kind === \"merged\")\n    return {\n      kind: \"merged-pr\",\n      context: row.context,\n      mergedAt: row.facts.mergedAt,\n    };",
+    "replace": "  if (row.kind === \"merged\") return observedMerge(row.facts);"
+  },
+  {
+    "name": "use-merge-facts-for-queue-completion",
+    "reason": "Do not turn a merge into a parent branch into a claim that trunk contains it.",
+    "anchor": "        row.kind === \"merged\"\n          ? [\n              {\n                kind: \"merged-pr\" as const,\n                context: row.context,\n                mergedAt: row.facts.mergedAt,\n              },\n            ]\n          : []",
+    "replace": "        row.kind === \"merged\" ? [observedMerge(row.facts)] : []"
+  },
+  {
+    "name": "publish-merge-fact-before-later-queries",
+    "reason": "Keep observed effects even if the next PR read fails before a complete sweep.",
+    "anchor": "    const applied = applyQueueSnapshot(",
+    "replace": "    if (snapshot.kind === \"merged\" && state.snapshots.get(context.number)?.kind !== \"merged\") {\n      args.dependencies.emit(stamp({ kind: \"MERGED\", terminal: false, merged: observedMerge(snapshot.facts) }));\n    }\n    const applied = applyQueueSnapshot("
+  },
+  {
+    "name": "describe-unmerged-frontier",
+    "reason": "Report whether the frontier is actually queued, auto-merge enabled, or neither.",
+    "anchor": "| { readonly kind: \"merge-queue\"; readonly unmergedCount: number };",
+    "replace": "| { readonly kind: \"awaiting-merge\"; readonly unmergedCount: number; readonly landing: T.MergeDisposition | undefined };"
+  },
+  {
+    "name": "do-not-infer-queue-enrollment",
+    "reason": "A clean or in-progress PR can be unqueued; refresh a wait when its observed landing state changes.",
+    "anchor": "      ? ({ kind: \"merge-queue\", unmergedCount: active.length } as const)\n      : ({ kind: \"pending-checks\", pending } as const);\n  const key =\n    reason.kind === \"pending-checks\"\n      ? `pending:${frontier.number}:${reason.pending.length}`\n      : `queue:${frontier.number}:${reason.unmergedCount}`;",
+    "replace": "      ? ({ kind: \"awaiting-merge\", unmergedCount: active.length, landing: row.facts.landing } as const)\n      : ({ kind: \"pending-checks\", pending } as const);\n  const key =\n    reason.kind === \"pending-checks\"\n      ? `pending:${frontier.number}:${reason.pending.length}`\n      : `unmerged:${frontier.number}:${reason.unmergedCount}:${JSON.stringify(reason.landing)}`;"
+  }
+]
