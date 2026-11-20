@@ -1,5 +1,6 @@
+import { dlopen, ptr } from "bun:ffi";
 import { expect, test } from "bun:test";
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { startCaptureServer } from "../harness-dock/capture-server";
 import { DOCK_CAPTURE_BASE_URL_ENV, DOCK_MODEL_SELECTOR } from "../harness-dock/fixtures/extension-root/provider";
@@ -59,10 +60,48 @@ interface Completion {
   tools: { function: { name: string } }[];
 }
 
+const ROLE_LIFECYCLE_TIMEOUT_MS = 180_000;
+
+async function awaitWorkingDirectoryRelease(cwd: string, deadline: number): Promise<void> {
+  if (process.platform !== "win32") return;
+  const kernel = dlopen("kernel32.dll", {
+    CreateFileW: { args: ["ptr", "u32", "u32", "ptr", "u32", "u32", "ptr"], returns: "u64" },
+    CloseHandle: { args: ["u64"], returns: "bool" },
+    GetLastError: { args: [], returns: "u32" },
+  });
+  const path = Buffer.from(`${cwd}\0`, "utf16le");
+  const DELETE_ACCESS = 0x10000;
+  const SHARE_READ_WRITE_DELETE = 7;
+  const OPEN_EXISTING = 3;
+  const OPEN_DIRECTORY = 0x02000000;
+  const INVALID_HANDLE = 0xffff_ffff_ffff_ffffn;
+  const SHARING_VIOLATION = 32;
+  try {
+    // OMP's detached daemon inherits this cwd and closes its SQLite files before exiting.
+    // Probe the cwd lease without deleting anything; the RPC parents' exits do not release it.
+    for (;;) {
+      const handle = kernel.symbols.CreateFileW(ptr(path), DELETE_ACCESS, SHARE_READ_WRITE_DELETE, null, OPEN_EXISTING, OPEN_DIRECTORY, null);
+      if (handle !== INVALID_HANDLE) {
+        if (!kernel.symbols.CloseHandle(handle)) throw new Error(`Could not close the cwd probe handle for ${cwd}`);
+        return;
+      }
+      const error = kernel.symbols.GetLastError();
+      const remaining = deadline - performance.now();
+      if (error !== SHARING_VIOLATION || remaining <= 0) {
+        throw new Error(`OMP fixture cwd did not become removable: ${cwd} (Windows error ${error})`);
+      }
+      await Bun.sleep(Math.min(25, remaining));
+    }
+  } finally {
+    kernel.close();
+  }
+}
+
 // S1/S3 / P26–P28, P31–P32. A mismatched model, stale output, or a reviewer with
 // write built-ins is observable only after native task dispatch. The local
 // provider scripts a task and a child tool call; OMP performs both operations.
 test("pstack setup updates fresh native role resolution without affecting unrelated OMP sessions", async () => {
+  const deadline = performance.now() + ROLE_LIFECYCLE_TIMEOUT_MS;
   const harness = await resolveInstalledOmp();
   const run = createRunRoot("pstack-role-lifecycle");
   const cwd = run.workDir;
@@ -223,7 +262,8 @@ test("pstack setup updates fresh native role resolution without affecting unrela
       }
     } finally {
       capture.stop();
-      rmSync(run.path, { recursive: true, force: true, maxRetries: 5 });
+      await awaitWorkingDirectoryRelease(cwd, deadline);
+      run.dispose();
     }
   }
-}, 180_000);
+}, ROLE_LIFECYCLE_TIMEOUT_MS);
