@@ -20,6 +20,7 @@
 | 当前或候选 harness 版本是否满足所需功能？应该运行哪些脚本？ | [Harness 版本检查手册](framework/docs/harness-support.md#version-verification) | 固定/候选版本测试、pi smoke、provider 与 TUI 验证；通过不自动提升支持状态 |
 | 订阅、命令与生命周期声明能否被静态解析？ | [Static authoring check](framework/docs/static-authoring-check.md) | 静态表达门禁；不替代 integration check 或行为验证 |
 | 如何选择测试范围、协调共享工作树中的运行？ | [测试约定](docs/agents/testing.md) | 按影响面选择用例与真实运行场景；文档变更检查链接和示例 |
+| 如何生成、检查和审阅 pstack Suite 资源？ | [pstack 资源维护](pstack-suite/README.md) | 对照固定快照和具名映射，不代表整个 Suite 的宿主验收 |
 
 版本支持状态与证据只在 [Harness support](framework/docs/harness-support.md)维护；机器可检查的固定基线在 [harness-baseline.json](framework/docs/harness-baseline.json)。
 

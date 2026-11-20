@@ -5,3 +5,6 @@
 host-patches/**/*.diff text eol=lf
 # Historical native-session captures must retain their original LF bytes.
 tests/framework/fixtures/pi-history/*.jsonl text eol=lf
+# Keep the pinned snapshot and deterministic delivery bytes across Git checkouts.
+pstack-suite/upstream/** -text
+pstack-suite/generated/** -text

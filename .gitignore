@@ -12,6 +12,7 @@ framework/.runtime/
 /.scratch/omp-version-acceptance/evidence/
 /.scratch/node-result-approval/evidence/
 /.scratch/pi-suite/evidence/
+/.scratch/pstack-omp-suite/evidence/
 /.scratch/rust-script-bots/evidence/
 *.log
 .idea/
