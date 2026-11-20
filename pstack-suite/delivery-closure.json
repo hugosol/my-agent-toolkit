@@ -39,7 +39,11 @@
   "references": [
     {"source":"omp.ts","literal":"../adapters/omp","kind":"toolkit","target":"adapters/omp/index.ts"},
     {"source":"omp.ts","literal":"../extensions/pstack/definition","kind":"toolkit","target":"extensions/pstack/definition.ts"},
-    {"source":"generated/skills/poteto-mode/SKILL.md","literal":"../<name>/SKILL.md","kind":"skill-template","target":"selected skill entries under generated/skills"},
+    {"source":"generated/skills/poteto-mode/SKILL.md","literal":"../<name>/SKILL.md","kind":"principle-index","target":"generated/skills"},
+    {"source":"generated/persona-templates/poteto-agent.md","literal":"Read the shipped poteto-mode SKILL.md","kind":"package","target":"generated/skills/poteto-mode/SKILL.md"},
+    {"source":"generated/skills/poteto-mode/SKILL.md","literal":"Read <path>/worker.md","kind":"package","target":"generated/skills/poteto-mode/worker.md"},
+    {"source":"generated/skills/statechart/scripts/statechart.ts","literal":"import.meta.dirname, \"worker.ts\"","kind":"package","target":"generated/skills/statechart/scripts/worker.ts"},
+    {"source":"generated/skills/statechart/scripts/statechart.ts","literal":"import.meta.dirname, \"janitor.ts\"","kind":"package","target":"generated/skills/statechart/scripts/janitor.ts"},
     {"source":"generated/skills/poteto-mode/SKILL.md","literal":"playbooks/prototype.md","kind":"package","target":"generated/skills/poteto-mode/playbooks/prototype.md"},
     {"source":"generated/skills/poteto-mode/playbooks/multi-phase-plan.md","literal":"playbooks/prototype.md","kind":"package","target":"generated/skills/poteto-mode/playbooks/prototype.md"},
     {"source":"generated/skills/poteto-mode/playbooks/perf-issue.md","literal":"playbooks/hillclimb.md","kind":"package","target":"generated/skills/poteto-mode/playbooks/hillclimb.md"},
