@@ -14,7 +14,7 @@ For a quick ballpark the user asked for, one run is enough. Still check question
 
 - Write down the claim you expect to make, in the words you would ship ("export is 30% faster at p50 on the 60k-row dataset"). The questions test that sentence.
 - Read the measurement script. Note what it times, counts, and ignores.
-- Check the load average with `uptime` and the core count with `nproc`. If the machine is busy, find out what is running. If you cannot stop it, interleave the sides so both see the same noise, and say so in the report.
+- Check machine load and logical core count before starting. On Linux use `uptime` and `nproc`. On Windows PowerShell use `(Get-CimInstance Win32_Processor | Measure-Object -Property NumberOfLogicalProcessors -Sum).Sum` for cores and `Get-CimInstance Win32_PerfFormattedData_PerfOS_Processor -Filter "Name='_Total'" | Select-Object -ExpandProperty PercentProcessorTime` for system CPU utilization (not load average); use Task Manager to identify competing processes. If the machine is busy, find out what is running. If you cannot stop it, interleave the sides so both see the same noise, and say so in the report.
 
 ## The questions
 
@@ -35,5 +35,5 @@ For a quick ballpark the user asked for, one run is enough. Still check question
 
 ## Other perf material
 
-- Vet the **Perf issue** playbook's baseline before the playbook plans from it, and every number after that.
-- Vet the **Hillclimb** playbook's harness before it is frozen. The frozen harness then prints error and work counts, so each keep-or-revert checks questions 4 and 7 for free.
+- Vet the [Perf issue](../poteto-mode/playbooks/perf-issue.md) playbook's baseline before the playbook plans from it, and every number after that.
+- Vet the [Hillclimb](../poteto-mode/playbooks/hillclimb.md) playbook's harness before it is frozen. The frozen harness then prints error and work counts, so each keep-or-revert checks questions 4 and 7 for free.

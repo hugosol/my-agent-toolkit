@@ -1,0 +1,32 @@
+[
+  {
+    "name": "use-omp-manual-invocation",
+    "reason": "Use the native OMP command for this hidden skill.",
+    "anchor": "Use for /create-verification-skill,",
+    "replace": "Use for /skill:create-verification-skill,"
+  },
+  {
+    "name": "keep-project-output-outside-suite",
+    "reason": "Write project-owned output and hand it off by file path, without changing suite skill discovery.",
+    "anchor": "This skill generates that as a project-local skill (`.cursor/skills/verify-<app>/`) tailored to the repo.",
+    "replace": "This skill generates that as a project-local skill (`verification/verify-<app>/`) tailored to the repo. Keep it out of the generated pstack package. Give the user the absolute path to its `SKILL.md` so an OMP session can explicitly `read` it; it is not added to the Suite default skill set."
+  },
+  {
+    "name": "write-project-local-skill",
+    "reason": "Specify the same explicit-read location and keep frontmatter without promising registration.",
+    "anchor": "Write `.cursor/skills/verify-<app>/SKILL.md` with YAML frontmatter (`name: verify-<app>` and a `description` that names the app, the surface, and when to reach for it — without frontmatter the skill never registers)",
+    "replace": "Write `verification/verify-<app>/SKILL.md` with YAML frontmatter (`name: verify-<app>` and a `description` that names the app, the surface, and when to reach for it)"
+  },
+  {
+    "name": "link-documentary-feature-map",
+    "reason": "Make the exact example file readable and distinguish the example commands from bundled tools.",
+    "anchor": "Create `.cursor/skills/verify-<app>/features/README.md` plus one file per user-facing feature you can identify (aim for the top 3-5 to start, from routes, commands, menus, or docs). Follow the shape in [`references/feature-map-example/`](references/feature-map-example/), with a README index and one file per feature.",
+    "replace": "Create `verification/verify-<app>/features/README.md` plus one file per user-facing feature you can identify (aim for the top 3-5 to start, from routes, commands, menus, or docs). Follow the shape in the [Notes feature-map example](references/feature-map-example/README.md), with a README index and one file per feature. Notes, `control-notes`, and `notes` are illustrative, not applications or drivers shipped with this skill. Use the actual project's tools and verify them on its target OS."
+  },
+  {
+    "name": "link-behavior-maintenance",
+    "reason": "Point to the delivered maintenance procedure and carry the explicit project file path into the handoff.",
+    "anchor": "Point the user at `/maintain-verification-skill` for keeping the map honest as the app changes.",
+    "replace": "Point the user at [`/skill:maintain-verification-skill`](../maintain-verification-skill/SKILL.md) with the project `SKILL.md` path for keeping the map honest as the app changes."
+  }
+]
