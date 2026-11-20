@@ -2,6 +2,7 @@ import { readFile } from "./files";
 
 interface Resource {
   source: string;
+  origin?: "runtime";
   output: string;
   kind: "text" | "binary";
   mapping?: string;
@@ -81,17 +82,21 @@ export function loadManifest(root: string): Manifest {
     const where = `${label}: files[${index}]`;
     const row = record(item, where);
     const source = relativePath(row.source, `${where}.source`);
+    const origin = row.origin;
+    if (origin !== undefined && origin !== "runtime") throw new Error(`${where}: origin must be runtime or omitted`);
     const output = relativePath(row.output, `${where}.output`);
     if (outputs.has(output.toLowerCase())) throw new Error(`${where}: duplicate output ${output}`);
     outputs.add(output.toLowerCase());
     const kind = row.kind;
     if (kind !== "text" && kind !== "binary") throw new Error(`${where}: kind must be text or binary`);
-    const priorKind = sources.get(source.toLowerCase());
+    const sourceKey = `${origin ?? "upstream"}/${source}`.toLowerCase();
+    const priorKind = sources.get(sourceKey);
     if (priorKind && priorKind !== kind) throw new Error(`${where}: conflicting kinds for ${source}`);
-    sources.set(source.toLowerCase(), kind);
+    sources.set(sourceKey, kind);
     const mapping = row.mapping === undefined ? undefined : relativePath(row.mapping, `${where}.mapping`);
     if (mapping !== undefined && kind !== "text") throw new Error(`${where}: binary resources cannot have mappings`);
-    return { source, output, kind, mapping };
+    if (mapping !== undefined && origin === "runtime") throw new Error(`${where}: runtime sources are authored directly, not mapped`);
+    return { source, origin, output, kind, mapping };
   });
   return {
     upstream: {
@@ -158,8 +163,8 @@ function editsFor(original: string, resource: Resource, operations: readonly Ope
 
 export function render(root: string, files: readonly Resource[]): RenderedResource[] {
   return files.map(resource => {
-    const { source, output, kind, mapping } = resource;
-    const input = inputFile(root, `upstream/${source}`);
+    const { source, origin, output, kind, mapping } = resource;
+    const input = inputFile(root, `${origin ?? "upstream"}/${source}`);
     if (kind === "binary") return { source, output, mapping, bytes: input, original: "", edits: [] };
     const original = text(input, source);
     const edits = mapping ? editsFor(original, resource, loadMapping(root, `mappings/${mapping}`)) : [];

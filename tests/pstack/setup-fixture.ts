@@ -5,7 +5,7 @@ const toolkit = resolve(import.meta.dir, "../..");
 
 export function copyPstackPackage(cwd: string): string {
   const root = join(cwd, "pstack-suite");
-  for (const entry of ["maintenance", "upstream", "mappings", "manifest.json"]) {
+  for (const entry of ["maintenance", "runtime", "upstream", "mappings", "manifest.json"]) {
     cpSync(join(toolkit, "pstack-suite", entry), join(root, entry), { recursive: true });
   }
   cpSync(join(toolkit, "package.json"), join(cwd, "package.json"));
