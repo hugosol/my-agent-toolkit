@@ -1,9 +1,15 @@
 [
   {
     "name": "log-with-available-mechanism",
-    "reason": "Retain the canonical TSV and spreadsheet-cell sanitization without requiring an undelivered script.",
+    "reason": "Use the bundled append helper explicitly with Bash, including Git Bash on Windows.",
     "anchor": "Use the helper `scripts/log.sh <logfile> <phase> <decision> <why> <evidence> <result>`. It stamps `ts`, writes the header on first use, strips stray tabs/newlines, and prefixes any cell starting with `=`, `+`, `-`, or `@` with a single quote. A bare `printf` appending a row works too, but mind those same bytes if cells come from generated or user-supplied text.",
-    "replace": "Append each row to the canonical file using the delivered helper if present; otherwise write the TSV row with the columns above. Include `ts` and the header on first use, strip stray tabs and newlines, and prefix cells starting with `=`, `+`, `-`, or `@` with a single quote."
+    "replace": "From the directory containing this skill, run `bash scripts/log.sh <logfile> <phase> <decision> <why> <evidence> <result>` (Git Bash on Windows). From another directory, use the helper’s absolute path. It creates missing parent directories, appends the header to an empty or new file, and appends a UTC-stamped row. It replaces tabs, LF and CR inside cells with spaces and prefixes cells starting with `=`, `+`, `-`, or `@` with a single quote. Use one writer at a time for this append-only log."
+  },
+  {
+    "name": "name-current-run-audit",
+    "reason": "The review uses current and explicitly supplied evidence; automatic transcript lookup is not a prerequisite.",
+    "anchor": "## Audit the log against the transcript",
+    "replace": "## Audit the log against current-run evidence"
   },
   {
     "name": "audit-current-run-evidence",

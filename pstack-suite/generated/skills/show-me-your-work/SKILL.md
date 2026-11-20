@@ -35,7 +35,7 @@ ts	phase	decision	why	evidence	result
 
 Write each entry the way you'd tell a teammate what you did. Plain words, concrete actions, no AI speak or abstract jargon (the **unslop** skill applies to log text too).
 
-Append each row to the canonical file using the delivered helper if present; otherwise write the TSV row with the columns above. Include `ts` and the header on first use, strip stray tabs and newlines, and prefix cells starting with `=`, `+`, `-`, or `@` with a single quote.
+From the directory containing this skill, run `bash scripts/log.sh <logfile> <phase> <decision> <why> <evidence> <result>` (Git Bash on Windows). From another directory, use the helper’s absolute path. It creates missing parent directories, appends the header to an empty or new file, and appends a UTC-stamped row. It replaces tabs, LF and CR inside cells with spaces and prefixes cells starting with `=`, `+`, `-`, or `@` with a single quote. Use one writer at a time for this append-only log.
 
 Log decision points and checkpoints, not every action: a fork chosen, a unit completed with its verification result, a pivot or revert with its trigger, a blocker surfaced, a gate fixed. For loop runs, one row per iteration. Skip the trivial and self-evident.
 
@@ -52,7 +52,7 @@ Commit it only when the work is ambitious enough that a reviewer needs the trail
 - Append-only. A wrong call gets a new row that supersedes it. Never edit or delete history.
 - Prefer evidence produced by committed scripts over hand-made one-offs (the **encode-lessons-in-structure** principle skill).
 
-## Audit the log against the transcript
+## Audit the log against current-run evidence
 
 At the end of the run, before handing back, check the log told the truth. Use the current OMP conversation, the explicitly provided record of this run, and its linked artifacts. If some of this run is unavailable, disclose the audit gap. Do not search unrelated sessions. Walk this run's rows against what actually happened. Each stretch of them begins at one of this run's `start` rows, or at the first row if this run created the log, and ends at the next `start` row of another run:
 

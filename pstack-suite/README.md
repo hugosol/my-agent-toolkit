@@ -138,6 +138,23 @@ Cursor Team Kit 固定提交中，这三个技能各只有一个 `SKILL.md`；�
 
 本分区使用 `bun run test:pstack --test-name-pattern=P34`；设定 `PSTACK_VERIFICATION_EVIDENCE_DIR` 为本次独占证据位置可保留原生 OMP 读取的请求、事件、退出和清理记录。测试不评价模型生成的验证方案或自主执行质量。
 
+### 决策日志、worktree 审计与交接
+
+运行下面的命令需要 Bash（Windows 用 Git for Windows 自带的 Git Bash，不是 WSL）；审计还需要支持 `git worktree list --porcelain -z` 的 Git，以及 `du` 和支持 `sort -h` 的 coreutils。用工作区自有的日志路径和要审计的仓库；下面从 toolkit 根执行。
+
+```bash
+bash pstack-suite/generated/skills/show-me-your-work/scripts/log.sh \
+  "C:/owned run/audit/decisions.tsv" review "Keep the change" "Checks passed" "tests/report.txt" done
+bash pstack-suite/generated/skills/poteto-mode/scripts/worktree-audit.sh \
+  --base origin/main --no-pr "C:/owned repo"
+```
+
+- [决策日志](generated/skills/show-me-your-work/SKILL.md)使用随包的 [TSV 模板](generated/skills/show-me-your-work/references/decision-log-template.tsv)。辅助命令需要六个参数，创建缺失父目录，为新建或空文件追加表头，再追加一行 UTC 记录。单元格内 Tab、CR 和 LF 各替换为一个空格；前导 `=`, `+`, `-`, `@` 加单引号。已有行不改写；同一日志使用一个写入者。
+- [worktree 审计](generated/skills/poteto-mode/playbooks/worktree-cleanup.md)输出按大小排序的 TSV，排除主 worktree。`--base` 指定合入比较基线；不提供时尝试 `origin/HEAD` 所指分支、`origin/main`、`origin/master`。`origin/<branch>` 会尝试 fetch，可能更新远端跟踪 ref、`FETCH_HEAD` 和 Git 对象；即使之后返回错误，之前的效果也不会回滚。fetch 失败但本地 ref 可用时输出陈旧警告并继续。若要避免这一步，传已核实的本地 ref 或 SHA。默认可用 `jq` 和已授权的 `origin` 或 `gh` 查询 PR；`--no-pr` 跳过查询，不等于禁止 Git fetch。`PR` 为 `-` 不能证明没有 PR；`LAST_CHAT` 为 `-` 不代表没有活动会话。用法错误退出 `2`，无法完成审计退出 `1`，出错时表格可能不完整。辅助命令不删除 worktree、分支或证据；分类仅作建议。
+- [安全暂停](generated/skills/poteto-mode/playbooks/pause-safely.md)仅按明确请求，在安全边界保存本次工作及可明确读取的续接笔记。[本地续接](generated/skills/poteto-mode/playbooks/session-pickup.md)使用当前上下文与明确提供的笔记、日志、WIP 或分支，不自动读取其他会话历史或云 agent。
+
+本分区使用 `bun run test:pstack --test-name-pattern=logs-audit`（包含 P36 的日志／审计代码分区）。Windows 可用 `PSTACK_GIT_BASH` 显式选择现有的 `Git/bin/bash.exe`。设置 `PSTACK_LOGS_AUDIT_EVIDENCE_DIR` 保留日志字节、Git refs、进程退出与原生 OMP 读取记录。测试不执行删除或评价模型选择暂停点的能力。
+
 ### H1：真实 OMP TUI 开关与恢复
 
 下面使用已安装的 OMP 和本地受控 provider。实际 TUI 的显示只由操作者确认；RPC 的 marker 事件、请求及日志不是屏幕验收。先完成自动检查：`bun run test:pstack --test-name-pattern 'Pstack native mode'`。如需留存自动证据，运行前把 `PSTACK_MODE_EVIDENCE_DIR` 指向本次独占证据目录；其中有双向切换前后 JSONL、RPC frames、请求内容、进程退出和 Git 副作用对照。
