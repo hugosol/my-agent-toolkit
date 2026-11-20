@@ -11,6 +11,7 @@
     "test:framework": "bun test tests/framework",
     "test:codebase-tools": "bun test tests/codebase-tools",
     "test:pstack": "bun test tests/pstack",
+    "pstack:setup": "bun pstack-suite/maintenance/cli.ts setup",
     "pstack:build": "bun pstack-suite/maintenance/cli.ts build",
     "pstack:check": "bun pstack-suite/maintenance/cli.ts check",
     "pstack:preview": "bun pstack-suite/maintenance/cli.ts preview",

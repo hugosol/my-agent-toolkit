@@ -30,12 +30,37 @@ Windows 比较示例：`bun run pstack:upstream -- --local "C:/src/cursor/plugin
 | 技能及原则 | `pstack/skills/<name>/SKILL.md` → `generated/skills/<name>/SKILL.md`；[pstack MIT](generated/LICENSE) | [核心路由](generated/skills/poteto-mode/SKILL.md) 与[帮助](generated/skills/poteto-help/SKILL.md) 列出实际资源；带隐藏标记的技能按需读取或显式 `/skill:<name>`，不在默认提示中展开。 |
 | Playbooks | `skills/poteto-mode/playbooks/`，保留相对布局；pstack MIT | 具体步骤由路由按需打开，不是独立的 slash 命令。 |
 | Worker | [skills/poteto-mode/worker.md](generated/skills/poteto-mode/worker.md)；pstack MIT | Worker kickoff 传递该文件的绝对路径；worker 与持续模式都以同一份生成的 `skills/poteto-mode/SKILL.md` 为工程规则来源。 |
-| Persona | 上游 `pstack/agents/`；pstack MIT | 与 worker 规则分开。只有完成 OMP 原生 persona 适配和角色绑定生成后才登记实际 persona；上游角色名称不等于已加载 persona。 |
+| Persona | 上游 `pstack/agents/` → `generated/persona-templates/`；pstack MIT | `poteto-agent` 和 `comment-sicko` 的原生文件由明确确认的套件绑定生成至 `generated/agents/`；无绑定时没有占位 persona。 |
 | 脚本 | 上游技能内的 `scripts/`；pstack MIT | 可执行资产单独登记、保留相对路径，并说明运行依赖、写入与副作用；指令引用不代表脚本已随包提供。 |
 | 资料 | 上游技能内 `references/`，或 `pstack/docs/`；pstack MIT | 随实际消费项登记。当前包括决策日志 TSV 模板与 TypeScript 模式参考。 |
 | 必要外部技能 | Cursor Team Kit 的 `cursor-team-kit/skills/{deslop,control-cli,control-ui}/SKILL.md`；[该来源的 MIT 授权](https://github.com/cursor/plugins/blob/aaeb0ea3a0584995aa8f55ce44c6c5259414b896/cursor-team-kit/LICENSE) | 外部依赖资源适配时分别登记源文件与授权，不加载整个插件。当前核心路由仅在实际技能存在时使用相应方法。 |
 
-直接打开生成文件可阅读方法；文件存在不证明持续模式、任务调用、运行取证或其他工具机制已经接上。纯本地方法与需要后续资产的工作流分开；不在清单的专题见[待迁移说明](MIGRATION-BACKLOG.md)。
+直接打开生成文件可阅读方法；文件存在不能证明任务调用、运行取证或其他工具机制已经接上。纯本地方法与需要后续资产的工作流分开；不在清单的专题见[待迁移说明](MIGRATION-BACKLOG.md)。
+
+## OMP 持续模式
+
+直接运行原生 pstack 会话时，显式加载 [`pstack-suite/omp.ts`](omp.ts)，并把绝对的 `pstack-suite/generated/skills` 路径加入 OMP 的 `skills.customDirectories`。普通 OMP 扩展目录不自动加载此入口。新进程首次打开没有保存值的会话时默认开启。输入 `/poteto-mode` 切换开关；开启时编辑器上方显示 `◈ Poteto mode`，关闭时移除该行。两种切换都给出提示，原生会话记录保留该值；退出后用 `omp --resume <会话文件>` 及相同的入口和配置恢复。
+
+首次启用的请求带上[生成的工程规则](generated/skills/poteto-mode/SKILL.md)及绝对来源路径，后续启用轮次只添加简短提醒。关闭只停止新增贡献，不移除已有会话历史。`/skill:poteto-mode` 是原生单次技能调用，即使持续模式关闭也能显式读取正文，并且不会改开关。隐藏技能不会列在模型的默认技能目录中；可以使用明确的 `/skill:<name>` 或 `skill://<name>`。读取技能正文后，从原生读取结果给出的源文件位置解析配套相对路径；子代理的 kickoff 明确传递资源路径，不依赖父会话正文。
+
+开关仅更新本地会话状态、提示贡献和界面。开启不会执行或授权合并、部署、对外业务操作；项目、宿主及外部系统的授权要求仍适用。这不是用来拦截后续模型操作的权限控制。
+
+## 首次模型设置与更新
+
+未绑定也可在新 OMP 会话中调用 [`/skill:setup-pstack`](generated/skills/setup-pstack/SKILL.md)。该技能读取实际模型清单并展示待确认的角色、席位与推理选项；不替使用者选默认绑定。以会话所用的 OMP 入口、相同模型配置 overlay 和 provider 扩展执行 `omp models --json`，保存目录输出为 `omp-models.json`。
+
+确认提议前不写入包；取消用 `bun run pstack:setup -- --cancel`。确认后先停止所有使用这份包的 pstack 会话（也包括 setup 会话），在 toolkit 根目录运行：
+
+```sh
+bun run pstack:setup -- --confirm proposal.json --catalog omp-models.json
+bun run pstack:check
+```
+
+`proposal.json` 是按角色名索引的 JSON；目前核心角色为 `poteto-agent` 和 `comment-sicko`，各需一个 `model`（完整 `provider/model` 或 `inherit-parent`）和 `thinking`（模型支持的等级、不高于 `xhigh`，或保留模型默认值的 `default`）。`inherit-parent` 要求 `thinking: "inherit"`，原生 persona 显式使用 `@default`。操作者设置仍可能覆盖原生选择；应查看实际解析，而不是仅凭绑定声称正确。
+
+确认的配置保存在 `pstack-suite/models.local.json` 的 `roles` 字段；用提议文件与确认命令更新，不直接改已保存记录。`generated/roles.local.json` 提供已生成的绑定清单，`generated/agents/` 下的 Markdown 由 OMP 原生读取。这些文件与其本地所有权记录不提交 Git，不复制到全局或项目 OMP 配置。套件 `build` 只消费已确认的配置，`check` 校对两组交付字节与所有权。若文件发布失败，检查已报告的效果；修复阻塞后可用 `pstack:build` 根据已保存的绑定恢复交付。
+
+重新发起会话后，以套件选中的 OMP 原生扩展目录 `pstack-suite/generated` 发现 persona；直接启动时同样可用 `omp -e /absolute/toolkit/pstack-suite/generated`。通过原生 `task` 的 `agent` 传递角色名，不传单次调用模型。执行者提交有证据的 scoped 工作；注释审查者报告发现，父会话编辑。后者只声明读取类 built-in，不构成 OS、MCP 或附加扩展工具沙箱。本流程不提供热重载或强制停用检测。
 
 ## 更新流程
 
@@ -63,7 +88,7 @@ Windows 比较示例：`bun run pstack:upstream -- --local "C:/src/cursor/plugin
 
 ## 验证
 
-`bun run test:pstack` 是 pstack 特性的测试分区，包含隔离文件系统上的维护命令及已安装 OMP 对真实适配样例的原生读取。OMP 从现有安装选择（或显式指定 `OMP_CLI`），不安装宿主，不使用生产会话或模型凭据。受控 provider 只证明实际发出的请求包含显式调用的技能正文，不评价模型行为。其他 pstack 自动用例放入同一分区；TypeScript 变更也运行 `bun run typecheck`。
+`bun run test:pstack` 是 pstack 特性的测试分区，包含隔离文件系统上的维护命令及已安装 OMP 对真实适配样例的原生读取。OMP 从现有安装选择（或显式指定 `OMP_CLI`），不安装宿主，不使用生产会话或模型凭据。受控 provider 只证明实际发出的请求包含显式调用的技能正文，不评价模型行为。其他 pstack 自动用例放入同一分区；TypeScript 变更也运行 `bun run typecheck`。只检查确认与原生角色时，运行 `bun test tests/pstack/setup-personas.test.ts tests/pstack/setup-personas-omp-dock.test.ts`；设置 `PSTACK_SETUP_EVIDENCE_DIR` 可保留实际 OMP 调用、模型请求和退出记录。
 
 ### 视频汇报
 
@@ -88,6 +113,52 @@ Windows 比较示例：`bun run pstack:upstream -- --local "C:/src/cursor/plugin
 **包内资产与运行前提：**这些创建、维护和核查技能的上游目录仅交付 Markdown（包括 [Notes feature map 示例](generated/skills/create-verification-skill/references/feature-map-example/README.md)），没有捆绑生成器、验证驱动或基准脚本。示例中的 Notes 应用、`control-notes` 和 `notes` 不随包交付。行为验证使用目标项目的实际启动命令、测试数据和 UI/CLI/API 驱动；宽影响面复核若用 arena，需要其配置完毕的工作流及角色。TDD 与性能核查使用项目现有测试、测量和分析工具。形式验证使用目标项目明确选定的验证器；TLA+ 的可执行套件资产与外部 Bun、Java、TLC 前提见[下节](#windows-statechart)。有引用不等于已执行。
 
 本分区使用 `bun run test:pstack --test-name-pattern=P34`；设定 `PSTACK_VERIFICATION_EVIDENCE_DIR` 为本次独占证据位置可保留原生 OMP 读取的请求、事件、退出和清理记录。测试不评价模型生成的验证方案或自主执行质量。
+
+### H1：真实 OMP TUI 开关与恢复
+
+下面使用已安装的 OMP 和本地受控 provider。实际 TUI 的显示只由操作者确认；RPC 的 marker 事件、请求及日志不是屏幕验收。先完成自动检查：`bun run test:pstack --test-name-pattern 'Pstack native mode'`。如需留存自动证据，运行前把 `PSTACK_MODE_EVIDENCE_DIR` 指向本次独占证据目录；其中有双向切换前后 JSONL、RPC frames、请求内容、进程退出和 Git 副作用对照。
+
+1. 在 toolkit 根目录打开 PowerShell 7。用第一个终端启动只监听动态回环端口的受控 provider，保持它运行，并记下输出的目录：
+
+   ```powershell
+   $env:PSTACK_H1_ROOT = Join-Path (Get-Location) ".scratch/pstack-omp-suite/evidence/h1-$([Guid]::NewGuid().ToString('N'))"
+   bun -e 'import { startCaptureServer } from "./tests/harness-dock/capture-server"; const root = process.env.PSTACK_H1_ROOT; const server = startCaptureServer({ dir: `${root}/requests` }); await Bun.write(`${root}/capture-url.txt`, server.baseUrl); console.log(root);'
+   ```
+
+2. 在第二个终端从同一 toolkit 根目录运行下列命令。配置、日志、工作目录和会话均落在独占目录，不读取生产会话。使用默认 TUI，不重定向屏幕或 stdin：
+
+   ```powershell
+   $repo = (Get-Location).Path
+   $root = Read-Host '输入第一个终端输出的证据目录'
+   $env:DOCK_CAPTURE_BASE_URL = (Get-Content -Raw "$root/capture-url.txt").Trim()
+   $env:HOME = $env:USERPROFILE = "$root/home"
+   $env:PI_CODING_AGENT_DIR = "$root/home/.omp/agent"
+   'OMP_PROFILE','PI_PROFILE','OMPCODE','PI_CONFIG_DIR','PI_CONFIG_FILES','XDG_DATA_HOME','XDG_CONFIG_HOME','XDG_STATE_HOME','XDG_CACHE_HOME' | ForEach-Object { Remove-Item "Env:$_" -ErrorAction SilentlyContinue }
+   Get-ChildItem Env: | Where-Object Name -Like 'OMP_AUTH_BROKER_*' | ForEach-Object { Remove-Item "Env:$($_.Name)" }
+   New-Item -ItemType Directory -Force -Path $env:PI_CODING_AGENT_DIR,"$root/work","$root/sessions" | Out-Null
+   $skillDir = ConvertTo-Json -Compress "$repo/pstack-suite/generated/skills"
+   Set-Content -Encoding utf8 "$env:PI_CODING_AGENT_DIR/config.yml" "skills:`n  customDirectories:`n    - $skillDir"
+   $nativeArgs = @('--offline','--no-title','--no-tools','--no-extensions','--cwd',"$root/work",'--session-dir',"$root/sessions",'--model','dock-gateway/dock-model','-e',"$repo/tests/harness-dock/fixtures/extension-root/provider.ts",'-e',"$repo/pstack-suite/omp.ts")
+   Set-Location "$root/work"
+   omp --version | Tee-Object "$root/omp-version.txt"
+   omp @nativeArgs
+   $LASTEXITCODE | Set-Content "$root/first-exit.txt"
+   ```
+
+3. 新会话在输入首轮之前应显示 `◈ Poteto mode`。发一条普通消息。输入 `/poteto-mode`，记录通知 `Poteto mode disabled` 和标记消失。再切换，记录 `Poteto mode enabled` 和标记返回。再切到关闭，发一条普通消息，空输入时用 `Ctrl+D` 正常退出。对照前后截图和通知，不用模型回答判断开关。
+4. 仍在第二个终端。复制唯一会话的原生 JSONL 后，启动独立进程并恢复原文件：
+
+   ```powershell
+   $sessions = @(Get-ChildItem "$root/sessions" -Recurse -Filter '*.jsonl' -File)
+   if ($sessions.Count -ne 1) { throw '隔离目录必须正好有一个原生会话' }
+   $session = $sessions[0].FullName
+   Copy-Item $session "$root/before-resume.jsonl"
+   omp @nativeArgs --resume $session
+   $LASTEXITCODE | Set-Content "$root/resume-exit.txt"
+   Copy-Item $session "$root/after-resume.jsonl"
+   ```
+
+5. 恢复后首条输入前后均应没有 `◈ Poteto mode`，且早先的消息仍可见。发一条新消息后正常退出。停止第一个终端的 provider（`Ctrl+C`）。保留截图、两份 JSONL、两次退出状态、`home/.omp/logs/` 下的 OMP 原生日志及本地请求。若未生成某个日志文件，记录该事实，不用 RPC 记录冒充 TUI 观察。不要上传 `/record` 或使用生产配置。H1 只有操作者回传并确认实际显示后才通过。
 
 ### Windows statechart
 
