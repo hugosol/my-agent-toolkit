@@ -64,3 +64,19 @@ Windows 比较示例：`bun run pstack:upstream -- --local "C:/src/cursor/plugin
 ## 验证
 
 `bun run test:pstack` 是 pstack 特性的测试分区，包含隔离文件系统上的维护命令及已安装 OMP 对真实适配样例的原生读取。OMP 从现有安装选择（或显式指定 `OMP_CLI`），不安装宿主，不使用生产会话或模型凭据。受控 provider 只证明实际发出的请求包含显式调用的技能正文，不评价模型行为。其他 pstack 自动用例放入同一分区；TypeScript 变更也运行 `bun run typecheck`。
+
+### Windows statechart
+
+在 OMP 中显式调用 `/skill:statechart`，并提供自有的 `.tla`、TLC `.cfg` 与可选的视图模块。也可直接从 toolkit 根运行：
+
+```powershell
+$env:TLA2TOOLS = 'C:\deps\tla2tools.jar'
+# 可选：不使用 PATH 上的 java 时，指定现有 Java 可执行文件。
+# $env:JAVA = 'C:\Program Files\Java\jdk-26\bin\java.exe'
+bun pstack-suite/generated/skills/statechart/scripts/statechart.ts `
+  'C:\work\Request.tla' --out 'C:\work\Request-chart'
+```
+
+依赖 Bun 1.4.4、Java 11 或更高版本，以及官方 [TLA+ Tools 1.7.4](https://github.com/tlaplus/tlaplus/releases/tag/v1.7.4) 的 `tla2tools.jar`（TLC 2.19，`5a47802`，SHA-256 `936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88`）。Windows 验证选用 Oracle JDK 26。维护及运行命令不安装或下载依赖。小图产出 `chart.mmd`、`report.md` 和 `tlc.out`；退出 `0` 表示规则成立，`1` 表示规则违反且仍有报告，`2` 表示输入或执行错误而未发布产物。SVG 渲染是[单独的可选步骤](generated/skills/statechart/references/render.md)，不参与 Java/TLC 验证。
+
+设定 `TLA2TOOLS` 后执行 `bun run test:pstack`；Windows 上缺少 Java、TLC 或实际 OMP 将使相应测试失败，不记为通过。只运行本分区可用 `bun test tests/pstack/windows-statechart.test.ts`。设定 `PSTACK_STATECHART_EVIDENCE_DIR` 为本次独占证据目录可保留命令、真实进程退出、产物及资源清理证据。操作时如需记录 Java 子进程的真实参数、PID 和退出，可显式设置 `PSTACK_STATECHART_PROCESS_TRACE=1`，它只向 stderr 写诊断，不记录继承的环境变量。

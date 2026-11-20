@@ -1,0 +1,26 @@
+[
+  {
+    "name": "remember-existing-empty-destination",
+    "reason": "Distinguish a pre-existing empty output directory from a path the caller has not created yet.",
+    "anchor": "  let entries: string[] = [];\n  let dest: string;",
+    "replace": "  let entries: string[] | undefined;\n  let dest: string;"
+  },
+  {
+    "name": "remember-only-resolved-destination",
+    "reason": "Do not treat a vanished path as a pre-existing destination if resolution fails after reading the directory.",
+    "anchor": "    entries = fs.readdirSync(out);\n    dest = fs.realpathSync(out);",
+    "replace": "    const existing = fs.readdirSync(out);\n    dest = fs.realpathSync(out);\n    entries = existing;"
+  },
+  {
+    "name": "validate-existing-output-entries",
+    "reason": "Keep refusing a non-empty output directory while allowing an absent destination.",
+    "anchor": "  if (entries.length)\n    throw new Error(",
+    "replace": "  if (entries?.length)\n    throw new Error("
+  },
+  {
+    "name": "publish-into-empty-windows-destination",
+    "reason": "Windows cannot rename a staged directory over an existing directory. Remove only the pre-existing empty directory, non-recursively, after the checker has succeeded or provided a rule violation.",
+    "anchor": "        fs.renameSync(done, dest);",
+    "replace": "        if (process.platform === \"win32\" && entries) fs.rmdirSync(dest);\n        fs.renameSync(done, dest);"
+  }
+]
