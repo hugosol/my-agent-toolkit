@@ -35,7 +35,7 @@ Windows 比较示例：`bun run pstack:upstream -- --local "C:/src/cursor/plugin
 | 资料 | 上游技能内 `references/`，或 `pstack/docs/`；pstack MIT | 随实际消费项登记。当前包括决策日志 TSV 模板与 TypeScript 模式参考。 |
 | 必要外部技能 | Cursor Team Kit 1.2.0 的 `cursor-team-kit/skills/{deslop,control-cli,control-ui}/SKILL.md`；[单独的 MIT 授权](generated/licenses/cursor-team-kit.txt) | 仅交付这三个技能，不加载整个插件。使用原生 `/skill:deslop`、`/skill:control-cli`、`/skill:control-ui` 显式读取。 |
 
-直接打开生成文件可阅读方法；文件存在不能证明任务调用、运行取证或其他工具机制已经接上。纯本地方法与需要后续资产的工作流分开；不在清单的专题见[待迁移说明](MIGRATION-BACKLOG.md)。
+直接打开生成文件可阅读方法；文件存在不能证明任务调用、运行取证或其他工具机制已经接上。[交付闭包](delivery-closure.json) 分开声明固定来源及许可证、包内引用、嵌入探针、运行工具和项目产物。herdr-bot 的 `scripts/check-pstack-delivery.py` 只读取实际文件和引用，不替代本包的生成检查，也不认证原生宿主行为。纯本地方法与需要后续资产的工作流分开；不在清单的专题见[待迁移说明](MIGRATION-BACKLOG.md)。
 
 ## OMP 持续模式
 
