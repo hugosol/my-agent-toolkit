@@ -1,0 +1,39 @@
+[
+  {
+    "name": "carry-observed-queue-state",
+    "reason": "Expose actual GitHub queue, auto-merge request and absent queue entry as different facts.",
+    "anchor": "export interface PullRequestFacts {\n  readonly context: PrContext;",
+    "replace": "export type MergeDisposition =\n  | { readonly kind: \"queued\"; readonly position: number }\n  | { readonly kind: \"auto-merge-requested\"; readonly enabledAt: string | null }\n  | { readonly kind: \"not-queued\" };\nexport interface PullRequestFacts {\n  readonly context: PrContext;\n  readonly landing?: MergeDisposition;"
+  },
+  {
+    "name": "read-landing-in-queued-mode",
+    "reason": "Leave regular PR and stack reads unchanged.",
+    "anchor": "  pullRequest(context: PrContext): Promise<PullRequestFacts>;",
+    "replace": "  pullRequest(context: PrContext, observeLanding?: boolean): Promise<PullRequestFacts>;"
+  },
+  {
+    "name": "type-command-start-failure",
+    "reason": "Differentiate a command that could not start from a command that ran and exited nonzero.",
+    "anchor": "export type QueryFailure =",
+    "replace": "export type QueryFailure =\n  | {\n      readonly kind: \"command-start\";\n      readonly retryable: false;\n      readonly detail: string;\n      readonly code: string | null;\n    }"
+  },
+  {
+    "name": "retain-merged-base",
+    "reason": "The forge can merge a PR into its parent branch without landing it on trunk.",
+    "anchor": "export interface MergedPr {\n  readonly kind: \"merged-pr\";\n  readonly context: PrContext;\n  readonly mergedAt: string | null;\n}",
+    "find": "  readonly mergedAt: string | null;",
+    "replace": "  readonly mergedAt: string | null;\n  readonly baseRefName: string;"
+  },
+  {
+    "name": "report-observed-merge-before-next-read",
+    "reason": "A later status error must not hide a merge already read from GitHub.",
+    "anchor": "  | (Progress<\"ADVANCE\", \"queued-stack\"> & {",
+    "replace": "  | (Progress<\"MERGED\", \"queued-stack\"> & { readonly merged: MergedPr })\n  | (Progress<\"ADVANCE\", \"queued-stack\"> & {"
+  },
+  {
+    "name": "report-wait-without-claiming-queueing",
+    "reason": "An unmerged, blocker-free PR is not necessarily enrolled in the remote queue.",
+    "anchor": "| { readonly kind: \"merge-queue\"; readonly unmergedCount: number };",
+    "replace": "| { readonly kind: \"awaiting-merge\"; readonly unmergedCount: number; readonly landing: MergeDisposition | undefined };"
+  }
+]

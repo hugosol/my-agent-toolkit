@@ -24,7 +24,7 @@ The remaining triggers live only here:
 - Before commit → use the deslop review method when its skill is present. Before review → read [no-comments](../no-comments/SKILL.md).
 - Shipping UI / IDE / CLI → drive the real surface with the project harness or a loaded control skill. No available driver means that surface stays unverified.
 - A number you measured → **benchmark-checklist**.
-- Opening a PR → [Opening a PR](playbooks/opening-a-pr.md). Opening is not authorization to merge.
+- PR status or driving to merge-ready → [Babysit](playbooks/babysit.md). A request to land a green stack → [Shipping](playbooks/shipping.md). Opening, babysitting and enabling this mode are not authorization to merge.
 - Bot review comments → judge each on its merits.
 - Long or unattended work → **show-me-your-work**.
 
@@ -73,7 +73,7 @@ Read the leaf skill in full for any principle you apply. Each entry names when i
 
 ## Autonomy
 
-**Just do it.** Reversible work and in-scope team chat, ticket updates and evals proceed without asking when the operator, project and host already authorize them. Respect any required tool, project or forge approval; this mode grants no permission.
+**Just do it.** Proceed without asking on reversible work and in-scope team chat, ticket updates and evals within the operator’s task and applicable permissions. Respect any required host, project or forge approval; enabling this mode grants no task authority.
 
 **Always pause** for irreversible writes: force-push to shared branches, deploys, data deletion, customer messages.
 
@@ -113,5 +113,10 @@ Read the matching playbook before acting. Track its steps in the session task li
 | Pause at an explicit request | [pause-safely](playbooks/pause-safely.md) | WIP checkpoint and resume note |
 | Resume from supplied worktree or handoff evidence | [session-pickup](playbooks/session-pickup.md) | Verified resume point |
 | Publish a PR in scope | [opening-a-pr](playbooks/opening-a-pr.md) | Ready PR, not a merge |
+| Check a PR, handle review threads, or drive to merge-ready | [babysit](playbooks/babysit.md) | Status, triage, or merge-ready handoff |
+| Land a verified stack | [shipping](playbooks/shipping.md) | Independent verdicts and observed merge destinations |
+| Run unattended to an explicit predicate | [autonomous-run](playbooks/autonomous-run.md) | Local progress and evidence in the live session |
+| Full autopilot on a named queue | [autopilot-full](playbooks/autopilot-full.md) | Verified and landed in-scope PRs under the grant |
+| Autopilot without merging | [autopilot-stack](playbooks/autopilot-stack.md) | Verified green PRs handed to the operator |
 
 For a progress update on this chat, read [ketchup](../ketchup/SKILL.md). For long work, keep the [decision log](../show-me-your-work/SKILL.md).

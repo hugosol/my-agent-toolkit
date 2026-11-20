@@ -1,0 +1,50 @@
+[
+  {
+    "name": "render-partial-merge-effect",
+    "reason": "Pretty output retains a witnessed merge even if a later PR read errors.",
+    "anchor": "    case \"ADVANCE\":",
+    "replace": "    case \"MERGED\":\n      return `MERGED: #${verdict.merged.context.number} into ${verdict.merged.baseRefName}\\n`;\n    case \"ADVANCE\":"
+  },
+  {
+    "name": "show-merge-destination-in-status",
+    "reason": "The human-visible table must show the actual destination as well as the merge state.",
+    "anchor": "  if (row.kind === \"merged\") return \"✅ merged\";",
+    "replace": "  if (row.kind === \"merged\") return `✅ merged into ${row.facts.baseRefName}`;"
+  },
+  {
+    "name": "show-merge-destination-in-completion",
+    "reason": "Completion of observation need not mean every PR landed on trunk.",
+    "anchor": "      return `COMPLETE: queued stack merged (${verdict.queue.length} PR${verdict.queue.length === 1 ? \"\" : \"s\"})\\n`;",
+    "replace": "      return `COMPLETE: ${verdict.merged.map(pr => `#${pr.context.number} merged into ${pr.baseRefName}`).join(\"; \")}\\n`;"
+  },
+  {
+    "name": "show-single-merged-pr-in-ready-verdict",
+    "reason": "A single already-merged PR is not just merge-ready.",
+    "anchor": "    case \"READY\": {\n      const detail =",
+    "replace": "    case \"READY\": {\n      if (verdict.scope.kind === \"single\" && verdict.scope.pr.kind === \"merged-pr\") {\n        return `MERGED: #${verdict.scope.pr.context.number} into ${verdict.scope.pr.baseRefName}\\n`;\n      }\n      const detail ="
+  },
+  {
+    "name": "show-observed-queue-state",
+    "reason": "Pretty output must distinguish enrollment, a request and absence of enrollment too.",
+    "anchor": "function mergeCell(row: T.PrSnapshot): string {",
+    "replace": "function describeLanding(landing: T.MergeDisposition): string {\n  switch (landing.kind) {\n    case \"queued\": return `queued (position ${landing.position})`;\n    case \"auto-merge-requested\": return \"auto-merge requested; not queued\";\n    case \"not-queued\": return \"not queued\";\n  }\n}\n\nfunction mergeCell(row: T.PrSnapshot): string {"
+  },
+  {
+    "name": "show-landing-in-status-table",
+    "reason": "Do not infer forge enrollment from the Merge column’s green check.",
+    "anchor": "    ? \"⚠️ conflict\"\n    : \"✅\";",
+    "replace": "    ? \"⚠️ conflict\"\n    : row.facts.landing ? describeLanding(row.facts.landing) : \"✅\";"
+  },
+  {
+    "name": "label-local-queue-as-input",
+    "reason": "Capturing a list of PRs is not enqueueing them.",
+    "anchor": "QUEUE: captured ${verdict.queue.length} PR${verdict.queue.length === 1 ? \"\" : \"s\"} bottom-to-top:",
+    "replace": "QUEUE: observing ${verdict.queue.length} PR${verdict.queue.length === 1 ? \"\" : \"s\"} bottom-to-top:"
+  },
+  {
+    "name": "show-landing-while-waiting",
+    "reason": "Pretty wait reports observed GitHub state, not presumed queue enrollment.",
+    "anchor": "is blocker-free; waiting for merge queue (${verdict.reason.unmergedCount}",
+    "replace": "is open; ${verdict.reason.landing ? describeLanding(verdict.reason.landing) : \"queue status not observed\"} (${verdict.reason.unmergedCount}"
+  }
+]
