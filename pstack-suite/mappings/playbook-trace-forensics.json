@@ -1,0 +1,9 @@
+[
+  {
+    "name": "keep-queries-portable",
+    "reason": "State an attainable queryable representation without requiring a specific system CLI installation.",
+    "anchor": "2. Transform the raw artifact into a form you can query. Dump the trace or heap snapshot into sqlite, one row per sample, frame, or node. Reach the queryable shape before you read.",
+    "find": "Dump the trace or heap snapshot into sqlite, one row per sample, frame, or node.",
+    "replace": "Use a parser to expose one queryable record per sample, frame, or node; materialize into SQLite when needed."
+  }
+]

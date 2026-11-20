@@ -1,0 +1,9 @@
+[
+  {
+    "name": "advertise-omp-manual-invocation",
+    "reason": "Use OMP native invocation in skill metadata while preserving the hidden marker and trigger wording.",
+    "anchor": "description: \"Make a task deeper, not bigger, then rewrite the prompt. Use for /sharpen.\"",
+    "find": "/sharpen",
+    "replace": "/skill:sharpen"
+  }
+]

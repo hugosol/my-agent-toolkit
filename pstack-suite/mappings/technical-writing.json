@@ -1,0 +1,9 @@
+[
+  {
+    "name": "advertise-omp-manual-invocation",
+    "reason": "Use OMP native invocation in skill metadata while preserving the hidden marker and trigger wording.",
+    "anchor": "description: \"Layered technical-writing standard: Diátaxis structure, Google developer style sentences, STE instruction rules, Global English syntax. Use for /technical-writing or when writing or reviewing docs, RFCs, readmes, PR descriptions, or commit messages.\"",
+    "find": "/technical-writing",
+    "replace": "/skill:technical-writing"
+  }
+]

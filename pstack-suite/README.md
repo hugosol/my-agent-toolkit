@@ -21,6 +21,22 @@ Windows 比较示例：`bun run pstack:upstream -- --local "C:/src/cursor/plugin
 
 退出 `0` 表示成功（对于 `check`/`upstream`，表示无差异）；`1` 表示 `check` 发现交付不一致或 `upstream` 发现基线差异；`2` 表示用法、输入、映射或文件系统错误。构建先验证快照和映射，再发布文件。发布不是整包事务：失败时会列出此前完成的文件效果；先处理错误并检查这些效果，再重跑。构建不会自动回滚先前已完成的操作。
 
+## 资源与来源
+
+[固定清单](manifest.json) 逐文件记录交付资产；下面的分类同时标明扩展时应使用的来源和许可证。pstack 及 Cursor Team Kit 为同一 [cursor/plugins 固定提交](https://github.com/cursor/plugins/tree/aaeb0ea3a0584995aa8f55ce44c6c5259414b896)，但分别保留各自的上游授权文件；不能用一份授权替代不同来源的记录。
+
+| 类别 | 相对布局与来源 | 读取方式及边界 |
+| --- | --- | --- |
+| 技能及原则 | `pstack/skills/<name>/SKILL.md` → `generated/skills/<name>/SKILL.md`；[pstack MIT](generated/LICENSE) | [核心路由](generated/skills/poteto-mode/SKILL.md) 与[帮助](generated/skills/poteto-help/SKILL.md) 列出实际资源；带隐藏标记的技能按需读取或显式 `/skill:<name>`，不在默认提示中展开。 |
+| Playbooks | `skills/poteto-mode/playbooks/`，保留相对布局；pstack MIT | 具体步骤由路由按需打开，不是独立的 slash 命令。 |
+| Worker | [skills/poteto-mode/worker.md](generated/skills/poteto-mode/worker.md)；pstack MIT | Worker kickoff 传递该文件的绝对路径；worker 与持续模式都以同一份生成的 `skills/poteto-mode/SKILL.md` 为工程规则来源。 |
+| Persona | 上游 `pstack/agents/`；pstack MIT | 与 worker 规则分开。只有完成 OMP 原生 persona 适配和角色绑定生成后才登记实际 persona；上游角色名称不等于已加载 persona。 |
+| 脚本 | 上游技能内的 `scripts/`；pstack MIT | 可执行资产单独登记、保留相对路径，并说明运行依赖、写入与副作用；指令引用不代表脚本已随包提供。 |
+| 资料 | 上游技能内 `references/`，或 `pstack/docs/`；pstack MIT | 随实际消费项登记。当前包括决策日志 TSV 模板与 TypeScript 模式参考。 |
+| 必要外部技能 | Cursor Team Kit 的 `cursor-team-kit/skills/{deslop,control-cli,control-ui}/SKILL.md`；[该来源的 MIT 授权](https://github.com/cursor/plugins/blob/aaeb0ea3a0584995aa8f55ce44c6c5259414b896/cursor-team-kit/LICENSE) | 外部依赖资源适配时分别登记源文件与授权，不加载整个插件。当前核心路由仅在实际技能存在时使用相应方法。 |
+
+直接打开生成文件可阅读方法；文件存在不证明持续模式、任务调用、运行取证或其他工具机制已经接上。纯本地方法与需要后续资产的工作流分开；不在清单的专题见[待迁移说明](MIGRATION-BACKLOG.md)。
+
 ## 更新流程
 
 [manifest.json](manifest.json) 记录上游仓库、固定提交和版本，以及每个源文件及其确切交付位置。上游授权保留在[交付许可证](generated/LICENSE)。[待迁移事项](MIGRATION-BACKLOG.md) 不属于当前资源清单。

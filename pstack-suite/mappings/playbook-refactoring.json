@@ -1,0 +1,9 @@
+[
+  {
+    "name": "resolve-suite-role",
+    "reason": "Remove hard-coded Cursor model names; only use a configured OMP role, per the generated shared rules.",
+    "anchor": "5. Move in small behavior-preserving steps, each keeping the pin green. For API reshapes, migrate every caller and delete the old API in the same wave (**principle-migrate-callers-then-delete-legacy-apis**). No compatibility shims, no parallel old-and-new paths. Spot-check every rename against the actual files. Renames silently miss usages in strings, prose, and back-references. Delegate the mechanical edits to a subagent using your configured refactoring model (default `claude-opus-5-5-xhigh-fast`) with a specific scope (file paths, the names being moved, the behavior to hold). Pick each subagent's reasoning level for the job, per the Subagents section.",
+    "find": "using your configured refactoring model (default `claude-opus-5-5-xhigh-fast`)",
+    "replace": "using the configured refactoring role under poteto-mode Subagents"
+  }
+]
