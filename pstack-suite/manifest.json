@@ -6,8 +6,36 @@
   },
   "files": [
     {
+      "origin": "runtime",
+      "source": "task-model-facts.ts",
+      "output": "task-model-facts.ts",
+      "kind": "text"
+    },
+    {
       "source": "pstack/LICENSE",
       "output": "LICENSE",
+      "kind": "text"
+    },
+    {
+      "source": "cursor-team-kit/skills/control-cli/SKILL.md",
+      "output": "skills/control-cli/SKILL.md",
+      "kind": "text",
+      "mapping": "control-cli.json"
+    },
+    {
+      "source": "cursor-team-kit/skills/control-ui/SKILL.md",
+      "output": "skills/control-ui/SKILL.md",
+      "kind": "text",
+      "mapping": "control-ui.json"
+    },
+    {
+      "source": "cursor-team-kit/skills/deslop/SKILL.md",
+      "output": "skills/deslop/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "cursor-team-kit/LICENSE",
+      "output": "licenses/cursor-team-kit.txt",
       "kind": "text"
     },
     {
@@ -27,6 +55,24 @@
       "output": "skills/architect/SKILL.md",
       "kind": "text",
       "mapping": "architect.json"
+    },
+    {
+      "source": "pstack/skills/arena/SKILL.md",
+      "output": "skills/arena/SKILL.md",
+      "kind": "text",
+      "mapping": "arena.json"
+    },
+    {
+      "source": "pstack/skills/interrogate/SKILL.md",
+      "output": "skills/interrogate/SKILL.md",
+      "kind": "text",
+      "mapping": "interrogate.json"
+    },
+    {
+      "source": "pstack/skills/swarm/SKILL.md",
+      "output": "skills/swarm/SKILL.md",
+      "kind": "text",
+      "mapping": "swarm.json"
     },
     {
       "source": "pstack/skills/benchmark-checklist/SKILL.md",
