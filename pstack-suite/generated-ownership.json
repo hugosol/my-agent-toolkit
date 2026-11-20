@@ -55,13 +55,6 @@
     "skills/sharpen/SKILL.md": "5b56b1a3fe8ae858306ae27cf63e1a60a914cdc69836c8c15e513f7bc2668205",
     "skills/show-me-your-work/SKILL.md": "a00f9da84c27e6ea350532761ca58ea55e10735be963b2079bd8018e57ec2208",
     "skills/show-me-your-work/references/decision-log-template.tsv": "6779378006a2f5225e8c06deb84f1d913fb532041ebbb6e50d94600bfe3f4b76",
-    "skills/tdd/SKILL.md": "eeb868e2dfebee528d730a67d7b17498fac4bb85dec2e38bc5c5176aca4d5d2f",
-    "skills/teach/SKILL.md": "2c17f3c0a79536ca2fa3c20983def027ffd8abb4063d9bb3c97778b77557600d",
-    "skills/technical-writing/SKILL.md": "1add6496e0fde6feb12c969c226e8f4b158f0c5b7591f3e6ba0a6f6b6f8f9053",
-    "skills/typescript-best-practices/SKILL.md": "ec1dac086d3708e5940d45d250c30a37dd953b4e3cb2ca0692f5851d7a039e27",
-    "skills/typescript-best-practices/references/patterns.md": "12e70c9419a8b3f5d6a1ab80e272c1f00a43ac0b3bbf72d68199033570e5de77",
-    "skills/unslop/SKILL.md": "2b823fd069e031c1420180be8e0d4f5e2fd25bf2c428049e5c835c59a489b5e0",
-    "skills/why/SKILL.md": "6b65b3180f1f1bd3b696d7933daf900747410c82931d220a3f57a98addb1c0fd",
     "skills/statechart/SKILL.md": "f316d6d182a57e384c16ed86bac66d24e4435172b77ada9d5ce312a30c056a79",
     "skills/statechart/references/render.md": "8cca446eb0c8f87f2ef7b97c4b149f59aacdc153134b4217c4bcde09b10ac3c4",
     "skills/statechart/scripts/backends/cfg.ts": "aea4d8766d214e7fa08f4881f1037319655e75eb56652e1b6d5d4f13a162e3e1",
@@ -91,6 +84,13 @@
     "skills/statechart/scripts/pipeline.ts": "8aa8d9295ab6762f7f2ffae91a0aee98b1a1314747c875edba4598fdab8ed543",
     "skills/statechart/scripts/run.ts": "ba91cbfaa61c680816f9483b31947f8e4f9ae3909b9a380e971d2de996f30f6c",
     "skills/statechart/scripts/statechart.ts": "08d4b39bb29b407895e7ea56ce8938f29a868669ddfcbfc58953b132aca52cd5",
-    "skills/statechart/scripts/worker.ts": "1f18ed5ef806982e05e8a40fc217e88257700b28b63cb4acbd647872f85f782b"
+    "skills/statechart/scripts/worker.ts": "1f18ed5ef806982e05e8a40fc217e88257700b28b63cb4acbd647872f85f782b",
+    "skills/tdd/SKILL.md": "eeb868e2dfebee528d730a67d7b17498fac4bb85dec2e38bc5c5176aca4d5d2f",
+    "skills/teach/SKILL.md": "2c17f3c0a79536ca2fa3c20983def027ffd8abb4063d9bb3c97778b77557600d",
+    "skills/technical-writing/SKILL.md": "1add6496e0fde6feb12c969c226e8f4b158f0c5b7591f3e6ba0a6f6b6f8f9053",
+    "skills/typescript-best-practices/SKILL.md": "ec1dac086d3708e5940d45d250c30a37dd953b4e3cb2ca0692f5851d7a039e27",
+    "skills/typescript-best-practices/references/patterns.md": "12e70c9419a8b3f5d6a1ab80e272c1f00a43ac0b3bbf72d68199033570e5de77",
+    "skills/unslop/SKILL.md": "2b823fd069e031c1420180be8e0d4f5e2fd25bf2c428049e5c835c59a489b5e0",
+    "skills/why/SKILL.md": "6b65b3180f1f1bd3b696d7933daf900747410c82931d220a3f57a98addb1c0fd"
   }
 }
