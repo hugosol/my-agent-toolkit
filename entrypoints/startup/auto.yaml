@@ -31,3 +31,5 @@ chief-chat:
   enabled: true
 chief-report:
   enabled: true
+poteto-mode:
+  enabled: true
