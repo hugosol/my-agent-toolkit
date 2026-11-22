@@ -92,8 +92,7 @@ test("line diffs retain both versions when edits share a line, add lines, and jo
   expect(after.map(row => row.text)).toEqual(["X Y", "Z", "join-last · No newline at end of file"]);
 });
 
-// Re-reading the expected buffer instead of the delivered bytes misses same-size binary drift.
-test("the report separates missing output and byte drift from unchanged sources and local runtime", () => fixture((root, put) => {
+test("the report omits unadapted resources and shows an empty state when no mappings change content", () => fixture((root, put) => {
   const manifest: Manifest = { upstream, files: [
     { source: "same.txt", output: "same.txt", kind: "text" },
     { source: "stamp.bin", output: "stamp.bin", kind: "binary" },
@@ -102,15 +101,28 @@ test("the report separates missing output and byte drift from unchanged sources 
   put("upstream/same.txt", "same text\r\n");
   put("upstream/stamp.bin", Uint8Array.of(0, 255));
   put("runtime/runtime.ts", "local runtime\n");
-  put("generated/same.txt", "same text\n");
-  put("generated/stamp.bin", Uint8Array.of(0, 254));
-
   const html = report(root, manifest);
-  expect(html).toMatch(/id="file-1"[\s\S]*Unchanged text[\s\S]*Matches expected bytes/);
-  expect(html).toMatch(/id="file-2"[\s\S]*Binary copy[\s\S]*Byte drift[\s\S]*Expected SHA-256[\s\S]*Observed SHA-256/);
-  expect(html).toMatch(/id="file-3"[\s\S]*Local runtime[\s\S]*runtime\/runtime\.ts[\s\S]*Missing output/);
-  expect(html).not.toContain("upstream/runtime.ts");
-  expect(html).toContain("Static snapshot");
+  for (const path of ["same.txt", "stamp.bin", "runtime.ts"]) expect(html).not.toContain(path);
+  expect(html).toContain("No mapping changes.");
+  expect(html).toContain("0 mapped files · 0 matching · 0 outputs to review");
+}));
+
+test("only adapted files enter navigation and integrity counts, retaining missing and drift diagnostics", () => fixture((root, put) => {
+  const manifest: Manifest = { upstream, files: [
+    { source: "same.txt", output: "same.txt", kind: "text" },
+    { source: "one.txt", output: "one.txt", kind: "text", mapping: "change.json" },
+    { source: "two.txt", output: "two.txt", kind: "text", mapping: "change.json" },
+  ] };
+  put("upstream/same.txt", "unchanged\n");
+  put("upstream/one.txt", "old\n");
+  put("upstream/two.txt", "old\n");
+  put("mappings/change.json", JSON.stringify([{ name: "change", reason: "Use local wording", anchor: "old", replace: "new" }]));
+  put("generated/one.txt", "bad\n");
+  const html = report(root, manifest);
+  expect(html).not.toContain("same.txt");
+  expect(html).toMatch(/id="file-1"[\s\S]*one\.txt[\s\S]*Byte drift[\s\S]*Observed SHA-256/);
+  expect(html).toMatch(/id="file-2"[\s\S]*two\.txt[\s\S]*Missing output/);
+  expect(html).toContain("2 mapped files · 0 matching · 2 outputs to review");
 }));
 
 // The report opens locally, so source text and provenance must never become executable markup.

@@ -133,9 +133,9 @@ function operations(resource: RenderedResource, id: string): string {
   }).join("\n");
 }
 
-function integrity(state: OutputInspection, expected: Buffer, binary: boolean): string {
+function integrity(state: OutputInspection, expected: Buffer): string {
   const { state: status } = state;
-  const expectedHash = binary || status !== "match"
+  const expectedHash = status !== "match"
     ? `<dt>Expected SHA-256</dt><dd><code>${sha256(expected)}</code></dd>` : "";
   const observed = status === "drift"
     ? `<dt>Observed size</dt><dd>${state.observed.length.toLocaleString("en-US")} bytes</dd>
@@ -196,7 +196,7 @@ dl { display:grid; grid-template-columns:max-content minmax(0,1fr); gap:4px 12px
 .cell { display:grid; grid-template-columns:42px minmax(0,1fr); } .cell:first-child { border-right:1px solid var(--border); }
 .split-label { padding:6px 12px; color:var(--muted); background:var(--subtle); }
 .split { display:none; } body[data-view="split"] .unified { display:none; } body[data-view="split"] .split { display:block; }
-.eof { font-size:11px; font-style:italic; } .plain { padding:12px; } .plain pre { white-space:pre-wrap; overflow-wrap:anywhere; }
+.eof { font-size:11px; font-style:italic; }
 dialog { position:fixed; inset:0 0 0 auto; margin:0; height:100dvh; max-height:100dvh; width:min(620px,100%); max-width:100%; padding:0; border:0; border-left:1px solid var(--border); background:var(--bg); color:var(--fg); }
 dialog::backdrop { background:rgb(0 0 0 / .18); }
 .drawer-head { position:sticky; top:0; display:flex; justify-content:space-between; align-items:center; gap:12px; padding:12px; border-bottom:1px solid var(--border); background:var(--subtle); } .drawer-head h2 { overflow-wrap:anywhere; }
@@ -229,7 +229,7 @@ const script = `
   }
   for (const file of files) file.detail.hidden = true;
   select(location.hash);
-  if (!selected && files.length) select((files.find(file => file.detail.dataset.mapped === 'true') || files[0]).link.hash);
+  if (!selected && files.length) select(files[0].link.hash);
   for (const { link } of files) link.addEventListener('click', event => {
     if (!event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) select(link.hash);
   });
@@ -269,44 +269,37 @@ const script = `
 
 export function writeMappingHtml(root: string, manifest: Manifest, delivery: readonly RenderedResource[], effects: string[]): void {
   const specifications = new Map(manifest.files.map(file => [file.output, file]));
-  let mapped = 0;
+  const mapped = delivery.filter(resource => resource.edits.length > 0);
   let matching = 0;
   const links: string[] = [];
   const details: string[] = [];
-  for (const [index, resource] of delivery.entries()) {
+  for (const [index, resource] of mapped.entries()) {
     const spec = specifications.get(resource.output);
     if (!spec) throw new Error(`${resource.output}: missing mapping report manifest entry`);
     const id = `file-${index + 1}`;
     const output = `generated/${relativePath(resource.output, "mapping report output")}`;
     const observed = inspectOutput(root, output, resource.bytes);
-    const binary = spec.kind === "binary";
-    const runtime = spec.origin === "runtime";
-    const changed = resource.edits.length > 0;
-    const type = runtime ? "Local runtime" : binary ? "Binary copy" : changed ? "Mapped text" : "Unchanged text";
-    if (changed) mapped++;
+
     if (observed.state === "match") matching++;
-    const source = `${runtime ? "runtime" : "upstream"}/${escape(resource.source)}`;
-    links.push(`<li><a href="#${id}" data-source="${source}"><code>${escape(resource.output)}</code><small>${type} · ${resource.edits.length} ops${observed.state === "match" ? "" : ` · <span data-state="${observed.state}">${integrityLabels[observed.state]}</span>`}</small></a><div class="nav-ops">${resource.edits.map((edit, index) => opButton(`${id}-op-${index}`, edit.name)).join(" ")}</div></li>`);
-    const evidence = changed ? comparison(resource, id) + operations(resource, id)
-      : binary ? `<p>${runtime ? "Local binary; there is no upstream comparison." : "Binary bytes are copied without a text diff."}</p>`
-      : `<p>${runtime ? "Authored locally; there is no upstream comparison." : "No mapping edits. Text is compared after CRLF-to-LF normalization."}</p>
-         <details><summary>${runtime ? "Local runtime text" : "Unchanged text content"}</summary>${snippet(resource.original)}</details>`;
-    details.push(`<article class="panel" id="${id}" tabindex="-1" data-mapped="${changed}">
-      <header class="file-head"><h2><code>${escape(resource.output)}</code></h2><span class="file-type">${type} · ${resource.edits.length} ops</span></header>
+    const source = `upstream/${escape(resource.source)}`;
+    links.push(`<li><a href="#${id}" data-source="${source}"><code>${escape(resource.output)}</code><small>Mapped text · ${resource.edits.length} ops${observed.state === "match" ? "" : ` · <span data-state="${observed.state}">${integrityLabels[observed.state]}</span>`}</small></a><div class="nav-ops">${resource.edits.map((edit, index) => opButton(`${id}-op-${index}`, edit.name)).join(" ")}</div></li>`);
+    const evidence = comparison(resource, id) + operations(resource, id);
+    details.push(`<article class="panel" id="${id}" tabindex="-1">
+      <header class="file-head"><h2><code>${escape(resource.output)}</code></h2><span class="file-type">Mapped text · ${resource.edits.length} ops</span></header>
       <div class="file-meta"><a class="back" href="#files-heading">Back to files</a>
       <details><summary>Source &amp; output integrity · ${integrityLabels[observed.state]}</summary><dl>
-        <dt>${runtime ? "Local source" : "Upstream source"}</dt><dd><code>${source}</code></dd>
+        <dt>Upstream source</dt><dd><code>${source}</code></dd>
         <dt>Output</dt><dd><code>${escape(output)}</code></dd>
         ${resource.mapping ? `<dt>Mapping</dt><dd><code>mappings/${escape(resource.mapping)}</code></dd>` : ""}
       </dl>
-      ${integrity(observed, resource.bytes, binary)}</details></div>
-      <div class="${changed ? "evidence" : "plain"}">${evidence}</div>
+      ${integrity(observed, resource.bytes)}</details></div>
+      <div class="evidence">${evidence}</div>
     </article>`);
   }
   const { upstream } = manifest;
   const href = commitLink(upstream);
   const revision = `<code>${escape(upstream.revision)}</code>`;
-  const attention = delivery.length - matching;
+  const attention = mapped.length - matching;
   const scriptHash = createHash("sha256").update(script).digest("base64");
   const bytes = Buffer.from(`<!doctype html>
 <html lang="en">
@@ -320,7 +313,7 @@ export function writeMappingHtml(root: string, manifest: Manifest, delivery: rea
 <body data-view="unified">
 <header class="topbar">
   <div class="toolbar"><h1>pstack-suite <span class="muted">· mapping report</span></h1>
-    <span class="stats">${delivery.length} files · ${mapped} mapped · ${matching} matching · ${attention} outputs to review</span>
+    <span class="stats">${mapped.length} mapped files · ${matching} matching · ${attention} outputs to review</span>
     <div class="controls"><div class="segmented" aria-label="Diff layout"><button type="button" data-view-button="unified" aria-pressed="true">Unified</button><button type="button" data-view-button="split" aria-pressed="false">Split</button></div><button type="button" id="theme">Theme: Auto</button></div>
   </div>
   <div class="provenance"><span>${escape(upstream.version)}</span><span>${href ? `<a href="${escape(href)}" rel="noreferrer">${revision}</a>` : revision}</span><details><summary>Snapshot provenance</summary><p>${escape(upstream.repository)}</p><p>Static snapshot. Output bytes were inspected when this report was generated. Rebuild to refresh it.</p></details></div>
@@ -329,7 +322,7 @@ export function writeMappingHtml(root: string, manifest: Manifest, delivery: rea
   <nav aria-labelledby="files-heading">
     <h2 id="files-heading" tabindex="-1">Files</h2>
     <div class="search" hidden><label for="file-search">Search file paths</label><input id="file-search" type="search" autocomplete="off" aria-controls="file-list"><p id="file-count" role="status"></p></div>
-    ${links.length ? `<ul id="file-list" class="file-list">${links.join("\n")}</ul>` : "<p>No files in this build.</p>"}
+    ${links.length ? `<ul id="file-list" class="file-list">${links.join("\n")}</ul>` : "<p>No mapping changes.</p>"}
   </nav>
   <div class="main">${details.join("\n")}</div>
 </main>
