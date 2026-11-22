@@ -60,6 +60,38 @@ test("the report connects the pinned commit and mapped changes to their exact op
   expect(repeatEffects).toEqual([]);
 }));
 
+test("line diffs retain both versions when edits share a line, add lines, and join the final line", async () => {
+  let html = "";
+  fixture((root, put) => {
+    const manifest: Manifest = { upstream, files: [
+      { source: "source.md", output: "delivered.md", kind: "text", mapping: "edits.json" },
+    ] };
+    put("upstream/source.md", "alpha beta\nkeep\nlast");
+    put("mappings/edits.json", JSON.stringify([
+      { name: "first", reason: "Change the first word", anchor: "alpha", replace: "X" },
+      { name: "second", reason: "Split the first line", anchor: "beta", replace: "Y\nZ" },
+      { name: "join", reason: "Join the final lines", anchor: "keep\n", replace: "join-" },
+    ]));
+    html = report(root, manifest);
+  });
+  const rows: { numbers: string[]; text: string }[] = [];
+  const parsed = new HTMLRewriter()
+    .on(".unified .row", { element() { rows.push({ numbers: [], text: "" }); } })
+    .on(".unified .row > .ln", {
+      element() { rows[rows.length - 1].numbers.push(""); },
+      text(chunk) { const row = rows[rows.length - 1]; row.numbers[row.numbers.length - 1] += chunk.text; },
+    })
+    .on(".unified .row > code", { text(chunk) { rows[rows.length - 1].text += chunk.text; } })
+    .transform(new Response(html));
+  await parsed.text();
+  const before = rows.filter(row => row.numbers[0]);
+  const after = rows.filter(row => row.numbers[1]);
+  expect(before.map(row => row.numbers[0])).toEqual(["1", "2", "3"]);
+  expect(after.map(row => row.numbers[1])).toEqual(["1", "2", "3"]);
+  expect(before.map(row => row.text)).toEqual(["alpha beta", "keep", "last · No newline at end of file"]);
+  expect(after.map(row => row.text)).toEqual(["X Y", "Z", "join-last · No newline at end of file"]);
+});
+
 // Re-reading the expected buffer instead of the delivered bytes misses same-size binary drift.
 test("the report separates missing output and byte drift from unchanged sources and local runtime", () => fixture((root, put) => {
   const manifest: Manifest = { upstream, files: [

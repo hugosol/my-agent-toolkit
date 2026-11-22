@@ -54,46 +54,83 @@ function snippet(value: string): string {
   return value === "" ? '<p class="empty">No text</p>' : `<pre><code>${code(value)}</code></pre>`;
 }
 
-function comparison(resource: RenderedResource): string {
-  const mapped = resource.bytes.toString("utf8");
-  const before: string[] = [];
-  const after: string[] = [];
-  let beforeEnd = 0;
-  let afterEnd = 0;
-  // Only decorate spans the renderer already resolved; the mapped side comes from its bytes.
-  for (const edit of resource.edits) {
-    const mappedStart = afterEnd + edit.start - beforeEnd;
-    before.push(code(resource.original.slice(beforeEnd, edit.start)), `<del>${code(edit.before)}</del>`);
-    beforeEnd = edit.start + edit.before.length;
-    after.push(code(mapped.slice(afterEnd, mappedStart)));
-    afterEnd = mappedStart + edit.after.length;
-    if (edit.after) after.push(`<ins>${code(mapped.slice(mappedStart, afterEnd))}</ins>`);
-  }
-  before.push(code(resource.original.slice(beforeEnd)));
-  after.push(code(mapped.slice(afterEnd)));
-  return `<details><summary>Full file comparison</summary>
-  <div class="pair">
-    <figure><figcaption>Upstream snapshot</figcaption><pre><code>${before.join("")}</code></pre></figure>
-    <figure><figcaption>Mapped result</figcaption><pre><code>${after.join("")}</code></pre></figure>
-  </div></details>`;
+function lines(value: string): string[] {
+  return value.match(/[^\n]*\n|[^\n]+$/g) ?? [];
 }
 
-function operations(resource: RenderedResource): string {
+function lineCode(value: string): string {
+  const terminated = value.endsWith("\n");
+  return code(terminated ? value.slice(0, -1) : value) + (terminated ? "" : '<span class="eof"> · No newline at end of file</span>');
+}
+
+function opButton(id: string, name: string): string {
+  return `<button type="button" class="op-chip" data-op="${id}">${escape(name)}</button>`;
+}
+
+function comparison(resource: RenderedResource, id: string): string {
+  // Group resolved edits by affected source lines; do not match anchors again.
+  const original = resource.original;
+  const mapped = resource.bytes.toString("utf8");
+  const groups: { start: number; end: number; delta: number; ops: number[] }[] = [];
+  resource.edits.forEach((edit, index) => {
+    const start = edit.start === 0 ? 0 : original.lastIndexOf("\n", edit.start - 1) + 1;
+    const last = edit.start + Math.max(0, edit.before.length - 1);
+    const searchFrom = original[last] === "\n" && !edit.after.endsWith("\n") ? last + 1 : last;
+    const newline = original.indexOf("\n", searchFrom);
+    const end = newline < 0 ? original.length : newline + 1;
+    const delta = edit.after.length - edit.before.length;
+    const previous = groups[groups.length - 1];
+    if (previous && start < previous.end) {
+      previous.end = Math.max(previous.end, end);
+      previous.delta += delta;
+      previous.ops.push(index);
+    } else groups.push({ start, end, delta, ops: [index] });
+  });
+  const unified: string[] = [];
+  const split: string[] = [];
+  let oldLine = 1, newLine = 1, offset = 0, delta = 0;
+  const cell = (value: string | undefined, number: number | undefined, kind: string) =>
+    `<div class="cell ${kind}"><span class="ln">${number ?? ""}</span><code>${value === undefined ? "" : lineCode(value)}</code></div>`;
+  function context(value: string) {
+    for (const line of lines(value)) {
+      unified.push(`<div class="row context"><span class="ln">${oldLine}</span><span class="ln">${newLine}</span><span class="sign"> </span><code>${lineCode(line)}</code></div>`);
+      split.push(`<div class="srow">${cell(line, oldLine, "context")}${cell(line, newLine, "context")}</div>`);
+      oldLine++; newLine++;
+    }
+  }
+  for (const group of groups) {
+    context(original.slice(offset, group.start));
+    const heading = `<div class="hunk">${group.ops.map(index => opButton(`${id}-op-${index}`, resource.edits[index].name)).join(" ")}</div>`;
+    unified.push(heading); split.push(heading);
+    const before = lines(original.slice(group.start, group.end));
+    const after = lines(mapped.slice(group.start + delta, group.end + delta + group.delta));
+    before.forEach((line, index) => unified.push(`<div class="row removed"><span class="ln">${oldLine + index}</span><span class="ln"></span><span class="sign">−</span><code>${lineCode(line)}</code></div>`));
+    after.forEach((line, index) => unified.push(`<div class="row added"><span class="ln"></span><span class="ln">${newLine + index}</span><span class="sign">+</span><code>${lineCode(line)}</code></div>`));
+    for (let index = 0; index < Math.max(before.length, after.length); index++) {
+      split.push(`<div class="srow">${cell(before[index], index < before.length ? oldLine + index : undefined, "removed")}${cell(after[index], index < after.length ? newLine + index : undefined, "added")}</div>`);
+    }
+    oldLine += before.length; newLine += after.length;
+    offset = group.end; delta += group.delta;
+  }
+  context(original.slice(offset));
+  return `<div class="diff unified" aria-label="Unified diff">${unified.join("")}</div><div class="diff split" aria-label="Split diff"><div class="split-label"><span>Upstream snapshot</span><span>Mapped result</span></div>${split.join("")}</div>`;
+}
+
+function operations(resource: RenderedResource, id: string): string {
   let line = 1;
   let offset = 0;
-  const items = resource.edits.map(edit => {
+  return resource.edits.map((edit, index) => {
     while (offset < edit.start) if (resource.original[offset++] === "\n") line++;
-    return `<li class="operation">
-      <h4><code>${escape(edit.name)}</code></h4>
-      <p>${escape(edit.reason)}</p>
-      <details><summary>Anchor <span class="muted">· edit starts on upstream line ${line}</span></summary>${snippet(edit.anchor)}</details>
-      <div class="pair">
-        <figure class="removed"><figcaption>Before <span class="muted">· upstream</span></figcaption>${snippet(edit.before)}</figure>
-        <figure class="added"><figcaption>After <span class="muted">· mapped</span></figcaption>${snippet(edit.after)}</figure>
-      </div>
-    </li>`;
-  });
-  return `${comparison(resource)}<h3>Mapping operations <span class="count">${items.length}</span></h3><ol class="operations">${items.join("\n")}</ol>`;
+    const opId = `${id}-op-${index}`;
+    return `<dialog id="${opId}" aria-labelledby="${opId}-title">
+      <header class="drawer-head"><h2 id="${opId}-title"><code>${escape(edit.name)}</code></h2><button type="button" data-close>Close</button></header>
+      <div class="drawer-body"><p>${escape(edit.reason)}</p><p class="muted">${escape(resource.output)} · upstream line ${line}</p>
+      <h3>Anchor</h3>${snippet(edit.anchor)}
+      <h3>Before · upstream</h3><div class="removed">${snippet(edit.before)}</div>
+      <h3>After · mapped</h3><div class="added">${snippet(edit.after)}</div>
+      <h3>Defined in</h3><code>mappings/${escape(resource.mapping ?? "")}</code></div>
+    </dialog>`;
+  }).join("\n");
 }
 
 function integrity(state: OutputInspection, expected: Buffer, binary: boolean): string {
@@ -108,92 +145,75 @@ function integrity(state: OutputInspection, expected: Buffer, binary: boolean): 
 }
 
 const styles = `
-:root {
-  color-scheme: light;
-  --ground: #f2f4f7; --surface: #fff; --raised: #eee; --border: #e6e6e6; --rule: #f0f0f0;
-  --control: #888; --text: #0a0a0a; --muted: #595959; --negative: #a52227; --data: #1d5fbf;
-  --radius: 8px; --control-radius: 6px; --gap: 12px;
-  font: 14px/1.5 Geist, system-ui, sans-serif; color: var(--text); background: var(--ground);
-}
-*, *::before, *::after { box-sizing: border-box; }
-[hidden] { display: none !important; }
-body, h1, h2, h3, h4, p, figure, pre, dl, dd { margin: 0; }
-code, pre { font-family: 'Geist Mono', ui-monospace, Consolas, monospace; }
-a { color: inherit; text-underline-offset: .2em; }
-:focus-visible { outline: 2px solid var(--data); outline-offset: 2px; }
-.frame { width: min(1088px, calc(100% - 48px)); margin-inline: auto; }
-.bar { border-bottom: 1px solid var(--border); }
-.brand { min-height: 48px; display: flex; align-items: center; gap: 10px; font-weight: 600; }
-main { padding-block: 32px; }
-h1 { font-size: 24px; line-height: 1.2; font-weight: 600; }
-h2, h3 { font-size: 16px; font-weight: 600; }
-h4 { font-size: 14px; font-weight: 600; }
-.muted, dt, figcaption, .count { color: var(--muted); }
-.provenance { margin-block: 12px; }
-dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 12px; }
-dd, code, h2, h4 { overflow-wrap: anywhere; }
-.notice { margin-block: 12px; padding: 8px 12px; border-inline-start: 2px solid var(--control); color: var(--muted); }
-.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--gap); margin-bottom: 24px; }
-.stats > div, .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
-.stats > div { padding: 10px 14px; }
-.stats dt { font-size: 12px; }
-.stats dd { font-size: 20px; font-variant-numeric: tabular-nums; }
-.stats .attention { color: var(--negative); }
-/* 1088px = 260px ledger + 12px gutter + 816px detail, including the panel edges. */
-.workspace { display: grid; grid-template-columns: 260px minmax(0, 1fr); align-items: start; gap: var(--gap); }
-nav { position: sticky; top: 12px; padding: 12px; min-width: 0; }
-.search { margin-block: 8px; }
-.search label { display: block; margin-bottom: 4px; }
-.search input { width: 100%; min-height: 36px; padding: 6px 10px; background: var(--surface); color: var(--text);
-  border: 1px solid var(--control); border-radius: var(--control-radius); font: inherit; }
-#file-count { color: var(--muted); font-size: 12px; margin-top: 4px; }
-.file-list { list-style: none; margin: 0; padding: 3px; max-height: 58vh; overflow-y: auto; }
-.file-list li + li { border-top: 1px solid var(--rule); }
-.file-list a, .back { display: block; padding: 7px 8px; min-height: 44px; border-radius: var(--control-radius); }
-.file-list a { text-decoration: none; }
-.file-list a:hover code { text-decoration: underline; }
-.file-list a[aria-current] { background: var(--raised); }
-.file-list small { display: block; color: var(--muted); font-size: 12px; }
-.file-list [data-state]:not([data-state="match"]) { color: var(--negative); }
-article { padding: 16px; scroll-margin-top: 12px; }
-article + article { margin-top: var(--gap); }
-.file-type { margin-block: 4px 12px; color: var(--muted); }
-.integrity { margin-block: 12px 4px; }
-.integrity:not([data-state="match"]) { color: var(--negative); }
-.evidence { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
-.count { padding-left: 4px; font-size: 12px; font-weight: 400; font-variant-numeric: tabular-nums; }
-.operations { margin: 0; padding: 0; list-style: none; }
-.operation { padding-block: 12px; border-bottom: 1px solid var(--rule); }
-.operation p { margin-block: 4px 10px; }
-.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--gap); margin-top: 8px; }
-figcaption { font-size: 12px; margin-bottom: 4px; }
-pre, .empty { padding: 8px 10px; background: var(--ground); border-radius: var(--control-radius); }
-pre { white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 4; }
-.empty { color: var(--muted); }
-.added figcaption, ins { color: var(--data); }
-.removed figcaption, del { color: var(--negative); }
-summary { cursor: pointer; padding: 10px 0; }
-.back { display: none; }
-@media (max-width: 1100px) {
-  .pair { grid-template-columns: minmax(0, 1fr); }
-}
-@media (max-width: 760px) {
-  .frame { width: calc(100% - 32px); }
-  main { padding-block: 20px; }
-  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 12px; }
-  .workspace, .pair { grid-template-columns: minmax(0, 1fr); }
-  nav { position: static; }
-  .file-list { max-height: 220px; }
-  .search input, summary { min-height: 44px; }
-  .search input { font-size: 16px; }
-  .back { display: inline-flex; align-items: center; margin-top: 8px; }
+:root { color-scheme: light; --bg:#fff; --subtle:#f6f8fa; --border:#d0d7de; --fg:#1f2328; --muted:#4b5561; --accent:#0969da; --add:#e6ffec; --del:#ffebe9; --add-fg:#1a7f37; --del-fg:#b62324; --chip:#ddf4ff; --bar-height:96px; font:14px/1.5 system-ui,sans-serif; }
+:root[data-theme="dark"] { color-scheme:dark; --bg:#101010; --subtle:#191919; --border:#383838; --fg:#ededed; --muted:#acacac; --accent:#75b6ff; --add:#122b1c; --del:#32191a; --add-fg:#75d894; --del-fg:#ff9292; --chip:#16334d; }
+* { box-sizing:border-box; }
+[hidden] { display:none !important; }
+body { margin:0; background:var(--bg); color:var(--fg); }
+h1,h2,h3,p,pre,dl,dd { margin:0; }
+h1 { font-size:14px; font-weight:600; }
+h2 { font-size:14px; } h3 { font-size:13px; margin:20px 0 8px; }
+code,pre { font-family:ui-monospace,Consolas,monospace; font-size:13px; }
+a { color:var(--accent); }
+button,input { font:inherit; color:var(--fg); background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:5px 10px; }
+button { cursor:pointer; font-size:12px; min-height:30px; } button:hover { background:var(--subtle); }
+:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+.muted,dt,.stats,.eof { color:var(--muted); }
+.topbar { position:sticky; top:0; z-index:10; background:var(--subtle); border-bottom:1px solid var(--border); padding:10px 16px; }
+.toolbar { display:flex; align-items:center; flex-wrap:wrap; gap:8px 16px; }
+.controls { display:flex; gap:8px; margin-left:auto; align-items:center; }
+.segmented { display:flex; } .segmented button { border-radius:0; } .segmented button:first-child { border-radius:6px 0 0 6px; } .segmented button:last-child { border-radius:0 6px 6px 0; margin-left:-1px; }
+button[aria-pressed="true"] { background:var(--accent); color:var(--bg); border-color:var(--accent); }
+.stats { font-size:12px; }
+.provenance { display:flex; flex-wrap:wrap; align-items:center; gap:4px 14px; margin-top:8px; font-size:12px; }
+.provenance summary { cursor:pointer; } .provenance details p { margin-top:6px; }
+.workspace { display:grid; grid-template-columns:300px minmax(0,1fr); align-items:start; }
+nav { position:sticky; top:var(--bar-height); height:calc(100dvh - var(--bar-height)); overflow:auto; padding:16px; background:var(--subtle); border-right:1px solid var(--border); }
+nav h2 { margin-bottom:8px; } .search label { display:block; font-size:12px; } .search input { width:100%; margin:4px 0; } #file-count { font-size:12px; color:var(--muted); margin-bottom:12px; }
+.file-list { list-style:none; padding:0; margin:0; } .file-list li { margin-bottom:12px; }
+.file-list a { display:block; padding:5px 6px; color:var(--fg); text-decoration:none; border-radius:6px; overflow-wrap:anywhere; }
+.file-list a[aria-current],.file-list a:hover { background:var(--border); }
+.file-list small { display:block; color:var(--muted); font-size:11px; }
+.nav-ops { display:flex; flex-wrap:wrap; gap:4px; padding:4px 6px; }
+.op-chip { font-family:ui-monospace,Consolas,monospace; font-size:11px; border-radius:20px; padding:2px 7px; min-height:24px; overflow-wrap:anywhere; max-width:100%; }
+.hunk .op-chip { background:var(--chip); color:var(--accent); border-color:transparent; }
+.main { padding:16px; min-width:0; }
+article { border:1px solid var(--border); border-radius:8px; overflow:hidden; scroll-margin-top:calc(var(--bar-height) + 12px); margin-bottom:24px; }
+.file-head { display:flex; align-items:center; flex-wrap:wrap; gap:8px 16px; padding:8px 12px; background:var(--subtle); border-bottom:1px solid var(--border); }
+.file-head h2 { overflow-wrap:anywhere; } .file-head .file-type { font-size:12px; color:var(--muted); }
+.file-meta { padding:8px 12px; border-bottom:1px solid var(--border); font-size:12px; } .file-meta summary { cursor:pointer; }
+dl { display:grid; grid-template-columns:max-content minmax(0,1fr); gap:4px 12px; margin-block:8px; } dd { overflow-wrap:anywhere; }
+.integrity[data-state="match"] { color:var(--muted); } .integrity:not([data-state="match"]),[data-state="missing"],[data-state="drift"],[data-state="unreadable"] { color:var(--del-fg); }
+.back { display:none; }
+.diff { font:12px/1.65 ui-monospace,Consolas,monospace; }
+.row { display:grid; grid-template-columns:42px 42px 20px minmax(0,1fr); }
+.row code,.cell code { padding:2px 8px; white-space:pre-wrap; overflow-wrap:anywhere; min-height:24px; tab-size:4; }
+.ln { color:var(--muted); text-align:right; padding:2px 8px; border-right:1px solid var(--border); user-select:none; font-variant-numeric:tabular-nums; }
+.sign { text-align:center; padding-block:2px; }
+.removed { background:var(--del); } .added { background:var(--add); }
+.hunk { padding:5px 12px 5px 104px; background:var(--subtle); border-block:1px solid var(--border); }
+.srow,.split-label { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+.cell { display:grid; grid-template-columns:42px minmax(0,1fr); } .cell:first-child { border-right:1px solid var(--border); }
+.split-label { padding:6px 12px; color:var(--muted); background:var(--subtle); }
+.split { display:none; } body[data-view="split"] .unified { display:none; } body[data-view="split"] .split { display:block; }
+.eof { font-size:11px; font-style:italic; } .plain { padding:12px; } .plain pre { white-space:pre-wrap; overflow-wrap:anywhere; }
+dialog { position:fixed; inset:0 0 0 auto; margin:0; height:100dvh; max-height:100dvh; width:min(620px,100%); max-width:100%; padding:0; border:0; border-left:1px solid var(--border); background:var(--bg); color:var(--fg); }
+dialog::backdrop { background:rgb(0 0 0 / .18); }
+.drawer-head { position:sticky; top:0; display:flex; justify-content:space-between; align-items:center; gap:12px; padding:12px; border-bottom:1px solid var(--border); background:var(--subtle); } .drawer-head h2 { overflow-wrap:anywhere; }
+.drawer-body { padding:16px; } .drawer-body p + p { margin-top:8px; } .drawer-body pre { white-space:pre-wrap; overflow-wrap:anywhere; padding:12px; border:1px solid var(--border); border-radius:6px; }
+.empty { padding:12px; }
+@media(max-width:760px) {
+  .topbar { position:static; padding:10px 16px; } .controls { margin-left:0; width:100%; } button { min-height:44px; }
+  .workspace { grid-template-columns:minmax(0,1fr); } nav { position:static; height:auto; max-height:320px; border-right:0; border-bottom:1px solid var(--border); }
+  .main { padding:16px; } article { scroll-margin-top:12px; } .file-list a { min-height:44px; } .op-chip { min-height:32px; }
+  .back { display:inline-block; padding:8px 0; } .row { grid-template-columns:30px 30px 18px minmax(0,1fr); } .ln { padding-inline:4px; } .hunk { padding-left:12px; }
+  .search input { min-height:44px; font-size:16px; } .srow { grid-template-columns:minmax(0,1fr); } .cell:first-child { border-right:0; } .split-label { display:none; }
 }
 `;
 
 const script = `
 (() => {
   const links = [...document.querySelectorAll('.file-list a')];
-  if (!links.length) return;
   const files = links.map(link => ({ link, detail: document.getElementById(link.hash.slice(1)),
     paths: [link.querySelector('code').textContent.toLowerCase(), link.dataset.source.toLowerCase()] }));
   const input = document.getElementById('file-search');
@@ -202,17 +222,14 @@ const script = `
   function select(hash) {
     const next = files.find(file => file.link.hash === hash);
     if (!next) return;
-    if (selected) {
-      selected.link.removeAttribute('aria-current');
-      selected.detail.hidden = true;
-    }
+    if (selected) { selected.link.removeAttribute('aria-current'); selected.detail.hidden = true; }
     next.detail.hidden = false;
     next.link.setAttribute('aria-current', 'location');
     selected = next;
   }
   for (const file of files) file.detail.hidden = true;
   select(location.hash);
-  if (!selected) select((files.find(file => file.detail.dataset.mapped === 'true') || files[0]).link.hash);
+  if (!selected && files.length) select((files.find(file => file.detail.dataset.mapped === 'true') || files[0]).link.hash);
   for (const { link } of files) link.addEventListener('click', event => {
     if (!event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) select(link.hash);
   });
@@ -227,9 +244,27 @@ const script = `
     }
     count.textContent = matching ? matching + ' of ' + files.length + ' files' : 'No files match this search.';
   }
-  filter();
-  input.addEventListener('input', filter);
+  filter(); input.addEventListener('input', filter);
   document.querySelector('.search').hidden = false;
+  for (const button of document.querySelectorAll('[data-view-button]')) button.addEventListener('click', () => {
+    document.body.dataset.view = button.dataset.viewButton;
+    for (const sibling of document.querySelectorAll('[data-view-button]')) sibling.setAttribute('aria-pressed', String(sibling === button));
+  });
+  const media = matchMedia('(prefers-color-scheme: dark)');
+  const theme = document.getElementById('theme');
+  let mode = 'Auto';
+  function applyTheme() { document.documentElement.dataset.theme = mode === 'Auto' ? (media.matches ? 'dark' : 'light') : mode.toLowerCase(); theme.textContent = 'Theme: ' + mode; }
+  theme.addEventListener('click', () => { mode = mode === 'Auto' ? 'Light' : mode === 'Light' ? 'Dark' : 'Auto'; applyTheme(); });
+  media.addEventListener('change', applyTheme); applyTheme();
+  for (const button of document.querySelectorAll('[data-op]')) button.addEventListener('click', () => {
+    const dialog = document.getElementById(button.dataset.op);
+    const article = dialog.closest('article');
+    select('#' + article.id);
+    dialog.showModal();
+  });
+  for (const button of document.querySelectorAll('[data-close]')) button.addEventListener('click', () => button.closest('dialog').close());
+  const bar = document.querySelector('.topbar');
+  new ResizeObserver(() => document.documentElement.style.setProperty('--bar-height', bar.offsetHeight + 'px')).observe(bar);
 })();`;
 
 export function writeMappingHtml(root: string, manifest: Manifest, delivery: readonly RenderedResource[], effects: string[]): void {
@@ -251,22 +286,21 @@ export function writeMappingHtml(root: string, manifest: Manifest, delivery: rea
     if (changed) mapped++;
     if (observed.state === "match") matching++;
     const source = `${runtime ? "runtime" : "upstream"}/${escape(resource.source)}`;
-    links.push(`<li><a href="#${id}" data-source="${source}"><code>${escape(resource.output)}</code><small>${type}${observed.state === "match" ? "" : ` · <span data-state="${observed.state}">${integrityLabels[observed.state]}</span>`}</small></a></li>`);
-    const evidence = changed ? operations(resource)
+    links.push(`<li><a href="#${id}" data-source="${source}"><code>${escape(resource.output)}</code><small>${type} · ${resource.edits.length} ops${observed.state === "match" ? "" : ` · <span data-state="${observed.state}">${integrityLabels[observed.state]}</span>`}</small></a><div class="nav-ops">${resource.edits.map((edit, index) => opButton(`${id}-op-${index}`, edit.name)).join(" ")}</div></li>`);
+    const evidence = changed ? comparison(resource, id) + operations(resource, id)
       : binary ? `<p>${runtime ? "Local binary; there is no upstream comparison." : "Binary bytes are copied without a text diff."}</p>`
       : `<p>${runtime ? "Authored locally; there is no upstream comparison." : "No mapping edits. Text is compared after CRLF-to-LF normalization."}</p>
          <details><summary>${runtime ? "Local runtime text" : "Unchanged text content"}</summary>${snippet(resource.original)}</details>`;
     details.push(`<article class="panel" id="${id}" tabindex="-1" data-mapped="${changed}">
-      <h2><code>${escape(resource.output)}</code></h2>
-      <a class="back" href="#files-heading">Back to files</a>
-      <p class="file-type">${type}</p>
-      <dl>
+      <header class="file-head"><h2><code>${escape(resource.output)}</code></h2><span class="file-type">${type} · ${resource.edits.length} ops</span></header>
+      <div class="file-meta"><a class="back" href="#files-heading">Back to files</a>
+      <details><summary>Source &amp; output integrity · ${integrityLabels[observed.state]}</summary><dl>
         <dt>${runtime ? "Local source" : "Upstream source"}</dt><dd><code>${source}</code></dd>
         <dt>Output</dt><dd><code>${escape(output)}</code></dd>
         ${resource.mapping ? `<dt>Mapping</dt><dd><code>mappings/${escape(resource.mapping)}</code></dd>` : ""}
       </dl>
-      ${integrity(observed, resource.bytes, binary)}
-      <div class="evidence">${evidence}</div>
+      ${integrity(observed, resource.bytes, binary)}</details></div>
+      <div class="${changed ? "evidence" : "plain"}">${evidence}</div>
     </article>`);
   }
   const { upstream } = manifest;
@@ -283,33 +317,21 @@ export function writeMappingHtml(root: string, manifest: Manifest, delivery: rea
 <title>Mapping report · pstack-suite</title>
 <style>${styles}</style>
 </head>
-<body>
-<header class="bar"><div class="frame brand">
-  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 4h6l4 6h6M2 10h6l4 6h6M2 16h5"/></svg>
-  pstack-suite
-</div></header>
-<main class="frame">
-  <h1>Mapping report</h1>
-  <dl class="provenance">
-    <dt>Repository</dt><dd>${escape(upstream.repository)}</dd>
-    <dt>Version</dt><dd>${escape(upstream.version)}</dd>
-    <dt>Commit</dt><dd>${href ? `<a href="${escape(href)}" rel="noreferrer">${revision}</a>` : revision}</dd>
-  </dl>
-  <p class="notice"><strong>Static snapshot.</strong> Output bytes were inspected when this report was generated. Rebuild to refresh it.</p>
-  <dl class="stats">
-    <div><dt>Generated files</dt><dd>${delivery.length}</dd></div>
-    <div><dt>Files with mappings</dt><dd>${mapped}</dd></div>
-    <div><dt>Matching outputs</dt><dd>${matching}</dd></div>
-    <div><dt>Outputs to review</dt><dd${attention ? ' class="attention"' : ""}>${attention}</dd></div>
-  </dl>
-  <div class="workspace">
-    <nav class="panel" aria-labelledby="files-heading">
-      <h2 id="files-heading" tabindex="-1">Files</h2>
-      <div class="search" hidden><label for="file-search">Search file paths</label><input id="file-search" type="search" autocomplete="off" aria-controls="file-list"><p id="file-count" role="status"></p></div>
-      ${links.length ? `<ul id="file-list" class="file-list">${links.join("\n")}</ul>` : "<p>No files in this build.</p>"}
-    </nav>
-    <div>${details.join("\n")}</div>
+<body data-view="unified">
+<header class="topbar">
+  <div class="toolbar"><h1>pstack-suite <span class="muted">· mapping report</span></h1>
+    <span class="stats">${delivery.length} files · ${mapped} mapped · ${matching} matching · ${attention} outputs to review</span>
+    <div class="controls"><div class="segmented" aria-label="Diff layout"><button type="button" data-view-button="unified" aria-pressed="true">Unified</button><button type="button" data-view-button="split" aria-pressed="false">Split</button></div><button type="button" id="theme">Theme: Auto</button></div>
   </div>
+  <div class="provenance"><span>${escape(upstream.version)}</span><span>${href ? `<a href="${escape(href)}" rel="noreferrer">${revision}</a>` : revision}</span><details><summary>Snapshot provenance</summary><p>${escape(upstream.repository)}</p><p>Static snapshot. Output bytes were inspected when this report was generated. Rebuild to refresh it.</p></details></div>
+</header>
+<main class="workspace">
+  <nav aria-labelledby="files-heading">
+    <h2 id="files-heading" tabindex="-1">Files</h2>
+    <div class="search" hidden><label for="file-search">Search file paths</label><input id="file-search" type="search" autocomplete="off" aria-controls="file-list"><p id="file-count" role="status"></p></div>
+    ${links.length ? `<ul id="file-list" class="file-list">${links.join("\n")}</ul>` : "<p>No files in this build.</p>"}
+  </nav>
+  <div class="main">${details.join("\n")}</div>
 </main>
 <script>${script}</script>
 </body>
