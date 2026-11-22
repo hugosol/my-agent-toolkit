@@ -1,25 +1,7 @@
 import { lstatSync } from "node:fs";
 import { sha256 } from "./delivery";
 import { readFile } from "./files";
-import { text, type Manifest, type RenderedResource } from "./inputs";
-
-export function preview(delivery: readonly RenderedResource[]) {
-  let count = 0;
-  for (const { output, source, mapping, original, edits } of delivery) {
-    let line = 1;
-    let offset = 0;
-    for (const edit of edits) {
-      count++;
-      while (offset < edit.start) if (original[offset++] === "\n") line++;
-      console.log(`@@ ${output}:${line} [${edit.name}] @@`);
-      console.log(`Mapping: ${mapping} (snapshot: ${source})\nReason: ${edit.reason}`);
-      for (const [prefix, value] of [["-", edit.before], ["+", edit.after]]) {
-        if (value) for (const part of value.split("\n")) console.log(`${prefix}${part}`);
-      }
-    }
-  }
-  if (!count) console.log("No mapped edits.");
-}
+import { text, type Manifest } from "./inputs";
 
 function changedLines(source: string, snapshot: string, local: string) {
   // Keep line terminators with the text so an added or removed final LF is a diff.

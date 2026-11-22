@@ -233,21 +233,17 @@ test("repeat builds are identical and check diagnoses drift without writing", ()
   expect(f.read(`${generated}/evidence/raw.txt`)).toEqual(Buffer.from("Keep this evidence\n"));
 }));
 
-// P6/P10 (S1): preview an edited mapping without touching the snapshot or
-// building. A preview of the old delivery or of upstream-only changes would omit it.
-test("preview reports the changed mapping's operation, reason and exact text", () => fixture(root => {
+test("build refreshes the mapping report after an adaptation changes", () => fixture(root => {
   const f = workspace(root);
   expect(f.run("build")).toMatchObject({ exit: 0 });
+  const source = f.read(`${upstream}/plugin/skill.md`);
   f.json(mapping, [{ ...f.op, replace: "`/skill:review`", reason: "Use the suite's review entry for this example." }]);
-  const before = tree(root);
-  const preview = f.run("preview");
-  expect(preview).toMatchObject({ exit: 0 });
-  expect(tree(root)).toEqual(before);
-  expect(preview.out).toContain("@@ skills/example/SKILL.md:2 [use-omp-manual-command] @@");
-  expect(preview.out).toContain("Reason: Use the suite's review entry for this example.");
-  expect(preview.out).toContain("-`/example`\n+`/skill:review`\n");
-  expect(preview.out).not.toContain("/skill:example");
-  expect(preview.out).not.toContain("Keep this.");
+  expect(f.run("build")).toMatchObject({ exit: 0 });
+  const html = f.read("pstack-suite/mapping.html").toString();
+  expect(html).toContain("use-omp-manual-command");
+  expect(html).toContain("/skill:review");
+  expect(html).not.toContain("/skill:example");
+  expect(f.read(`${upstream}/plugin/skill.md`)).toEqual(source);
 }));
 
 // P10 (S1): compare an actual local directory against the pinned snapshot,
@@ -287,7 +283,7 @@ test("help is read-only and invalid invocation exits 2 instead of building", () 
   const f = workspace(root);
   unlinkSync(join(root, manifest)); // help and usage errors must not load inputs
   const before = tree(root);
-  for (const command of ["build", "check", "preview", "upstream"]) {
+  for (const command of ["build", "check", "update", "upstream"]) {
     const help = f.run(command, "--", "--help");
     expect(help).toMatchObject({ exit: 0 });
     expect(help.out).toContain(`bun run pstack:${command}`);
@@ -301,11 +297,6 @@ test("help is read-only and invalid invocation exits 2 instead of building", () 
 // P6 (S1): the actual hidden skill is a manual invocation. Porting the command
 // must not alter its visibility or its method of restating the user's goals.
 test("the shipped goal-restatement skill changes only the native invocation spelling", () => {
-  const preview = runAt(toolkit, "preview");
-  expect(preview).toMatchObject({ exit: 0 });
-  expect(preview.out).toContain("@@ skills/in-your-own-words/SKILL.md:3 [use-omp-manual-invocation] @@");
-  expect(preview.out).toContain("Reason: OMP attaches the hidden skill through its native /skill:<name> command; preserve manual invocation.");
-  expect(preview.out).toContain("-/in-your-own-words\n+/skill:in-your-own-words\n");
   expect(readFileSync(join(toolkit, generated, "skills/in-your-own-words/SKILL.md"), "utf8")).toBe([
     "---",
     "name: in-your-own-words",

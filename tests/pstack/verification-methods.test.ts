@@ -15,18 +15,6 @@ test("P34/P35 S1 delivers named verification methods with readable references", 
   // The pinned upstream skill trees define these four entry points and the
   // three example documents. Publishing only SKILL.md or leaving a Cursor
   // command/link behind must fail here, independent of the delivery manifest.
-  const preview = Bun.spawnSync([process.execPath, "run", "pstack:preview"], { cwd: root });
-  expect(preview.exitCode, preview.stderr.toString()).toBe(0);
-  const changes = preview.stdout.toString();
-  for (const [name, edit] of [
-    ...authorship.map(name => [name, "use-omp-manual-invocation"]),
-    ["tdd", "name-native-invocation"],
-    ["blast-radius", "name-native-invocation"],
-    ["benchmark-checklist", "measure-host-load"],
-  ]) {
-    expect(changes).toMatch(new RegExp(`@@ skills/${name}/SKILL\\.md:\\d+ \\[${edit}\\] @@`));
-  }
-
   const files = [
     ...authorship.map(name => `${name}/SKILL.md`),
     "tdd/SKILL.md", "blast-radius/SKILL.md", "benchmark-checklist/SKILL.md",

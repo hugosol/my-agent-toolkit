@@ -19,6 +19,7 @@ interface Operation {
 interface Edit {
   name: string;
   reason: string;
+  anchor: string;
   start: number;
   before: string;
   after: string;
@@ -148,7 +149,7 @@ function editsFor(original: string, resource: Resource, operations: readonly Ope
     if (offset === -1) throw new Error(`${label}: find text is not inside the anchor`);
     if (op.anchor.indexOf(before, offset + 1) !== -1) throw new Error(`${label}: ambiguous find inside anchor`);
     if (before === op.replace) throw new Error(`${label}: replacement makes no change`);
-    return { name: op.name, reason: op.reason, start: anchor + offset, before, after: op.replace };
+    return { name: op.name, reason: op.reason, anchor: op.anchor, start: anchor + offset, before, after: op.replace };
   });
   edits.sort((a, b) => a.start - b.start);
   for (let i = 1; i < edits.length; i++) {

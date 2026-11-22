@@ -34,7 +34,10 @@
     "maintenance/files.ts",
     "maintenance/inputs.ts",
     "maintenance/models.ts",
-    "maintenance/reports.ts"
+    "maintenance/reports.ts",
+    "maintenance/upstream-update.ts",
+    "maintenance/mapping-html.ts",
+    "GLOSSARY.md"
   ],
   "references": [
     {"source":"omp.ts","literal":"../adapters/omp","kind":"toolkit","target":"adapters/omp/index.ts"},

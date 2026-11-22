@@ -3,10 +3,10 @@
 从 toolkit 根目录运行以下命令。使用根 `package.json` 指定的 Bun；构建不联网，也不调用 OMP。
 
 ```sh
-bun run pstack:preview
 bun run pstack:build
 bun run pstack:check
 bun run pstack:upstream -- --local "/home/me/src/cursor/plugins"
+bun run pstack:update -- --local "/home/me/src/cursor/plugins"
 bun run test:pstack
 ```
 
@@ -14,16 +14,16 @@ Windows 比较示例：`bun run pstack:upstream -- --local "C:/src/cursor/plugin
 
 | 命令 | 行为 |
 | --- | --- |
-| `pstack:build` | 从固定快照和映射生成清单中的交付文件，更新所有权记录，并清理已过期的生成文件。 |
+| `pstack:build` | 从固定快照和映射生成清单中的交付文件，更新所有权记录，清理已过期的生成文件，并生成 `mapping.html` 差异页面。 |
 | `pstack:check` | 比较预期的生成字节及所有权，报告缺失、变更和过期记录；不改输入、产物或目录。 |
-| `pstack:preview` | 显示每项本地适配的源路径、交付路径、源行号、名称、原因和替换文本；不读交付状态，也不写文件。 |
+| `pstack:update` | 从指定本地 Git 仓库的 HEAD 提交读取清单内上游文件，覆盖快照并同步版本记录；不读取未提交修改、不联网、不更新映射或交付文件。 |
 | `pstack:upstream` | 只读比较已列入清单的快照源文件与指定目录，显示文本差异、二进制大小和 SHA-256，或报告上游缺项；不应用映射，不扫描或同步未列出的资源。 |
 
 退出 `0` 表示成功（对于 `check`/`upstream`，表示无差异）；`1` 表示 `check` 发现交付不一致或 `upstream` 发现基线差异；`2` 表示用法、输入、映射或文件系统错误。构建先验证快照和映射，再发布文件。发布不是整包事务：失败时会列出此前完成的文件效果；先处理错误并检查这些效果，再重跑。构建不会自动回滚先前已完成的操作。
 
 ## 资源与来源
 
-[固定清单](manifest.json) 逐文件记录交付资产；下面的分类同时标明扩展时应使用的来源和许可证。pstack 及 Cursor Team Kit 为同一 [cursor/plugins 固定提交](https://github.com/cursor/plugins/tree/aaeb0ea3a0584995aa8f55ce44c6c5259414b896)，但分别保留各自的上游授权文件；不能用一份授权替代不同来源的记录。
+[固定清单](manifest.json) 逐文件记录交付资产；下面的分类同时标明扩展时应使用的来源和许可证。pstack 及 Cursor Team Kit 来自同一 cursor/plugins 固定提交，当前提交以清单的 `upstream.revision` 为准；两者分别保留各自的上游授权文件，不能用一份授权替代不同来源的记录。
 
 | 类别 | 相对布局与来源 | 读取方式及边界 |
 | --- | --- | --- |
@@ -89,9 +89,29 @@ Windows 机械检查：`bun test tests/pstack/forge-delivery.test.ts`。设置 `
 
 [manifest.json](manifest.json) 记录上游仓库、固定提交和版本，以及每个源文件及其确切交付位置。上游授权保留在[交付许可证](generated/LICENSE)。[待迁移事项](MIGRATION-BACKLOG.md) 不属于当前资源清单。
 
-1. 更换基线时，先用 `pstack:upstream` 对照新版 checkout。把选中的原始字节复制到 `upstream/`，保留相对路径并同步更新清单里的来源版本与资源列表。不要在快照上实施本地适配。
-2. 在 `mappings/` 调整适配；用 `pstack:preview` 单独审阅这些变化。因上游改写而重定位锚点，与有意改变本地行为分开审阅。
-3. **先停止使用同一包的 pstack 会话**，再运行 `pstack:build` 和 `pstack:check`。提交快照、清单、映射、生成文件及生成所有权记录的对应改动，然后新发起会话。本包不提供热加载、跨进程检测或并发发布；未更新时正常并行使用不受限制。
+1. 在本地上游 Git 仓库选择目标 HEAD。可先用 `pstack:upstream -- --local <绝对目录>` 比较工作区文件；注意该只读比较读取工作区，未提交修改不代表 HEAD 内容。
+2. 运行 `bun run pstack:update -- --local <上游仓库根目录的绝对路径>`。命令固定一次 HEAD，读取同一提交内的原始文件字节；工作区未提交修改、上游新增但未登记的文件都不会进入快照。命令不 fetch、不 pull，也不改上游仓库。
+3. 在 `mappings/` 调整适配。因上游改写而重定位锚点，与有意改变本地行为分开审阅；快照本身不承载本地适配。
+4. **先停止使用同一包的 pstack 会话**，再运行 `pstack:build` 和 `pstack:check`。构建成功后打开 `pstack-suite/mapping.html` 审阅差异。提交快照、清单、映射、生成文件及生成所有权记录的对应改动，然后新发起会话。本包不提供热加载、跨进程检测或并发发布；未更新时正常并行使用不受限制。
+
+### 快照清单与版本同步
+
+`manifest.json` 的 `files` 是唯一资源清单：更新命令只读取其中非 `origin: "runtime"` 的 `source`。新增资源必须明确加入清单；不自动扫描、收录或删除未登记资源。登记文件在目标提交缺失或不是普通文件时，更新失败，不跳过。
+
+`manifest.upstream` 是唯一快照基线记录，不另建重复的 revision 文件。更新时保留 `repository`，将 `revision` 更新为完整 HEAD SHA，并从同一提交的 `pstack/.cursor-plugin/plugin.json` 读取版本号，记录为 `pstack <version>`。运行 update 表示授权覆盖所登记快照，即使其本地字节已修改；不覆盖映射、runtime 或 generated。
+
+更新先读取所有源文件与版本信息，并检查目标路径，再写快照，最后写 manifest。它不是整包事务：文件系统在发布途中失败可能留下部分更新；命令退出 2 并报告已完成的文件效果，此时不能把旧版本记录视为整个目录的一致性证明。修复阻塞后从同一目标提交重跑。不要并发更新或构建同一套件。
+
+`delivery-closure.json` 中的来源版本、树摘要、许可证摘要和引用声明属于既有交付闭包审查记录，不是 update 的输入或自动认证结果。更换快照后，发布前必须重新核查并更新这些声明；update 成功不代表许可证、引用闭包或宿主行为已重新验收。
+
+### Mapping HTML
+
+`pstack:build` 自动写出 `pstack-suite/mapping.html`；旧的终端 `pstack:preview` 已移除。页面自包含，无服务器或网络依赖，已加入 gitignore，不是宿主交付资源。
+
+页面展示仓库、版本、完整提交及提交链接；按文件查看固定快照到当前映射结果的差异，以及操作名称、原因与锚点。它复用构建计算出的编辑，不另写替换引擎；原样复制的文件、二进制资源和自有 runtime 分开标注。生成时核对实际交付文件与预期字节，标出缺失或漂移。页面是生成当时的静态报告，之后手改文件不会自动更新页面；实时只读检查仍用 `pstack:check`。
+
+映射失效时构建报错，不猜测修复；HTML 刷新失败也导致构建失败，已完成的交付写入不会自动回滚。旧 HTML 可能仍留在原处，失败后不能把它当成本次成功报告。
+
 
 清单每项的 `source` 默认相对于 `upstream/`，`output` 相对于 `generated/`，可选 `mapping` 相对于 `mappings/`。`origin: "runtime"` 标记由 toolkit 维护的运行时代码，`source` 相对于 `runtime/`；不应用映射，也不计入 `pstack:upstream` 的固定快照比较。路径用 `/`，保留确切大小写。`kind: "text"` 声明 UTF-8 文本，只将 CRLF 转成 LF，原有 BOM、孤立 CR 和文件末尾换行保持原状；`kind: "binary"` 逐字节复制，不允许映射。Git 检出也不对快照或交付文件自动换行转换。
 

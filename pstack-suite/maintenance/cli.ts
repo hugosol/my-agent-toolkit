@@ -3,7 +3,9 @@ import { build, check } from "./delivery";
 import { errorMessage, readFile, writeFile } from "./files";
 import { loadManifest, render } from "./inputs";
 import { bindingsPath, confirmedBindings, modelLedger, modelResources, savedBindings } from "./models";
-import { compareUpstream, preview } from "./reports";
+import { compareUpstream } from "./reports";
+import { updateUpstream } from "./upstream-update";
+import { writeMappingHtml } from "./mapping-html";
 
 const root = dirname(import.meta.dir);
 const effects: string[] = [];
@@ -15,15 +17,16 @@ const help = `pstack resource maintenance (run from the toolkit root)
   bun run pstack:setup -- --confirm <proposal.json> --catalog <omp-models.json>
                                         Save confirmed Suite bindings and generate native personas.
   bun run pstack:setup -- --cancel      Leave settings and generated resources unchanged.
-  bun run pstack:build                  Build resources and rebuild saved Suite personas.
+  bun run pstack:build                  Build resources, saved Suite personas and mapping.html.
   bun run pstack:check                  Check delivery bytes and ownership without writing.
-  bun run pstack:preview                Show named local edits and reasons without writing.
+  bun run pstack:update -- --local <absolute-directory>
+                                        Copy listed sources from local Git HEAD and record its version.
   bun run pstack:upstream -- --local <absolute-directory>
                                         Compare listed sources to a local upstream baseline.
   bun run pstack:build -- --help         Show this help (-h also works on every command).
 
 Examples:
-  bun run pstack:preview
+  bun run pstack:update -- --local "C:/src/cursor/plugins"
   bun run pstack:build
   bun run pstack:check
   bun run pstack:upstream -- --local "C:/src/cursor/plugins"
@@ -44,12 +47,17 @@ function run(): number {
     console.log(help.trimEnd());
     return 0;
   }
-  if (command === "upstream") {
+  if (command === "upstream" || command === "update") {
     const [option, local] = args;
     if (args.length !== 2 || option !== "--local" || !isAbsolute(local) || parse(local).root.length < (process.platform === "win32" ? 3 : 1)) {
-      throw new Error("Pass an absolute upstream directory: bun run pstack:upstream -- --local <absolute-directory>");
+      throw new Error(`Pass an absolute upstream directory: bun run pstack:${command} -- --local <absolute-directory>`);
     }
-    return compareUpstream(root, local, loadManifest(root)) ? 1 : 0;
+    const manifest = loadManifest(root);
+    if (command === "upstream") return compareUpstream(root, local, manifest) ? 1 : 0;
+    updateUpstream(root, local, manifest, effects);
+    console.log(effects.length ? effects.join("\n") : "Snapshot already matches local Git HEAD.");
+    console.log("Review mappings, then run pstack:build and pstack:check; update does not build delivery.");
+    return 0;
   }
 
   if (command === "setup") {
@@ -71,13 +79,10 @@ function run(): number {
     return 0;
   }
 
-  if (command !== "build" && command !== "check" && command !== "preview") throw new Error(`Unknown command ${command}; use --help`);
+  if (command !== "build" && command !== "check") throw new Error(`Unknown command ${command}; use --help`);
   if (args.length) throw new Error(`Unexpected arguments for ${command}; use --help`);
-  const delivery = render(root, loadManifest(root).files);
-  if (command === "preview") {
-    preview(delivery);
-    return 0;
-  }
+  const manifest = loadManifest(root);
+  const delivery = render(root, manifest.files);
   const models = modelResources(delivery, savedBindings(root));
   if (command === "check") {
     const differences = [...check(root, delivery), ...check(root, models, modelLedger)];
@@ -89,6 +94,7 @@ function run(): number {
   } else {
     build(root, delivery, effects);
     build(root, models, effects, modelLedger);
+    writeMappingHtml(root, manifest, delivery, effects);
     console.log(effects.length ? effects.join("\n") : "Generated resources already match.");
   }
   return 0;
@@ -98,6 +104,6 @@ try {
   process.exitCode = run();
 } catch (error) {
   console.error(`pstack: ${errorMessage(error)}`);
-  if (command === "build" || command === "setup") console.error(effects.length ? `File effects before failure:\n${effects.join("\n")}` : "No files changed.");
+  if (command === "build" || command === "setup" || command === "update") console.error(effects.length ? `File effects before failure:\n${effects.join("\n")}` : "No files changed.");
   process.exitCode = 2;
 }
