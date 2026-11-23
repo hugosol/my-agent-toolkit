@@ -1,0 +1,23 @@
+[
+  {
+    "name": "reuse-local-observation-cadence",
+    "reason": "Use the delivered live-session observation cadence without replacing hillclimb's own stopping condition.",
+    "anchor": "   Each iteration ends in a check before the next begins (the **sequence-verifiable-units** principle skill). If the run is unattended, borrow only the wake mechanism from the Autonomous run playbook (`playbooks/autonomous-run.md`), not its stop rule.",
+    "find": "If the run is unattended, borrow only the wake mechanism from the Autonomous run playbook (`playbooks/autonomous-run.md`), not its stop rule.",
+    "replace": "For unattended work, borrow the live-session observation cadence from [Autonomous run](autonomous-run.md), not its stopping condition."
+  },
+  {
+    "name": "resolve-suite-role",
+    "reason": "Remove hard-coded Cursor model names; only use a configured OMP role, per the generated shared rules.",
+    "anchor": "   - Hand the change to a subagent using your configured hillclimb model (default `claude-opus-5-5-xhigh-fast`) with a tight scope. Pick each subagent's reasoning level for the job, per the Subagents section. Supervise and review the diff rather than typing it (the **guard-the-context-window** principle skill). When several independent hypotheses are live, fan them to parallel subagents, each in its own worktree (the **separate-before-serializing-shared-state** principle skill).",
+    "find": "using your configured hillclimb model (default `claude-opus-5-5-xhigh-fast`)",
+    "replace": "using the configured hillclimb role under poteto-mode Subagents"
+  },
+  {
+    "name": "maintain-owned-commit-scope",
+    "reason": "Keep commit ownership while deferring the actual commit interface to the target project.",
+    "anchor": "   - One commit per accepted fix, staging only the files you changed (`git add <files>`, never `-A`). Log the row either way, kept or reverted.",
+    "find": "staging only the files you changed (`git add <files>`, never `-A`)",
+    "replace": "including only the changes owned by the run and following the project’s commit interface"
+  }
+]

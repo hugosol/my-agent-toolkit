@@ -1,0 +1,16 @@
+[
+  {
+    "name": "use-native-decision-design",
+    "reason": "Preserve architecture-first handling of expensive decisions; leave panel availability to the architecture instruction.",
+    "anchor": "- For one-way-door design decisions, run the **architect** skill (it runs **arena**). Skip it for mechanical work whose shape is already concrete. A second arena over a settled design is over-engineering (the **laziness-protocol** principle skill).",
+    "find": "run the **architect** skill (it runs **arena**).",
+    "replace": "read [architect](../architect/SKILL.md) and apply its design and panel guidance."
+  },
+  {
+    "name": "advertise-omp-manual-invocation",
+    "reason": "Use OMP native invocation in skill metadata while preserving the hidden marker and trigger wording.",
+    "anchor": "description: \"Design an auditable playbook when no narrower one fits: a large migration, an ambitious multi-part change, or work a human reviews after stepping away. Scales rigor to the task, runs a hypothesis loop, and logs decisions. Use for /figure-it-out or 'figure it out'.\"",
+    "find": "/figure-it-out",
+    "replace": "/skill:figure-it-out"
+  }
+]

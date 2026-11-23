@@ -12,6 +12,13 @@ framework/.runtime/
 /.scratch/omp-version-acceptance/evidence/
 /.scratch/node-result-approval/evidence/
 /.scratch/pi-suite/evidence/
+/.scratch/pstack-omp-suite/evidence/
 /.scratch/rust-script-bots/evidence/
+/pstack-suite/mapping.html
+/.scratch/pstack-maintenance/evidence/
+/pstack-suite/models.local.json
+/pstack-suite/models-ownership.local.json
+/pstack-suite/generated/agents/
+/pstack-suite/generated/roles.local.json
 *.log
 .idea/

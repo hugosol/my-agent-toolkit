@@ -1,0 +1,15 @@
+[
+  {
+    "name": "replace-cloud-wake-with-live-local-work",
+    "reason": "Use bounded local watches or native tasks during the live session; keep an explicit evidence predicate rather than promising timers or restart recovery.",
+    "anchor": "2. Pick the wake mechanism using Cursor's `/loop` command (a built-in, not a pstack skill). An event to watch (CI, a merge, a ref advancing) gets a watcher subagent that wakes you on the event, with a long time-based heartbeat as fallback. No event gets a fixed-interval heartbeat sized to when the result is worth re-checking. Pick each subagent's reasoning level for the job, per the Subagents section.",
+    "replace": "2. Choose the observation cadence while this OMP session is live. For CI, a merge or a ref advance, run the matching local watcher with a bounded wait, or delegate that bounded observation via native `task` with a confirmed role and exact target. Use its observed result or recheck explicitly at the next live iteration. With no event, recheck directly at an interval justified by the work. The session has no scheduler or guaranteed wake after host exit; checkpoint for explicit pickup."
+  },
+  {
+    "name": "retain-no-question-worker-policy",
+    "reason": "Preserve reversible autonomy and escalation without requiring a Cursor AskQuestion tool.",
+    "anchor": "4. Mid-run discoveries that support the goal are yours. Address broken skills, related bugs, flaky verifiers, review noise, tooling failures, orphaned follow-ups, and fixable drift yourself via poteto-mode. Put out-of-band fixes in their own PR. Do not park reversible work for the human or use `AskQuestion`. Surface only irreversible actions, genuine product or preference calls no experiment can settle, or a real dead end. Keep the predicate as the main drive, and return to it after each side fix.",
+    "find": "Do not park reversible work for the human or use `AskQuestion`.",
+    "replace": "Do not park reversible work for the human or open a blocking question tool."
+  }
+]

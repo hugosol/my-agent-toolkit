@@ -1,0 +1,507 @@
+{
+  "upstream": {
+    "repository": "https://github.com/cursor/plugins",
+    "revision": "aaeb0ea3a0584995aa8f55ce44c6c5259414b896",
+    "version": "pstack 0.15.46"
+  },
+  "files": [
+    {
+      "origin": "runtime",
+      "source": "task-model-facts.ts",
+      "output": "task-model-facts.ts",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/LICENSE",
+      "output": "LICENSE",
+      "kind": "text"
+    },
+    {
+      "source": "cursor-team-kit/skills/control-cli/SKILL.md",
+      "output": "skills/control-cli/SKILL.md",
+      "kind": "text",
+      "mapping": "control-cli.json"
+    },
+    {
+      "source": "cursor-team-kit/skills/control-ui/SKILL.md",
+      "output": "skills/control-ui/SKILL.md",
+      "kind": "text",
+      "mapping": "control-ui.json"
+    },
+    {
+      "source": "cursor-team-kit/skills/deslop/SKILL.md",
+      "output": "skills/deslop/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "cursor-team-kit/LICENSE",
+      "output": "licenses/cursor-team-kit.txt",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/agents/comment-sicko.md",
+      "output": "persona-templates/comment-sicko.md",
+      "kind": "text",
+      "mapping": "persona-comment-sicko.json"
+    },
+    {
+      "source": "pstack/agents/poteto-agent.md",
+      "output": "persona-templates/poteto-agent.md",
+      "kind": "text",
+      "mapping": "persona-poteto-agent.json"
+    },
+    {
+      "source": "pstack/skills/architect/SKILL.md",
+      "output": "skills/architect/SKILL.md",
+      "kind": "text",
+      "mapping": "architect.json"
+    },
+    {
+      "source": "pstack/skills/arena/SKILL.md",
+      "output": "skills/arena/SKILL.md",
+      "kind": "text",
+      "mapping": "arena.json"
+    },
+    {
+      "source": "pstack/skills/interrogate/SKILL.md",
+      "output": "skills/interrogate/SKILL.md",
+      "kind": "text",
+      "mapping": "interrogate.json"
+    },
+    {
+      "source": "pstack/skills/swarm/SKILL.md",
+      "output": "skills/swarm/SKILL.md",
+      "kind": "text",
+      "mapping": "swarm.json"
+    },
+    {
+      "source": "pstack/skills/benchmark-checklist/SKILL.md",
+      "output": "skills/benchmark-checklist/SKILL.md",
+      "kind": "text",
+      "mapping": "benchmark-checklist.json"
+    },
+    {
+      "source": "pstack/skills/blast-radius/SKILL.md",
+      "output": "skills/blast-radius/SKILL.md",
+      "kind": "text",
+      "mapping": "blast-radius.json"
+    },
+    {
+      "source": "pstack/skills/bro/SKILL.md",
+      "output": "skills/bro/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/create-formal-verification-skill/SKILL.md",
+      "output": "skills/create-formal-verification-skill/SKILL.md",
+      "kind": "text",
+      "mapping": "create-formal-verification-skill.json"
+    },
+    {
+      "source": "pstack/skills/create-verification-skill/references/feature-map-example/README.md",
+      "output": "skills/create-verification-skill/references/feature-map-example/README.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/create-verification-skill/references/feature-map-example/create-note.md",
+      "output": "skills/create-verification-skill/references/feature-map-example/create-note.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/create-verification-skill/references/feature-map-example/search.md",
+      "output": "skills/create-verification-skill/references/feature-map-example/search.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/create-verification-skill/SKILL.md",
+      "output": "skills/create-verification-skill/SKILL.md",
+      "kind": "text",
+      "mapping": "create-verification-skill.json"
+    },
+    {
+      "source": "pstack/skills/figure-it-out/SKILL.md",
+      "output": "skills/figure-it-out/SKILL.md",
+      "kind": "text",
+      "mapping": "figure-it-out.json"
+    },
+    {
+      "source": "pstack/skills/how/SKILL.md",
+      "output": "skills/how/SKILL.md",
+      "kind": "text",
+      "mapping": "how.json"
+    },
+    {
+      "source": "pstack/skills/in-your-own-words/SKILL.md",
+      "output": "skills/in-your-own-words/SKILL.md",
+      "kind": "text",
+      "mapping": "in-your-own-words.json"
+    },
+    {
+      "source": "pstack/skills/ketchup-video/SKILL.md",
+      "output": "skills/ketchup-video/SKILL.md",
+      "kind": "text",
+      "mapping": "ketchup-video.json"
+    },
+    {
+      "source": "pstack/skills/ketchup/SKILL.md",
+      "output": "skills/ketchup/SKILL.md",
+      "kind": "text",
+      "mapping": "ketchup.json"
+    },
+    {
+      "source": "pstack/skills/maintain-formal-verification-skill/SKILL.md",
+      "output": "skills/maintain-formal-verification-skill/SKILL.md",
+      "kind": "text",
+      "mapping": "maintain-formal-verification-skill.json"
+    },
+    {
+      "source": "pstack/skills/maintain-verification-skill/SKILL.md",
+      "output": "skills/maintain-verification-skill/SKILL.md",
+      "kind": "text",
+      "mapping": "maintain-verification-skill.json"
+    },
+    {
+      "source": "pstack/skills/no-comments/SKILL.md",
+      "output": "skills/no-comments/SKILL.md",
+      "kind": "text",
+      "mapping": "no-comments.json"
+    },
+    {
+      "source": "pstack/skills/poteto-help/SKILL.md",
+      "output": "skills/poteto-help/SKILL.md",
+      "kind": "text",
+      "mapping": "poteto-help.json"
+    },
+    {
+      "source": "pstack/skills/poteto-mode/playbooks/bug-fix.md",
+      "output": "skills/poteto-mode/playbooks/bug-fix.md",
+      "kind": "text",
+      "mapping": "playbook-bug-fix.json"
+    },
+    {
+      "source": "pstack/skills/poteto-mode/playbooks/feature.md",
+      "output": "skills/poteto-mode/playbooks/feature.md",
+      "kind": "text",
+      "mapping": "playbook-feature.json"
+    },
+    {
+      "source": "pstack/skills/poteto-mode/playbooks/hillclimb.md",
+      "output": "skills/poteto-mode/playbooks/hillclimb.md",
+      "kind": "text",
+      "mapping": "playbook-hillclimb.json"
+    },
+    {
+      "source": "pstack/skills/poteto-mode/playbooks/investigation.md",
+      "output": "skills/poteto-mode/playbooks/investigation.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/poteto-mode/playbooks/multi-phase-plan.md",
+      "output": "skills/poteto-mode/playbooks/multi-phase-plan.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/poteto-mode/playbooks/opening-a-pr.md",
+      "output": "skills/poteto-mode/playbooks/opening-a-pr.md",
+      "kind": "text",
+      "mapping": "playbook-opening-a-pr.json"
+    },
+    { "source": "pstack/skills/poteto-mode/playbooks/babysit.md", "output": "skills/poteto-mode/playbooks/babysit.md", "kind": "text", "mapping": "playbook-babysit.json" },
+    { "source": "pstack/skills/poteto-mode/playbooks/shipping.md", "output": "skills/poteto-mode/playbooks/shipping.md", "kind": "text", "mapping": "playbook-shipping.json" },
+    { "source": "pstack/skills/poteto-mode/playbooks/autonomous-run.md", "output": "skills/poteto-mode/playbooks/autonomous-run.md", "kind": "text", "mapping": "playbook-autonomous-run.json" },
+    { "source": "pstack/skills/poteto-mode/playbooks/autopilot-full.md", "output": "skills/poteto-mode/playbooks/autopilot-full.md", "kind": "text", "mapping": "playbook-autopilot-full.json" },
+    { "source": "pstack/skills/poteto-mode/playbooks/autopilot-stack.md", "output": "skills/poteto-mode/playbooks/autopilot-stack.md", "kind": "text", "mapping": "playbook-autopilot-stack.json" },
+    { "source": "pstack/skills/poteto-mode/references/bugbot-triage.md", "output": "skills/poteto-mode/references/bugbot-triage.md", "kind": "text" },
+    { "source": "pstack/skills/poteto-mode/scripts/watch-pr/cli.ts", "output": "skills/poteto-mode/scripts/watch-pr/cli.ts", "kind": "text", "mapping": "watch-pr-cli.json" },
+    { "source": "pstack/skills/poteto-mode/scripts/watch-pr/github.ts", "output": "skills/poteto-mode/scripts/watch-pr/github.ts", "kind": "text", "mapping": "watch-pr-github.json" },
+    { "source": "pstack/skills/poteto-mode/scripts/watch-pr/policy.ts", "output": "skills/poteto-mode/scripts/watch-pr/policy.ts", "kind": "text", "mapping": "watch-pr-policy.json" },
+    { "source": "pstack/skills/poteto-mode/scripts/watch-pr/render.ts", "output": "skills/poteto-mode/scripts/watch-pr/render.ts", "kind": "text", "mapping": "watch-pr-render.json" },
+    { "source": "pstack/skills/poteto-mode/scripts/watch-pr/types.ts", "output": "skills/poteto-mode/scripts/watch-pr/types.ts", "kind": "text", "mapping": "watch-pr-types.json" },
+    {
+      "source": "pstack/skills/poteto-mode/playbooks/pause-safely.md",
+      "output": "skills/poteto-mode/playbooks/pause-safely.md",
+      "kind": "text",
+      "mapping": "playbook-pause-safely.json"
+    },
+    {
+      "source": "pstack/skills/poteto-mode/playbooks/perf-issue.md",
+      "output": "skills/poteto-mode/playbooks/perf-issue.md",
+      "kind": "text",
+      "mapping": "playbook-perf-issue.json"
+    },
+    {
+      "source": "pstack/skills/poteto-mode/playbooks/prototype.md",
+      "output": "skills/poteto-mode/playbooks/prototype.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/poteto-mode/playbooks/refactoring.md",
+      "output": "skills/poteto-mode/playbooks/refactoring.md",
+      "kind": "text",
+      "mapping": "playbook-refactoring.json"
+    },
+    {
+      "source": "pstack/skills/poteto-mode/playbooks/runtime-forensics.md",
+      "output": "skills/poteto-mode/playbooks/runtime-forensics.md",
+      "kind": "text",
+      "mapping": "playbook-runtime-forensics.json"
+    },
+    {
+      "source": "pstack/skills/poteto-mode/playbooks/session-pickup.md",
+      "output": "skills/poteto-mode/playbooks/session-pickup.md",
+      "kind": "text",
+      "mapping": "playbook-session-pickup.json"
+    },
+    {
+      "source": "pstack/skills/poteto-mode/playbooks/trace-forensics.md",
+      "output": "skills/poteto-mode/playbooks/trace-forensics.md",
+      "kind": "text",
+      "mapping": "playbook-trace-forensics.json"
+    },
+    {
+      "source": "pstack/skills/poteto-mode/playbooks/visual-parity.md",
+      "output": "skills/poteto-mode/playbooks/visual-parity.md",
+      "kind": "text",
+      "mapping": "playbook-visual-parity.json"
+    },
+    {
+      "source": "pstack/skills/poteto-mode/playbooks/worktree-cleanup.md",
+      "output": "skills/poteto-mode/playbooks/worktree-cleanup.md",
+      "kind": "text",
+      "mapping": "playbook-worktree-cleanup.json"
+    },
+    {
+      "source": "pstack/skills/poteto-mode/scripts/worktree-audit.sh",
+      "output": "skills/poteto-mode/scripts/worktree-audit.sh",
+      "kind": "text",
+      "mapping": "worktree-audit.json"
+    },
+    {
+      "source": "pstack/skills/poteto-mode/SKILL.md",
+      "output": "skills/poteto-mode/SKILL.md",
+      "kind": "text",
+      "mapping": "poteto-mode.json"
+    },
+    {
+      "source": "pstack/skills/poteto-mode/worker.md",
+      "output": "skills/poteto-mode/worker.md",
+      "kind": "text",
+      "mapping": "poteto-mode-worker.json"
+    },
+    {
+      "source": "pstack/skills/principle-attack-the-premise/SKILL.md",
+      "output": "skills/principle-attack-the-premise/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-boundary-discipline/SKILL.md",
+      "output": "skills/principle-boundary-discipline/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-build-the-lever/SKILL.md",
+      "output": "skills/principle-build-the-lever/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-encode-lessons-in-structure/SKILL.md",
+      "output": "skills/principle-encode-lessons-in-structure/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-exhaust-the-design-space/SKILL.md",
+      "output": "skills/principle-exhaust-the-design-space/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-experience-first/SKILL.md",
+      "output": "skills/principle-experience-first/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-explain-the-number/SKILL.md",
+      "output": "skills/principle-explain-the-number/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-fix-root-causes/SKILL.md",
+      "output": "skills/principle-fix-root-causes/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-foundational-thinking/SKILL.md",
+      "output": "skills/principle-foundational-thinking/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-guard-the-context-window/SKILL.md",
+      "output": "skills/principle-guard-the-context-window/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-laziness-protocol/SKILL.md",
+      "output": "skills/principle-laziness-protocol/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-make-operations-idempotent/SKILL.md",
+      "output": "skills/principle-make-operations-idempotent/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-migrate-callers-then-delete-legacy-apis/SKILL.md",
+      "output": "skills/principle-migrate-callers-then-delete-legacy-apis/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-minimize-reader-load/SKILL.md",
+      "output": "skills/principle-minimize-reader-load/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-model-the-domain/SKILL.md",
+      "output": "skills/principle-model-the-domain/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-never-block-on-the-human/SKILL.md",
+      "output": "skills/principle-never-block-on-the-human/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-outcome-oriented-execution/SKILL.md",
+      "output": "skills/principle-outcome-oriented-execution/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-prove-it-works/SKILL.md",
+      "output": "skills/principle-prove-it-works/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-redesign-from-first-principles/SKILL.md",
+      "output": "skills/principle-redesign-from-first-principles/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-separate-before-serializing-shared-state/SKILL.md",
+      "output": "skills/principle-separate-before-serializing-shared-state/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-sequence-verifiable-units/SKILL.md",
+      "output": "skills/principle-sequence-verifiable-units/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-subtract-before-you-add/SKILL.md",
+      "output": "skills/principle-subtract-before-you-add/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-test-behavior-not-implementation/SKILL.md",
+      "output": "skills/principle-test-behavior-not-implementation/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/principle-type-system-discipline/SKILL.md",
+      "output": "skills/principle-type-system-discipline/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/setup-pstack/SKILL.md",
+      "output": "skills/setup-pstack/SKILL.md",
+      "kind": "text",
+      "mapping": "setup-pstack.json"
+    },
+    {
+      "source": "pstack/skills/sharpen/SKILL.md",
+      "output": "skills/sharpen/SKILL.md",
+      "kind": "text",
+      "mapping": "sharpen.json"
+    },
+    {
+      "source": "pstack/skills/show-me-your-work/references/decision-log-template.tsv",
+      "output": "skills/show-me-your-work/references/decision-log-template.tsv",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/show-me-your-work/scripts/log.sh",
+      "output": "skills/show-me-your-work/scripts/log.sh",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/show-me-your-work/SKILL.md",
+      "output": "skills/show-me-your-work/SKILL.md",
+      "kind": "text",
+      "mapping": "show-me-your-work.json"
+    },
+    {
+      "source": "pstack/skills/tdd/SKILL.md",
+      "output": "skills/tdd/SKILL.md",
+      "kind": "text",
+      "mapping": "tdd.json"
+    },
+    {
+      "source": "pstack/skills/teach/SKILL.md",
+      "output": "skills/teach/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/technical-writing/SKILL.md",
+      "output": "skills/technical-writing/SKILL.md",
+      "kind": "text",
+      "mapping": "technical-writing.json"
+    },
+    {
+      "source": "pstack/skills/typescript-best-practices/references/patterns.md",
+      "output": "skills/typescript-best-practices/references/patterns.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/typescript-best-practices/SKILL.md",
+      "output": "skills/typescript-best-practices/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/unslop/SKILL.md",
+      "output": "skills/unslop/SKILL.md",
+      "kind": "text"
+    },
+    {
+      "source": "pstack/skills/why/SKILL.md",
+      "output": "skills/why/SKILL.md",
+      "kind": "text"
+    },
+    { "source": "pstack/skills/statechart/SKILL.md", "output": "skills/statechart/SKILL.md", "kind": "text", "mapping": "statechart-skill.json" },
+    { "source": "pstack/skills/statechart/references/render.md", "output": "skills/statechart/references/render.md", "kind": "text" },
+    { "source": "pstack/skills/statechart/scripts/backends/cfg.ts", "output": "skills/statechart/scripts/backends/cfg.ts", "kind": "text" },
+    { "source": "pstack/skills/statechart/scripts/backends/mermaid.ts", "output": "skills/statechart/scripts/backends/mermaid.ts", "kind": "text" },
+    { "source": "pstack/skills/statechart/scripts/backends/plain-text.ts", "output": "skills/statechart/scripts/backends/plain-text.ts", "kind": "text" },
+    { "source": "pstack/skills/statechart/scripts/backends/report.ts", "output": "skills/statechart/scripts/backends/report.ts", "kind": "text" },
+    { "source": "pstack/skills/statechart/scripts/frontends/config.ts", "output": "skills/statechart/scripts/frontends/config.ts", "kind": "text" },
+    { "source": "pstack/skills/statechart/scripts/frontends/dot.ts", "output": "skills/statechart/scripts/frontends/dot.ts", "kind": "text" },
+    { "source": "pstack/skills/statechart/scripts/frontends/marks.ts", "output": "skills/statechart/scripts/frontends/marks.ts", "kind": "text" },
+    { "source": "pstack/skills/statechart/scripts/frontends/messages.ts", "output": "skills/statechart/scripts/frontends/messages.ts", "kind": "text" },
+    { "source": "pstack/skills/statechart/scripts/frontends/spec.ts", "output": "skills/statechart/scripts/frontends/spec.ts", "kind": "text" },
+    { "source": "pstack/skills/statechart/scripts/frontends/trace.ts", "output": "skills/statechart/scripts/frontends/trace.ts", "kind": "text" },
+    { "source": "pstack/skills/statechart/scripts/frontends/value.ts", "output": "skills/statechart/scripts/frontends/value.ts", "kind": "text" },
+    { "source": "pstack/skills/statechart/scripts/frontends/verdict.ts", "output": "skills/statechart/scripts/frontends/verdict.ts", "kind": "text" },
+    { "source": "pstack/skills/statechart/scripts/frontends/view.ts", "output": "skills/statechart/scripts/frontends/view.ts", "kind": "text" },
+    { "source": "pstack/skills/statechart/scripts/ir.ts", "output": "skills/statechart/scripts/ir.ts", "kind": "text" },
+    { "source": "pstack/skills/statechart/scripts/janitor.ts", "output": "skills/statechart/scripts/janitor.ts", "kind": "text" },
+    { "source": "pstack/skills/statechart/scripts/kill.ts", "output": "skills/statechart/scripts/kill.ts", "kind": "text" },
+    { "source": "pstack/skills/statechart/scripts/passes/annotate.ts", "output": "skills/statechart/scripts/passes/annotate.ts", "kind": "text" },
+    { "source": "pstack/skills/statechart/scripts/passes/label.ts", "output": "skills/statechart/scripts/passes/label.ts", "kind": "text" },
+    { "source": "pstack/skills/statechart/scripts/passes/lift.ts", "output": "skills/statechart/scripts/passes/lift.ts", "kind": "text" },
+    { "source": "pstack/skills/statechart/scripts/passes/loop-check.ts", "output": "skills/statechart/scripts/passes/loop-check.ts", "kind": "text" },
+    { "source": "pstack/skills/statechart/scripts/passes/paths.ts", "output": "skills/statechart/scripts/passes/paths.ts", "kind": "text" },
+    { "source": "pstack/skills/statechart/scripts/passes/reach.ts", "output": "skills/statechart/scripts/passes/reach.ts", "kind": "text" },
+    { "source": "pstack/skills/statechart/scripts/passes/region-check.ts", "output": "skills/statechart/scripts/passes/region-check.ts", "kind": "text" },
+    { "source": "pstack/skills/statechart/scripts/passes/regions.ts", "output": "skills/statechart/scripts/passes/regions.ts", "kind": "text" },
+    { "source": "pstack/skills/statechart/scripts/pipeline.ts", "output": "skills/statechart/scripts/pipeline.ts", "kind": "text" },
+    { "source": "pstack/skills/statechart/scripts/run.ts", "output": "skills/statechart/scripts/run.ts", "kind": "text", "mapping": "statechart-run.json" },
+    { "source": "pstack/skills/statechart/scripts/statechart.ts", "output": "skills/statechart/scripts/statechart.ts", "kind": "text", "mapping": "statechart-cli.json" },
+    { "source": "pstack/skills/statechart/scripts/worker.ts", "output": "skills/statechart/scripts/worker.ts", "kind": "text" }
+  ]
+}

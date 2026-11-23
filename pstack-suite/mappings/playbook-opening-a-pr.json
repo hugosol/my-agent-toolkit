@@ -1,0 +1,15 @@
+[
+  {
+    "name": "use-loaded-deslop-method",
+    "reason": "Preserve the pre-commit review without routing through a Cursor plugin command.",
+    "anchor": "Work from a git worktree off trunk, and keep unrelated work out of it. Rebase into small, landable commits. Run `/deslop` from `cursor-team-kit` over the diff before commit.",
+    "find": "Run `/deslop` from `cursor-team-kit` over the diff before commit.",
+    "replace": "If the suite includes the deslop skill, read it and apply it to the diff before commit; if absent, report the missing review method."
+  },
+  {
+    "name": "respect-review-only-methods",
+    "reason": "Keep read-only investigation and local prototypes independent of delivery side effects.",
+    "anchor": "Invoked at the end of every other playbook.",
+    "replace": "Use at the end of a delivery playbook that calls for publishing a PR, or early when the selected autopilot playbook says so. Opening a PR is not a merge or deploy grant. Follow the task scope and existing project and forge requirements; read-only work does not publish."
+  }
+]

@@ -1,0 +1,30 @@
+[
+  {
+    "name": "use-evidence-based-visuals",
+    "reason": "Preserve the visual explanation without relying on an undeclared visualization command.",
+    "anchor": "A visual is a picture: a screenshot, a video, a Mermaid diagram, a chart or diagram from `/visualize`, or a generated image. A Markdown table is not a visual, even with before and after columns.",
+    "find": ", a chart or diagram from `/visualize`",
+    "replace": ", a chart based on recorded measurements"
+  },
+  {
+    "name": "chart-only-measured-numbers",
+    "reason": "Charts describe existing artifacts rather than relying on a foreign command.",
+    "anchor": "Embed screenshots and videos inline when the change is visible, not only as links. If a visible change has none, mark its summary line \"No screenshot yet,\" and say there what changed on screen. Draw diagrams and charts from facts you have: a Mermaid diagram for how things connect and a `/visualize` chart for numbers. Never invent a number, and never draw or generate a picture of a screen you did not capture. Link only artifacts that exist.",
+    "find": "a `/visualize` chart for numbers",
+    "replace": "a chart for measured numbers"
+  },
+  {
+    "name": "mention-manual-native-ketchup",
+    "reason": "Preserve the last-user-message boundary with OMP native invocation.",
+    "anchor": "Catch the user up on what changed in this chat since the last message they wrote before `/ketchup`, and help them understand each change, not only where it stands. Then lay out every call waiting on them so they can make it from your reply alone. Notifications and subagent results are not their messages. Assume the user remembers their last message and nothing after it.",
+    "find": "last message they wrote before `/ketchup`",
+    "replace": "last message before they invoked this skill"
+  },
+  {
+    "name": "advertise-omp-manual-invocation",
+    "reason": "Use OMP native invocation in skill metadata while preserving the hidden marker and trigger wording.",
+    "anchor": "description: \"Catch the user up on what changed in this chat since their last message, in plain words and small visuals. List every item waiting on them with what they need to decide it from the reply alone. Use for /ketchup.\"",
+    "find": "/ketchup",
+    "replace": "/skill:ketchup"
+  }
+]

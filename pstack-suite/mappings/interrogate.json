@@ -1,0 +1,14 @@
+[
+  {
+    "name": "run-native-adversarial-review",
+    "reason": "Reuse the native arena dispatch method with confirmed interrogate seats and capture the exact uncommitted scope independently.",
+    "anchor": "Run Phase A steps 3 and 4 and Phase B of the **arena** skill, with four changes. Read the `interrogate reviewers` line in place of `arena runners`. Copy the scope's uncommitted changes into each worktree. Spawn each adversary as `generalPurpose`. In place of the arena task and rationale, give each adversary the scope, the intent, and this brief:",
+    "replace": "Select independent `interrogate-reviewer-<seat>` personas using the [native panel dispatch](../arena/SKILL.md#native-panel-dispatch) procedure. As in arena, launch the briefs together, but give each adversary a separate writable worktree with the same base SHA and scoped uncommitted changes before dispatch. Verify that starting scope and tell each reviewer the exact intent, scope, and this brief:"
+  },
+  {
+    "name": "report-interrogate-panel-gaps",
+    "reason": "Keep dropped findings distinct from unavailable, substituted, or unverified reviewers.",
+    "anchor": "- **Dropped**: for each adversary, the count of dropped findings and why.",
+    "replace": "- **Dropped**: for each adversary, the count of dropped findings and why.\n- **Panel**: expected and resolved model/provider for any substitution, missing reviewers, and vendor diversity only where confirmed. An empty proven result is not the same as an unrun review."
+  }
+]

@@ -44,6 +44,15 @@ persisted yet. `targetId` is an opaque correlation, not a claimed Pane or Termin
 must independently bind it to the live target in the selected host instance and validate the
 publishing process (`pid`, a number). Each event carries the same tuple; HTTP arrivals may reorder.
 
+The App launcher's host binding is separate from these native observations. The launcher can read
+core's existing `HC_TERMINAL_ID` and `HC_TERMINAL_SOCKET` inside its newly created terminal and
+publish that source through its own invocation-bound receipt. The panel must match the actual
+terminal, core instance, and owner process before using that endpoint. These launch events do not
+supply a socket path or authorize changing an existing binding. No extension change or forced
+connect-bot loading is needed to acquire host evidence for a native-default Resume. Native
+conversation confirmation still requires the existing identity evidence; a host receipt is not a
+`launch_identity` or `launch_ready` event.
+
 - `launch_identity` identifies the first owner of this managed invocation.
 - `launch_ready` adds the framework's `session_ready` observation for that same owner.
 - `launch_ended` withdraws the evidence when that owner transfers or ends. In-flight publications

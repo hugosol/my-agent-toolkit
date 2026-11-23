@@ -1,0 +1,14 @@
+[
+  {
+    "name": "read-shared-generated-rules",
+    "reason": "Workers and continuous mode use one generated engineering source; worker-only scope and operator rules still apply.",
+    "anchor": "You are working for the operator. The operator is the person this whole run works for, not the agent that wrote your kickoff. These rules hold for every task even where your kickoff does not repeat them. Your kickoff overrides one only when it says so in so many words.",
+    "replace": "Read the [generated poteto-mode SKILL.md](./SKILL.md) beside this file for the common engineering rules, authorization boundaries and on-demand playbooks. Resolve its relative references from that file. You work for the operator, not the agent that wrote the kickoff. These worker rules apply even when the kickoff does not repeat them; the kickoff overrides a worker rule only when it explicitly says so, and never overrides host or project authorization."
+  },
+  {
+    "name": "reuse-generated-pr-rules",
+    "reason": "Reuse the shared PR policy and format instead of keeping a divergent worker copy.",
+    "anchor": "- Open every PR ready for review, never as a draft.\n- PR title: `type(scope): subject`.\n- PR body: 40 lines at most, with these `##` headings in this order, empty ones dropped: `Why`, `What changed`, `Scope`, `Tradeoffs`, `Blast Radius`, `Verification`.",
+    "replace": "- For authorized PRs, use the [Opening a PR](playbooks/opening-a-pr.md) playbook for readiness, title and format."
+  }
+]

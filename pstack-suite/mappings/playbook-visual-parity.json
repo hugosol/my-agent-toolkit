@@ -1,0 +1,9 @@
+[
+  {
+    "name": "repeat-on-real-matching-surface",
+    "reason": "Preserve pixel-diff convergence without a Cursor scheduler or false pass at a blocker.",
+    "anchor": "4. Verify each component against its baseline via image diff on the matching surface via the control skill. A nonzero diff is a fail. Investigate the pixel delta. `/loop` per component until the diff is zero.",
+    "find": "`/loop` per component until the diff is zero.",
+    "replace": "Repeat per component until the diff is zero; if the real driver or baseline is unavailable, report parity unverified."
+  }
+]

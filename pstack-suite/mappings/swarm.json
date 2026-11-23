@@ -1,0 +1,20 @@
+[
+  {
+    "name": "bind-swarm-seats",
+    "reason": "Use explicitly confirmed OMP role names instead of Cursor slug defaults or automatic model substitution.",
+    "anchor": "3. Pick the worker model from the `swarm workers` line in `~/.cursor/rules/pstack-models.mdc`. If the rule or that line is missing, use `claude-opus-5-5-high-fast`. For `auto` or `inherit-parent`, omit `model` so the workers run on the parent model. If the Task tool rejects a slug, use the default and say so. If it rejects the default, use the closest valid slug of the same family from its error message. For a model race, name each arm's model up front. Pick each subagent's reasoning level for the job, per the Subagents section of the **poteto-mode** skill.",
+    "replace": "3. Read [native panel dispatch](../arena/SKILL.md#native-panel-dispatch). Select confirmed `swarm-worker-<seat>` personas from the roster and record each arm’s expected model and thinking. A named model race needs a confirmed seat for each model; repeated arms can use the same seat with different task names. If a required seat is missing, report it or complete setup before the run."
+  },
+  {
+    "name": "dispatch-swarm-with-native-task",
+    "reason": "Replace Cursor cloud launch and pushed-branch arguments with native local task and explicit Git baselines.",
+    "anchor": "Spawn all N workers in one message with `subagent_type: generalPurpose`, `environment: \"cloud\"`, `run_in_background: true`, and the step 3 model, left unset for `auto` or `inherit-parent`. Use `environment: \"local\"` only when the worker needs access to something on the user's computer.\n\nWhen a worker must start from a non-default pushed branch, pass `cloud_base_branch`.",
+    "replace": "Launch all eligible arms together through native `task`. Give each item its own name, confirmed `agent`, and, when it writes, its own isolated checkout or writable directory. For a particular baseline, resolve the Git ref to a SHA and verify each checkout started from that SHA."
+  },
+  {
+    "name": "report-swarm-model-deviations",
+    "reason": "Keep a missing model or panel arm visible in the consolidated coverage and race report.",
+    "anchor": "Return one consolidated in-chat report with a result table, issue one-liners, gaps or dropouts, and the race rule when used.",
+    "replace": "Return one consolidated in-chat report with a result table, issue one-liners, gaps or dropouts, and the race rule when used. Identify each affected arm’s expected and actual model/provider, or mark the actual model unknown. A substituted arm does not count as a successful run of the requested model."
+  }
+]

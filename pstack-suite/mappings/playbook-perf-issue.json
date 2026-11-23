@@ -1,0 +1,9 @@
+[
+  {
+    "name": "resolve-suite-role",
+    "reason": "Remove hard-coded Cursor model names; only use a configured OMP role, per the generated shared rules.",
+    "anchor": "3. Plan the fix from the trace. If it crosses a function boundary, `architect` first. Delegate implementation to a subagent using your configured perf-issue model (default `claude-opus-5-5-xhigh-fast`). Pick each subagent's reasoning level for the job, per the Subagents section. Review the diff. Capture a post-fix trace.",
+    "find": "using your configured perf-issue model (default `claude-opus-5-5-xhigh-fast`)",
+    "replace": "using the configured perf-issue role under poteto-mode Subagents"
+  }
+]

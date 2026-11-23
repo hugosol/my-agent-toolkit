@@ -1,0 +1,26 @@
+[
+  {
+    "name": "name-native-invocation",
+    "reason": "Expose the hidden method through the native OMP command.",
+    "anchor": "# Blast radius",
+    "replace": "# Blast radius\n\nManual entry: `/skill:blast-radius`."
+  },
+  {
+    "name": "link-companion-methods",
+    "reason": "Make the existing companion methods readable from the delivered source directory.",
+    "anchor": "Companion to `how` and `why`.",
+    "replace": "Companion to [how](../how/SKILL.md) and [why](../why/SKILL.md)."
+  },
+  {
+    "name": "require-available-arena-panel",
+    "reason": "Preserve independent panel evidence without promising an unconfigured native workflow or roles.",
+    "anchor": "For a big or wide change, run it as an `arena`. Ask more than one model the same question and merge the answers.",
+    "replace": "For a big or wide change, use the arena workflow when its OMP roles are configured. Ask more than one model the same question and merge the answers. If the panel is unavailable, report that part of the evidence as missing."
+  },
+  {
+    "name": "link-unslop-method",
+    "reason": "Resolve the delivered editing method from the current skill directory.",
+    "anchor": "Write it through `unslop`,",
+    "replace": "Write it through [unslop](../unslop/SKILL.md),"
+  }
+]

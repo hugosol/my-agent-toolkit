@@ -1,0 +1,51 @@
+[
+  {
+    "name": "state-report-and-fetch-boundaries",
+    "reason": "Distinguish report-only output from Git fetch writes and unsupported chat history lookup.",
+    "anchor": "# Read-only worktree prune audit. Classifies every git worktree by size, merge\n# state, uncommitted work, remote/PR state, and the most recent chat that\n# operated in it. Emits a table sorted by size with a suggested bucket. Never\n# deletes anything; deletion stays a human-gated step in the playbook.\n#\n# Usage: worktree-audit.sh [-b|--base <ref>] [repo-path]",
+    "replace": "# Report linked Git worktrees by size, merge state, uncommitted work, and\n# remote/PR state. Emits a table sorted by size with advisory buckets. Never\n# removes worktrees or branches. An origin base triggers a best-effort fetch,\n# which can update the tracking ref, FETCH_HEAD, and Git objects.\n# LAST_CHAT is not discovered; verify active use separately.\n#\n# Usage: bash worktree-audit.sh [-b|--base <ref>] [--no-pr] [repo-path]\n#   --no-pr skips the optional origin/gh PR lookup (requires jq)."
+  },
+  {
+    "name": "validate-cli-and-allow-skipping-forge",
+    "reason": "Provide an explicit Git-only audit and reject malformed invocations before fetching.",
+    "anchor": "set -u\n\nbase=\"\"\nwhile [ $# -gt 0 ]; do\n\tcase \"$1\" in\n\t-b|--base) [ $# -ge 2 ] || { echo \"error: $1 needs a ref\" >&2; exit 2; }; base=\"$2\"; shift 2 ;;\n\t-h|--help) sed -n '2,/^set -u/p' \"$0\" | sed '$d; s/^# \\{0,1\\}//'; exit 0 ;;\n\t-*) echo \"error: unknown option: $1\" >&2; exit 2 ;;\n\t*) break ;;\n\tesac\ndone",
+    "replace": "set -uo pipefail\n\nbase=\"\"\nlookup_pr=yes\nwhile [ $# -gt 0 ]; do\n\tcase \"$1\" in\n\t-b|--base) [[ $# -ge 2 && -n $2 && $2 != -* ]] || { echo \"error: $1 needs a ref\" >&2; exit 2; }; base=\"$2\"; shift 2 ;;\n\t--no-pr) lookup_pr=no; shift ;;\n\t-h|--help) sed -n '2,/^set -u/p' \"$0\" | sed '$d; s/^# \\{0,1\\}//'; exit 0 ;;\n\t--) shift; break ;;\n\t-*) echo \"error: unknown option: $1\" >&2; exit 2 ;;\n\t*) break ;;\n\tesac\ndone\n[ $# -le 1 ] || { echo 'error: expected at most one repository path' >&2; exit 2; }"
+  },
+  {
+    "name": "keep-complete-worktree-paths",
+    "reason": "Decode Git's NUL-delimited worktree records without splitting paths containing spaces or unescaping Git quotes.",
+    "anchor": "# Main worktree is the first entry; everything else is a candidate.\nmain_wt=$(git worktree list --porcelain | awk '/^worktree /{print $2; exit}')",
+    "replace": "# Main worktree is the first record. Pass all other paths through intact.\nmapfile -d '' -t worktrees < <(git worktree list --porcelain -z)\nwait \"$!\" || exit 1"
+  },
+  {
+    "name": "fetch-only-base-not-tags-or-submodules",
+    "reason": "Keep the best-effort base refresh without also fetching tags or recursing into submodules.",
+    "anchor": "case \"$base\" in\norigin/*) git fetch origin \"+refs/heads/${base#origin/}:refs/remotes/$base\" --quiet 2>/dev/null",
+    "find": "git fetch origin \"+refs/heads/${base#origin/}:refs/remotes/$base\" --quiet",
+    "replace": "git fetch --quiet --no-tags --no-recurse-submodules origin \"+refs/heads/${base#origin/}:refs/remotes/$base\""
+  },
+  {
+    "name": "keep-optional-pr-results-in-memory",
+    "reason": "Retain optional PR lookups without leaking a scratch file; report unavailable lookup without treating it as evidence of no open PR.",
+    "anchor": "# GNU coreutils (Linux, Homebrew gnubin) reads `stat -f` as file system status\n# and `date -r` as a file, so pick the stat and date flags once.\nif stat -c %Y / >/dev/null 2>&1; then\n\tstat_fmt=(-c '%Y %n'); fmt_day() { date -d \"@$1\" '+%Y-%m-%d'; }\nelse\n\tstat_fmt=(-f '%m %N'); fmt_day() { date -r \"$1\" '+%Y-%m-%d'; }\nfi\n\n# PR state by branch, fetched once as [{number, state, head}] with a lowercase\n# state. Origin when its CLI can read this repo's PRs, otherwise gh. Empty when\n# neither can.\nprs=$(mktemp)\nif command -v origin >/dev/null 2>&1 \\\n\t&& raw=$(origin pr list --author \"@me\" --state all --limit 1000 \\\n\t\t--json number,status,headRef 2>/dev/null); then\n\tprintf '%s' \"$raw\" | jq '[.[] | {number, state: .status, head: .headRef}]' > \"$prs\" 2>/dev/null\nelif raw=$(gh pr list --author \"@me\" --state all --limit 1000 \\\n\t--json number,state,headRefName 2>/dev/null); then\n\tprintf '%s' \"$raw\" | jq '[.[] | {number, state: (.state | ascii_downcase), head: .headRefName}]' > \"$prs\" 2>/dev/null\nfi\n[ -s \"$prs\" ] || echo \"[]\" > \"$prs\"\n\n# Transcripts dir: ~/.cursor/projects/<slugified-repo-path>/agent-transcripts.\nslug=$(printf '%s' \"$main_wt\" | sed 's#^/##; s#/#-#g')\ntranscripts=\"$HOME/.cursor/projects/$slug/agent-transcripts\"",
+    "replace": "# Optional forge metadata. A missing tool, auth or result is not proof of no PR.\nprs=''\nif [ \"$lookup_pr\" = yes ]; then\n\tif command -v jq >/dev/null 2>&1; then\n\t\tif raw=$(origin pr list --author \"@me\" --state all --limit 1000 \\\n\t\t\t--json number,status,headRef 2>/dev/null); then\n\t\t\tprs=$(jq -ce '[.[] | {number, state: (.status | ascii_downcase), head: .headRef}]' <<<\"$raw\" 2>/dev/null) || prs=''\n\t\telif raw=$(gh pr list --author \"@me\" --state all --limit 1000 \\\n\t\t\t--json number,state,headRefName,isDraft 2>/dev/null); then\n\t\t\tprs=$(jq -ce '[.[] | {number, state: (if .isDraft and .state == \"OPEN\" then \"draft\" else .state | ascii_downcase end), head: .headRefName}]' <<<\"$raw\" 2>/dev/null) || prs=''\n\t\tfi\n\tfi\n\t[ -n \"$prs\" ] || echo 'warn: PR lookup unavailable; verify PRs separately' >&2\nfi"
+  },
+  {
+    "name": "fail-on-unreadable-worktree",
+    "reason": "A missing or unreadable worktree must not be reported as clean, or produce a successful audit with an incomplete table.",
+    "anchor": "git worktree list --porcelain | awk '/^worktree /{print $2}' | while read -r wt; do\n\t[ \"$wt\" = \"$main_wt\" ] && continue\n\n\tsize=$(du -sh \"$wt\" 2>/dev/null | awk '{print $1}')\n\thead=$(git -C \"$wt\" rev-parse HEAD 2>/dev/null)\n\thead_ts=$(git -C \"$wt\" log -1 --format='%ct' HEAD 2>/dev/null || echo 0)",
+    "replace": "for entry in \"${worktrees[@]:1}\"; do\n\t[[ $entry == 'worktree '* ]] || continue\n\twt=${entry#worktree }\n\n\tsize=$(du -sh -- \"$wt\" | cut -f1) || exit 1\n\thead=$(git -C \"$wt\" rev-parse --verify HEAD) || exit 1\n\thead_ts=$(git -C \"$wt\" log -1 --format='%ct' HEAD) || exit 1"
+  },
+  {
+    "name": "distinguish-git-errors-from-audit-states",
+    "reason": "Only a successful status command can classify a worktree as clean; do not refresh the index just to report.",
+    "anchor": "\tgit merge-base --is-ancestor \"$head\" \"$base\" 2>/dev/null && merged=YES || merged=no\n\n\t# Distinguish real WIP (tracked edits) from disposable untracked scratch.\n\tporcelain=$(git -C \"$wt\" status --porcelain 2>/dev/null)",
+    "replace": "\tif git merge-base --is-ancestor \"$head\" \"$base\"; then merged=YES\n\telif [ \"$?\" -eq 1 ]; then merged=no\n\telse exit 1; fi\n\n\t# Distinguish tracked WIP from untracked scratch without refreshing the index.\n\tporcelain=$(git --no-optional-locks -C \"$wt\" status --porcelain --untracked-files=normal) || exit 1"
+  },
+  {
+    "name": "report-without-discovering-chat-history",
+    "reason": "Chat history discovery is deferred; retain safety buckets for WIP and PRs without implying absent chat use.",
+    "anchor": "\tpr=$([ -n \"$branch\" ] && jq -r --arg b \"$branch\" \\\n\t\t'.[] | select(.head==$b) | \"#\\(.number)/\\(.state)\"' \"$prs\" 2>/dev/null | head -1)\n\t[ -z \"$pr\" ] && pr=\"-\"\n\n\t# Most recent chat whose transcript operated in this worktree. Match path\n\t# followed by \"/\" or a quote so glint-482 does not match glint-482-r37.\n\tlast=\"-\"; last_ts=0\n\tif [ -d \"$transcripts\" ]; then\n\t\tf=$(rg -l -e \"${wt}/\" -e \"${wt}\\\"\" \"$transcripts\" 2>/dev/null \\\n\t\t\t| xargs stat \"${stat_fmt[@]}\" 2>/dev/null | sort -rn | head -1)\n\t\tif [ -n \"$f\" ]; then last_ts=$(echo \"$f\" | awk '{print $1}')\n\t\t\tlast=$(fmt_day \"$last_ts\" 2>/dev/null); fi\n\tfi\n\trecent=$([ \"$last_ts\" -gt 0 ] 2>/dev/null && [ $(( (now - last_ts) / 86400 )) -le 4 ] && echo yes || echo no)\n\n\tcase \"$dirty\" in wip:*) bucket=hold-wip ;; *)\n\t\tcase \"$pr\" in */open|*/draft) bucket=hold-open-pr ;; *)\n\t\t\tif [ \"$recent\" = yes ]; then bucket=verify-recent-chat\n\t\t\telif [ \"$merged\" = YES ] || [ \"$pr\" != \"-\" ]; then bucket=safe\n\t\t\telse bucket=review; fi ;;\n\t\tesac ;;\n\tesac\n\n\tprintf \"%s\\t%s\\t%s\\t%s\\t%s\\t%s\\t%s\\t%s\\t%s\\n\" \\\n\t\t\"$size\" \"$age\" \"$merged\" \"$dirty\" \"$remote\" \"$pr\" \"$last\" \"$bucket\" \"$wt\"\ndone | sort -t$'\\t' -k1,1 -rh\n\nrm -f \"$prs\"",
+    "replace": "\tpr=-\n\tif [ -n \"$branch\" ] && [ -n \"$prs\" ]; then\n\t\tpr=$(jq -r --arg b \"$branch\" '[.[] | select(.head==$b)] | sort_by(.state != \"open\" and .state != \"draft\") | first | if . then \"#\\(.number)/\\(.state)\" else \"-\" end' <<<\"$prs\") || exit 1\n\tfi\n\n\tcase \"$dirty\" in wip:*) bucket=hold-wip ;; *)\n\t\tcase \"$pr\" in */open|*/draft) bucket=hold-open-pr ;; *)\n\t\t\tif [ \"$merged\" = YES ] || [ \"$pr\" != \"-\" ]; then bucket=safe\n\t\t\telse bucket=review; fi ;;\n\t\tesac ;;\n\tesac\n\n\t# Preserve the TSV shape for Unix paths containing literal control characters.\n\twt=${wt//$'\\t'/\\\\t}; wt=${wt//$'\\n'/\\\\n}; wt=${wt//$'\\r'/\\\\r}\n\tprintf \"%s\\t%s\\t%s\\t%s\\t%s\\t%s\\t-\\t%s\\t%s\\n\" \\\n\t\t\"$size\" \"$age\" \"$merged\" \"$dirty\" \"$remote\" \"$pr\" \"$bucket\" \"$wt\"\ndone | sort -t$'\\t' -k1,1 -rh"
+  }
+]

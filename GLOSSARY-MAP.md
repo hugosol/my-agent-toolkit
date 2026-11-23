@@ -10,6 +10,8 @@
 
 - [workflow-chat](./extensions/workflow-chat/GLOSSARY.md): manager-chat and node-chat serve the manager and node-executor roles of a Map Run; Run and handoff completion are distinct from a framework Round or Chat exit.
 
+- [pstack-suite](./pstack-suite/GLOSSARY.md): distinguishes the upstream snapshot and its baseline, the resource manifest, local adaptations, and delivered resources.
+
 ## Relationships
 
 - **Framework → extensions**: each extension's shared logic crosses the framework's small public interfaces (`defineExtension`, `ompAdapter`) and reads, but does not own, the framework's State and contribution vocabulary.

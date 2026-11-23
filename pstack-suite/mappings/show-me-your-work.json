@@ -1,0 +1,42 @@
+[
+  {
+    "name": "log-with-available-mechanism",
+    "reason": "Use the bundled append helper explicitly with Bash, including Git Bash on Windows.",
+    "anchor": "Use the helper `scripts/log.sh <logfile> <phase> <decision> <why> <evidence> <result>`. It stamps `ts`, writes the header on first use, strips stray tabs/newlines, and prefixes any cell starting with `=`, `+`, `-`, or `@` with a single quote. A bare `printf` appending a row works too, but mind those same bytes if cells come from generated or user-supplied text.",
+    "replace": "From the directory containing this skill, run `bash scripts/log.sh <logfile> <phase> <decision> <why> <evidence> <result>` (Git Bash on Windows). From another directory, use the helper’s absolute path. It creates missing parent directories, appends the header to an empty or new file, and appends a UTC-stamped row. It replaces tabs, LF and CR inside cells with spaces and prefixes cells starting with `=`, `+`, `-`, or `@` with a single quote. Use one writer at a time for this append-only log."
+  },
+  {
+    "name": "name-current-run-audit",
+    "reason": "The review uses current and explicitly supplied evidence; automatic transcript lookup is not a prerequisite.",
+    "anchor": "## Audit the log against the transcript",
+    "replace": "## Audit the log against current-run evidence"
+  },
+  {
+    "name": "audit-current-run-evidence",
+    "reason": "Use explicit own-run evidence instead of Cursor transcript discovery; never fabricate unavailable history.",
+    "anchor": "At the end of the run, before handing back, check the log told the truth. Read this run's transcript under the active workspace's `agent-transcripts/` directory (the system prompt names the path). Don't glob across `~/.cursor/projects/*/`. That reads unrelated private chats. Walk this run's rows against what actually happened. Each stretch of them begins at one of this run's `start` rows, or at the first row if this run created the log, and ends at the next `start` row of another run:",
+    "find": "Read this run's transcript under the active workspace's `agent-transcripts/` directory (the system prompt names the path). Don't glob across `~/.cursor/projects/*/`. That reads unrelated private chats.",
+    "replace": "Use the current OMP conversation, the explicitly provided record of this run, and its linked artifacts. If some of this run is unavailable, disclose the audit gap. Do not search unrelated sessions."
+  },
+  {
+    "name": "report-missing-cross-model-review",
+    "reason": "Require an actual independent reviewer and do not substitute a self-review.",
+    "anchor": "Before handing back, spawn a subagent on another vendor's model than the one that did the work. Self-review is not a substitute. The subagent reads the audit trail and the run's transcript, then flags what the user should pay attention to. Not a redo of the work, a scan for what's suboptimal or risky. Pick each subagent's reasoning level for the job, per the Subagents section of the **poteto-mode** skill.",
+    "find": "Before handing back, spawn a subagent on another vendor's model than the one that did the work. Self-review is not a substitute. The subagent reads the audit trail and the run's transcript, then flags what the user should pay attention to.",
+    "replace": "Before handing back, use an OMP task with a loaded reviewer on another vendor from the one that did the work. Give it only this run’s log and available evidence to flag what the user should pay attention to. If there is no such reviewer, mark the independent review unavailable. Self-review is not a substitute."
+  },
+  {
+    "name": "show-attention-with-actual-review",
+    "reason": "Keep the reviewer identity and findings distinct from an unavailable review.",
+    "anchor": "Every reply for a run that produced a trail ends with an \"Attention\" section. Lead with the reviewer's model on its own line (`reviewed by <model>`), then list each flag pointing to specific rows or moments. \"No flags\" is a valid value. The model name is not.",
+    "find": "The model name is not.",
+    "replace": "Give the actual resolved model, or say the independent review was unavailable."
+  },
+  {
+    "name": "advertise-omp-manual-invocation",
+    "reason": "Use OMP native invocation in skill metadata while preserving the hidden marker and trigger wording.",
+    "anchor": "description: \"Keep a reviewable decision trail for long-running or unattended work: a TSV log with one row per decision (what, why, evidence, result). Local by default; commit it when a reviewer needs the trail to trust the result. Use for /show-me-your-work, autonomous or multi-phase runs, or work a human reviews after stepping away.\"",
+    "find": "/show-me-your-work",
+    "replace": "/skill:show-me-your-work"
+  }
+]
