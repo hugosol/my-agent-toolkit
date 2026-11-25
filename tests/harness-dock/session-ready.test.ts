@@ -92,10 +92,8 @@ function startTerminal(root: RunRoot, command: readonly string[], harness: "omp"
 	};
 }
 
-// S2/S3, P17. A real later startup hook holds OMP after its semantic start. A binding
-// equating that start with ready trips the closed-gate assertion; one waiting in the hook
-// deadlocks before the gate can open. An actual submission after release proves the path remains intact.
-test("installed OMP reports session ready only after its native composer startup gate opens", async () => {
+// A later native hook stays pending: readiness invites an input attempt without waiting for bootstrap.
+test("installed OMP reports session ready while a later startup hook is pending", async () => {
 	const root = createRunRoot("omp-session-ready");
 	const capture = startCaptureServer({ dir: root.captureDir });
 	const messages: PanelMessage[] = [];
@@ -111,29 +109,27 @@ test("installed OMP reports session ready only after its native composer startup
 		writeAgentSettings(root.agentDir, { "startup.setupWizard": false, "startup.checkUpdate": false, "composer.predictions": false });
 		const run = startTerminal(root, [omp.path, ...omp.argvPrefix], "omp", [
 			"-e", path.join(import.meta.dir, "fixtures/extension-root/provider.ts"), "-e", connectBot,
-			"--model", "dock-gateway/dock-model", "--no-lsp", "--no-title", "--no-tools",
+			"--model", "dock-gateway/dock-model", "--no-lsp", "--no-title",
 		], { DOCK_CAPTURE_BASE_URL: capture.baseUrl, HERDR_BOT_LAUNCH_ID: launch.launchId, HERDR_BOT_LAUNCH_TARGET_ID: launch.targetId });
 		try {
-			const native = await run.until("closed native gate", () => run.observations().find(event => event.kind === "native-gate-closed"));
+			const native = await run.until("held native startup", () => run.observations().find(event => event.kind === "native-start-held"));
 			if (!native.session) throw new Error("The OMP observation carried no native session ID");
 			const identity = await run.until("production launch identity", () => messages.find(message => message.kind === "launch_identity"));
 			const expected = { ...launch, agentType: "omp", pid: run.pid, cwd: root.workDir, ...(native.file ? { sessionFile: native.file } : {}) };
 			expect(identity).toEqual({ kind: "launch_identity", sessionId: native.session, data: expected });
-			// The native startup hook stays latched by the file while multiple real adapter samples run.
-			await Bun.sleep(150);
-			expect(messages.map(message => message.kind)).toEqual(["launch_identity"]);
-			const before = run.observations();
-			expect(before.map(event => event.kind)).toEqual(["session_start", "native-gate-closed"]);
-			expect(capture.requests()).toHaveLength(0);
-			writeFileSync(path.join(root.captureDir, RELEASE), "release");
 			const ready = await run.until("public session_ready", () => run.observations().find(event => event.kind === "session_ready"));
-			expect(ready.session).toBe(before[0]!.session);
+			expect(ready.session).toBe(native.session);
+			expect(run.observations().some(event => event.kind === "native-hook-released")).toBe(false);
+			expect(capture.requests()).toHaveLength(0);
 			const reported = await run.until("production launch ready", () => messages.find(message => message.kind === "launch_ready"));
 			expect(reported).toEqual({ kind: "launch_ready", sessionId: native.session, data: expected });
-			expect(run.observations().map(event => event.kind)).toEqual(["session_start", "native-gate-closed", "native-hook-released", "session_ready"]);
+			writeFileSync(path.join(root.captureDir, RELEASE), "release");
+			await run.until("released native startup", () => run.observations().find(event => event.kind === "native-hook-released"));
 			run.type("/dock-ready-input omp-readiness-native-input\r");
 			const input = await run.until("native command admission", () => run.observations().find(event => event.kind === "native-command-input"));
 			expect(input.session).toBe("omp-readiness-native-input");
+			expect(run.observations().filter(event => event.kind === "session_ready")).toEqual([ready]);
+			expect(messages.filter(message => message.kind === "launch_ready")).toEqual([reported]);
 		} finally {
 			const exit = await run.close();
 			console.log(`ready dock: OMP ${omp.version} (${omp.path}); owned process exited ${exit}; controlled loopback provider`);

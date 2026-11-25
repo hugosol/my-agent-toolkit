@@ -63,7 +63,6 @@ const SNAPSHOT = /[^\s()]+\([^()]*\)/;
 /** The theme a terminal host draws with, as escape sequences a terminal really interprets. */
 export const ANSI_THEME: WidgetTheme = {
 	fg: (color, text) => `\u001B[${ANSI_CODES[color] ?? "0"}m${text}\u001B[0m`,
-	getThinkingBorderColor: level => text => `\u001B[${ANSICodeForLevel(level)}m${text}\u001B[0m`,
 };
 
 /** The SGR code each theme token is drawn with, as this CLI's own colours are approximated. */
@@ -74,20 +73,15 @@ const ANSI_CODES: Record<string, string> = {
 	success: "32",
 	warning: "33",
 	error: "31",
+	thinkingLow: "32",
+	thinkingMedium: "36",
 	thinkingHigh: "35",
 	thinkingXhigh: "36",
+	thinkingMax: "36",
 	syntaxType: "36",
 	syntaxNumber: "33",
 	syntaxKeyword: "35",
 };
-
-/** The SGR code one thinking level is drawn with, from the level's own name. */
-function ANSICodeForLevel(level: string): string {
-	if (level === "high") return "35";
-	if (level === "medium") return "36";
-	if (level === "low") return "32";
-	return "0";
-}
 
 /** The escape sequences taken back off, so a drawn line can be measured in the columns it occupies. */
 export function withoutAnsi(text: string): string {

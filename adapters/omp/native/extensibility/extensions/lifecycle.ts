@@ -29,7 +29,6 @@ import { defineAdapterDelivery } from "../../../../../framework/runtime/adapter-
 import type { HarnessPort } from "../../../../../framework/runtime/port";
 import { feedbackTransport, noticeTransport } from "./feedback";
 import { markerTransport } from "./marker";
-import { observeComposerGate } from "./ui";
 import type { OmpExtensionApi, OmpSessionContext } from "./types";
 import { statePayloadsOf, type OmpStateEntry } from "../../session/session-manager";
 import { sessionFactsOf, startReasonOf } from "./session-facts";
@@ -89,7 +88,7 @@ export function observeSessionEvents(
 	handler: Parameters<HarnessPort["onSession"]>[0],
 	observeReady = false,
 ): void {
-	let gateTimer: ReturnType<typeof setTimeout> | undefined;
+	let readyTimer: ReturnType<typeof setTimeout> | undefined;
 	// The owner key this binding currently serves — the session it started and has not ended.
 	let activeOwnerKey: string | undefined;
 	// Keep facts, never an old native context: effects always use the delivery's current context.
@@ -184,8 +183,8 @@ export function observeSessionEvents(
 
 		const endedOwnerKey = activeOwnerKey;
 		const endedSession = activeSession;
-		clearTimeout(gateTimer);
-		gateTimer = undefined;
+		clearTimeout(readyTimer);
+		readyTimer = undefined;
 		activeOwnerKey = owner.key;
 		if (endedOwnerKey !== undefined) {
 			deliver({ kind: "session_end", reason: "transferred" }, { kind: "owner", key: endedOwnerKey }, ctx, endedSession);
@@ -193,17 +192,14 @@ export function observeSessionEvents(
 		deliver({ kind: "session_start", reason }, owner, ctx);
 		if (!observeReady || !ctx.hasUI || ctx.mode !== "tui") return;
 		const sessionId = activeSession?.sessionId;
-		const gateIsOpen = observeComposerGate(ctx.ui);
-		if (sessionId === undefined || gateIsOpen === undefined) return;
+		if (sessionId === undefined) return;
 
-		// Never await this from a native start hook: the host opens the gate after it returns.
-		const checkGate = (): void => {
-			gateTimer = undefined;
+		// An opportunity to attempt input, not proof that bootstrap or later dialogs have finished.
+		readyTimer = setTimeout(() => {
+			readyTimer = undefined;
 			if (activeOwnerKey !== owner.key || ctx.sessionManager.getSessionId() !== sessionId) return;
-			if (gateIsOpen()) deliver({ kind: "session_ready" }, owner, ctx);
-			else gateTimer = setTimeout(checkGate, 50).unref();
-		};
-		gateTimer = setTimeout(checkGate, 0).unref();
+			deliver({ kind: "session_ready" }, owner, ctx);
+		}, 0).unref();
 	};
 
 	// One semantic event per native session event, and no other native event reaches this hook: a
@@ -224,8 +220,8 @@ export function observeSessionEvents(
 		startOf(startReasonOf(event), ctx);
 	});
 	pi.on("session_shutdown", (_event, ctx) => {
-		clearTimeout(gateTimer);
-		gateTimer = undefined;
+		clearTimeout(readyTimer);
+		readyTimer = undefined;
 		// Only a session this binding started can end: the owner that is ending is the one this
 		// binding serves, whatever the shutting-down session resolves now.
 		const endedOwnerKey = activeOwnerKey;

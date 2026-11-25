@@ -209,7 +209,6 @@ interface ControlledHost {
  */
 const MARKING_THEME: WidgetTheme = {
 	fg: (color, text) => `\u00AB${color}:${text}\u00BB`,
-	getThinkingBorderColor: level => text => `\u00ABeffort:${level}:${text}\u00BB`,
 };
 
 /** The marks that theme writes taken back off, so the columns a terminal really draws can be read. */

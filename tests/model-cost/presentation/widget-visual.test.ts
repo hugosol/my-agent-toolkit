@@ -119,8 +119,6 @@ interface Draw {
 	readonly lines: readonly string[];
 	/** Every themed piece of those lines, in the order they were drawn. */
 	readonly painted: readonly Paint[];
-	/** Every thinking level an effort value was drawn by, in the order they were asked for. */
-	readonly levels: readonly string[];
 }
 
 /** One widget frame a controlled session was handed; a cleared widget carries no content. */
@@ -149,20 +147,14 @@ function last<T>(items: readonly T[] | undefined): T | undefined {
 }
 
 /** The theme a drawing host hands the frontend: every colour it is asked for is recorded, not created. */
-function recordingTheme(): { readonly theme: WidgetTheme; readonly painted: Paint[]; readonly levels: string[] } {
+function recordingTheme(): { readonly theme: WidgetTheme; readonly painted: Paint[] } {
 	const painted: Paint[] = [];
-	const levels: string[] = [];
 	return {
 		painted,
-		levels,
 		theme: {
 			fg: (color, text) => {
 				painted.push({ color, text });
 				return `\u00AB${color}:${text}\u00BB`;
-			},
-			getThinkingBorderColor: level => text => {
-				levels.push(level);
-				return `\u00ABeffort:${level}:${text}\u00BB`;
 			},
 		},
 	};
@@ -224,7 +216,7 @@ function controlledHost(options: {
 				undefined,
 				capture.theme,
 			);
-			return { lines: component.render(width), painted: capture.painted, levels: capture.levels };
+			return { lines: component.render(width), painted: capture.painted };
 		},
 		plain() {
 			const content = lastFrame()?.content;
@@ -543,11 +535,11 @@ describe("the host's own drawing form decides what the frontend hands it (P67)",
 		// the period's accrued bar rides the same account line.
 		const drawn = bound.host.draw(200);
 		expect(drawn.lines[0]).toBe(
-			`\u{1F525}  \u00ABdim:[${EMPTY_BAR}   0% (1,000/450.0K)]\u00BB  Effort: \u00ABeffort:high:high\u00BB  \u23F3 Accrued: \u00A50.05 [\u00ABsuccess:\u258F\u00BB]`,
+			`\u{1F525}  \u00ABdim:[${EMPTY_BAR}   0% (1,000/450.0K)]\u00BB  Effort: \u00ABthinkingHigh:high\u00BB  \u23F3 Accrued: \u00A50.05 [\u00ABsuccess:\u258F\u00BB]`,
 		);
-		expect(drawn.levels).toEqual(["high"]);
 		expect(drawn.painted).toEqual([
 			{ color: "dim", text: `[${EMPTY_BAR}   0% (1,000/450.0K)]` },
+			{ color: "thinkingHigh", text: "high" },
 			{ color: "success", text: "\u258F" },
 		]);
 	});
@@ -604,7 +596,7 @@ describe("the fixed-budget bar keeps the four bands it always warned in (P67)", 
 	test("the Codex pair is drawn against its own fixed budget (P67)", async () => {
 		const codex = await bindVisual({ provider: CODEX, model: "gpt-6-luna", viewed: codexFacts() });
 		expect(codex.host.draw(200).lines[0]).toBe(
-			`\u00ABdim:[${EMPTY_BAR}   0% (1,000/272.0K)]\u00BB  Effort: \u00ABeffort:high:high\u00BB  \u23F3 Accrued: \u00A50.05 [\u00ABsuccess:\u258F\u00BB]`,
+			`\u00ABdim:[${EMPTY_BAR}   0% (1,000/272.0K)]\u00BB  Effort: \u00ABthinkingHigh:high\u00BB  \u23F3 Accrued: \u00A50.05 [\u00ABsuccess:\u258F\u00BB]`,
 		);
 	});
 
@@ -727,7 +719,7 @@ describe("the DeepSeek account facts stay visible beside another current channel
 		bound.host.publish({ ...mainFacts(), provider: "go-provider", model: "model-alpha" });
 		const tokenOnly = bound.host.draw(200).lines;
 		expect(tokenOnly[0]).toContain("\u00ABdim:[");
-		expect(tokenOnly[0]).toContain("Effort: \u00ABeffort:high:high\u00BB");
+		expect(tokenOnly[0]).toContain("Effort: \u00ABthinkingHigh:high\u00BB");
 		expect(tokenOnly[0]).toContain("\u{1F4B0} Balance: \u00ABtext:\u00A5110.00\u00BB");
 		expect(tokenOnly[0]).toContain("\u23F3 Accrued: \u00A50.05");
 
@@ -823,6 +815,25 @@ describe("the accrued bar keeps the old eighth-block shapes and palette (P67)", 
 });
 
 describe("only the effort value is coloured, by its own level (P67)", () => {
+	test("a theme with only fg renders every effort level without the removed helper", async () => {
+		const bound = await bindVisual();
+		const levels = [
+			["off", "thinkingOff"],
+			["minimal", "thinkingMinimal"],
+			["low", "thinkingLow"],
+			["medium", "thinkingMedium"],
+			["high", "thinkingHigh"],
+			["xhigh", "thinkingXhigh"],
+			["max", "thinkingMax"],
+			["unknown", "thinkingOff"],
+		] as const;
+		for (const [effort, color] of levels) {
+			bound.host.publish({ ...mainFacts(), effort });
+			const drawn = bound.host.draw(200);
+			expect(drawn.lines[0]).toContain(`Effort: \u00AB${color}:${effort}\u00BB`);
+		}
+	});
+
 	test("the label stays plain and the value is drawn with the level's own colour", async () => {
 		const bound = await bindVisual({ viewed: { ...mainFacts(), effort: "medium" } });
 		const drawn = bound.host.draw(200);
@@ -830,18 +841,18 @@ describe("only the effort value is coloured, by its own level (P67)", () => {
 		// The value alone is coloured: the label is drawn as the line's own text, and the colour is the
 		// level's, not a fixed token.
 		expect(drawn.lines[0]).toBe(
-			`\u{1F525}  \u00ABdim:[${EMPTY_BAR}   0% (1,000/450.0K)]\u00BB  Effort: \u00ABeffort:medium:medium\u00BB  \u23F3 Accrued: \u00A50.05 [\u00ABsuccess:\u258F\u00BB]`,
+			`\u{1F525}  \u00ABdim:[${EMPTY_BAR}   0% (1,000/450.0K)]\u00BB  Effort: \u00ABthinkingMedium:medium\u00BB  \u23F3 Accrued: \u00A50.05 [\u00ABsuccess:\u258F\u00BB]`,
 		);
-		expect(drawn.levels).toEqual(["medium"]);
+		expect(drawn.painted).toContainEqual({ color: "thinkingMedium", text: "medium" });
 	});
 
 	test("an effort the host never reported is a question mark, coloured as the level it is (P67)", async () => {
 		const bound = await bindVisual({ viewed: { ...mainFacts(), effort: undefined } });
 		const drawn = bound.host.draw(200);
 		expect(drawn.lines[0]).toBe(
-			`\u{1F525}  \u00ABdim:[${EMPTY_BAR}   0% (1,000/450.0K)]\u00BB  Effort: \u00ABeffort:?:?\u00BB  \u23F3 Accrued: \u00A50.05 [\u00ABsuccess:\u258F\u00BB]`,
+			`\u{1F525}  \u00ABdim:[${EMPTY_BAR}   0% (1,000/450.0K)]\u00BB  Effort: \u00ABthinkingOff:?\u00BB  \u23F3 Accrued: \u00A50.05 [\u00ABsuccess:\u258F\u00BB]`,
 		);
-		expect(drawn.levels).toEqual(["?"]);
+		expect(drawn.painted).toContainEqual({ color: "thinkingOff", text: "?" });
 	});
 });
 

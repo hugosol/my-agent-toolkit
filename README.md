@@ -27,6 +27,11 @@ The supported harness is one **exact** version combination, not a range:
 upgrade rules live in
 [`framework/docs/harness-support.md`](framework/docs/harness-support.md).
 
+OMP interactive `session_ready` is an invitation to attempt input. The adapter emits it on the next
+event-loop task after a session start, only while the same owner and session remain active. It does
+not inspect private editor state or guarantee that startup hooks and modal dialogs have finished.
+Hosts retain their input-blocking checks and retry only explicitly rejected, unwritten submissions.
+
 ## Quick start
 
 Use Bun **1.4.4** for repository checks, as selected by `package.json`. This test runtime
