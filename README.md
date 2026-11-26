@@ -22,9 +22,8 @@ and [connect-bot](extensions/connect-bot/README.md#startup-modes) state the laun
 mode's initial choice, and the difference between loading, a startup target and actual State. The
 architecture decision is [ADR 0002](docs/adr/0002-semantic-extension-framework.md).
 
-The supported harness is one **exact** version combination, not a range:
-`@oh-my-pi/pi-coding-agent@18.5.0` + Windows x64 + Bun 1.4.2. The record, its evidence and the
-upgrade rules live in
+Formal harness support is distinct from the locally installed version selected for checks.
+The authoritative supported combinations, evidence limits and promotion rules live in
 [`framework/docs/harness-support.md`](framework/docs/harness-support.md).
 
 OMP interactive `session_ready` is an invitation to attempt input. The adapter emits it on the next
@@ -35,7 +34,7 @@ Hosts retain their input-blocking checks and retry only explicitly rejected, unw
 ## Quick start
 
 Use Bun **1.4.4** for repository checks, as selected by `package.json`. This test runtime
-is separate from the historical supported combination above; see the
+is separate from the historical support baseline; see the
 [testing conventions](docs/agents/testing.md#test-runtime).
 
 ```bash
@@ -116,8 +115,7 @@ The table below locates supporting references and evidence; role-specific readin
 | [`framework/docs/harness-baseline.json`](framework/docs/harness-baseline.json) | Historical first-release baseline: revision anchor, acceptance artifact and dependency lockfiles. It does not select the current test executable. | You need the machine-checkable correspondence behind the supported row; refresh it after a deliberate dependency or version change. |
 | [`framework/docs/framework-capabilities.md`](framework/docs/framework-capabilities.md) | Index of the framework's public authoring surface: what every `defineExtension` / `ompAdapter` parameter means, each symbol cited to source. | You are writing or reading framework code and need to find an entry point. |
 | [`docs/adr/0002-semantic-extension-framework.md`](docs/adr/0002-semantic-extension-framework.md) | The architecture decision for the semantic extension framework. | You are changing the framework's shape or asking why it is built this way. |
-| [`framework/docs/semantic-extension-framework-backlog.md`](framework/docs/semantic-extension-framework-backlog.md) | Deferred work and open research gaps. | You are picking up work outside the first-release scope. |
-| [`framework/docs/research/prompt-injection-research.md`](framework/docs/research/prompt-injection-research.md) | Source references and exercised scenarios behind the contribution contract. | You are changing contribution timing, placement, retention or role. |
+| [`framework/docs/capability-interface-architecture.md`](framework/docs/capability-interface-architecture.md) | Layering decisions and unresolved architecture questions. | You are changing capability ownership or evaluating an unsupported requirement. |
 | [`GLOSSARY-MAP.md`](GLOSSARY-MAP.md) | The multi-context domain vocabulary map: points at one `GLOSSARY.md` per context. | You are naming things in code, tests or docs. |
 | [`AGENTS.md`](AGENTS.md) | Repository working agreement for agents. | You are an agent starting work here. |
 | [`tests/framework/`](tests/framework) | The framework capability suite (C1–C15). The upgrade regression alarm. | You changed the framework, or you are verifying a candidate version. |
@@ -126,7 +124,7 @@ The table below locates supporting references and evidence; role-specific readin
 | [`tests/harness-dock/`](tests/harness-dock) | The shared dock (local installed harness, isolated controlled session, capture) and its self-test. | You are writing a test that drives a real session. |
 | [`scripts/omp-dock-tests.ts`](scripts/omp-dock-tests.ts) | Local installed OMP acceptance with shared Pi/OMP version floors, complete test-report checks and scoped source/environment evidence. | You are verifying the developer-selected installed harness. |
 | [`scripts/capture-codex-outbound.ts`](scripts/capture-codex-outbound.ts) | Prepared layer-2 capture of a real `openai-codex` round trip; needs a human-supplied credential. | You are recording the real-credential role evidence. |
-| [`scripts/pi-provider-account-read.ts`](scripts/pi-provider-account-read.ts) | The real account-side reading for the pi migration: runs the loaded extension on the real host against a real provider account and publishes a desensitized, timestamped reading beside what the host drew. Reads the machine's own credential, prints it only as a fingerprint, makes no model request, and reports a missing credential as a blocker. | You are recording or replaying the account-side acceptance evidence (P53). |
+| [`scripts/pi-provider-account-read.ts`](scripts/pi-provider-account-read.ts) | The real account-side reading for the pi migration: runs the loaded extension on the real host against a real provider account and publishes a desensitized, timestamped reading beside what the host drew. Reads the machine's own credential, prints it only as a fingerprint, makes no model request, and reports a missing credential as a blocker. | You are recording or replaying the account-side acceptance evidence. |
 
 The durable documentation is self-contained: migration decisions, constraints, support status,
 test guidance and acceptance requirements live in the per-extension READMEs, framework documents

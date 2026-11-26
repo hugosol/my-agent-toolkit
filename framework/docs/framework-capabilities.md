@@ -46,7 +46,7 @@ exports.
 | `SessionFacts`, `SessionStartup`, `TurnEvent`, `TurnStartDelivery`, `TurnEndDelivery`, `TurnStartFacts`, `TurnEndFacts`, `TurnUsage`, `TurnOutcome`, `ProviderHttpFacts`, `CatalogPrice`, `CatalogPriceSource`, `ProviderAccess`, `ProviderAccessFacts` | [`Session facts`](../interface/session/details/facts.ts), [`Turn`](../interface/session/details/turn.ts), [`Provider`](../interface/provider/index.ts) | The per-actual-session facts and the Turn axis: a session's identity, direct parent, latest name, the handle of the task it was spawned for (a subagent's own name for its work, which is neither the agent definition it runs nor the id its registry uses), the name and id of the agent it runs, and the optional `SessionStartup` — the model and effective level the session began on, reported on its own start alone and never rewritten; the two Turn edges with the request-time facts fixed at the first and repeated at the second; the reliable-or-unavailable usage, outcome, HTTP facts and the two provider reference ids; and the extension's own catalog the framework queries at each request's start. Native `TurnSignal` / `TurnSignalFacts` remain internal adapter contracts, not Session consumer exports. See [The Turn axis and the two observation scopes](#the-turn-axis-and-the-two-observation-scopes). |
 | `CommandImplementations`, `CommandImplementation`, `CommandAction`, `ActionsCommandImplementation`, `ActionDelivery` | [`Command interface`](../interface/command/index.ts) | What an implementation delivers for one command: a directed implementation under its command name, or an `actions` command's table of named actions. An action may return a promise the host's command chain waits for, and its delivery is the invocation facts alone — the argument, the owner, `hasUI`, the idle query, the running session's `provider` and the feedback channel — with no declared-value seam, retained capability, persistence path or marker transport, because an `actions` command drives no State and owns no area line. |
 | `ompAdapter(definition, options?)` | [`adapters/omp/index.ts`](../../adapters/omp/index.ts) | Assembles a definition for the `omp` harness; returns an `OmpExtensionFactory`. Also re-exports `BindingResult`, which is what that factory returns. |
-| `piAdapter(definition, options?)` | [`adapters/pi/index.ts`](../../adapters/pi/index.ts) | Uses the same `ExtensionAssembly`, `StateStore` and binding behaviors for pi. Maps the session boundaries, the run-cycle facts the Round axis is synthesized from, Turn signals, user input, commands, hidden persisted prompt messages, marker and feedback. Catalog, provider-access and viewed-session outlets are provided only where pi's own surface states them. |
+| `piAdapter(definition, options?)` | [`adapters/pi/index.ts`](../../adapters/pi/index.ts) | Uses the same `ExtensionAssembly`, `StateStore` and binding behaviors for pi. Maps the session boundaries, the run-cycle facts the Round axis is synthesized from, Turn signals, user input, commands, hidden persisted prompt messages, marker and feedback. Catalog and provider access map available native facts. This port explicitly supplies no viewed-session outlet; delivery-position projection remains. |
 | `ExtensionAssembly` | [`framework/interface/details/implementation.ts`](../interface/details/implementation.ts) | The harness-independent assembly information, every member optional (`implementation`, `configBaseDir`, `startupPolicy`). `implementation` is the result of `defineImplementation`, never a raw factory function; `startupPolicy` is the policy document the entrypoint's mode selected. Harness version support is deliberately not one of them either: support is an evidence claim recorded in the repository's support record ([`harness-support.md`](harness-support.md)), and no assembly supplies or widens it. |
 | `BindingResult`, `BindingFailure` | [`framework/runtime/port.ts`](../runtime/port.ts) | What a binding concluded, and why it was refused. |
 | `DirectedCommandImplementation`, `CommandDelivery`, `DeclaredValueSeam` | [`command/details/implementation.ts#L81`](../interface/command/details/implementation.ts#L81), [`#L137`](../interface/command/details/implementation.ts#L137), [`State interface`](../interface/state/index.ts) | The implementations an assembly injects for a definition's directed commands, keyed by command name — each with a `run` member and an optional `unrecognized` member for an argument that parsed to no directive — and the delivery and declared-value seam each one writes through. The delivery is explicitly constructed from its approved members (`args`, `canAcceptInput`, `provider`, `owner`, `feedback`, `hasUI`, `state`, `capability`); the adapter's persistence callback and the marker area transport stay internal. The old `CommandActions` combination type was removed after its last consumer check found none. |
@@ -100,64 +100,18 @@ toggle's enabled/disabled notice).
 
 ### Source-derived integration contracts
 
-Extension demand comes from actual definitions, canonical static authoring and framework interface
-use, not manually synchronized requirement arrays. The former subagent-only requirement and adapter
-inventory lists are removed. The shared framework planner expands subscription, command, prompt,
-marker and lifecycle structure; explicit semantic rules cover indirect observations and other
-framework-mediated uses. Native widgets and general HTTP/files/config modules do not become adapter
-requirements, and business handler bodies are not interpreted.
+Integration demand comes from definitions, canonical static authoring and framework interface use.
+Supply comes from actual adapter assembly and reachable delivery construction, not parallel inventories.
+These are structural findings, not native-behavior or version-support evidence.
 
-Each contract carries one family (`port:*`, `delivery:*`, `framework:*`), a required/optional policy,
-source origins and a dependency path. The policy comes from source use and framework rules, never from
-a port member's `?`. Demand lists the reachable obligations, not a claim about every runtime path:
-configuration is not read and branches are not evaluated. No working reference harness or target
-discovery entry is a prerequisite, and demand can be listed without an adapter.
-
-Adapter supply is derived from the actual `defineAdapterPort` assembly and reachable canonical
-delivery construction, not a separate declaration catalog. Required delivery payload members come
-from the canonical `AdapterDeliveryMap`, so framework-needed callbacks are checked even when the
-extension never reads them directly. Results distinguish `provided`, `unavailable`, `conditional`,
-`missing` and `unresolved`; unknown analysis never counts as complete. A function body is not examined
-to guess whether native behavior is really implemented.
-
-Commands, option resolution, exit codes, output fields, the precise status/completeness rules and the
-generator boundary live in [static integration check](integration-check.md). This index records only
-the capability model.
+The [integration check guide](integration-check.md) owns [demand analysis](integration-check.md#demand-analysis),
+[supply analysis and statuses](integration-check.md#supply-analysis), commands and generation limits.
 
 #### Assembly-specific factory outputs
 
-A generic adapter factory may legitimately return an optional member according to assembly inputs.
-The checker must not treat that generic optionality as uncertainty for every concrete extension.
-`AdapterFactory<Port, Factory>` in the internal adapter authoring module retains the native factory's
-callable shape and carries a **type-only** `AdapterFactoryOutput<Port>` witness. It adds no runtime
-property, capability inventory, or loading decision. The witness is an adapter output contract,
-trusted subject to adapter verification; it does not prove provider registration or native behavior.
-
-Pi preserves the correlation through `piAdapter` and `createPiPort` overloads:
-
-| Assembly input | Declared port output | Conditional member's selected supply |
-| --- | --- | --- |
-| `childEntry: string` | Required `subagentIntegration` function | `provided` |
-| Omitted or explicitly `undefined` `childEntry` | Absent `subagentIntegration` member | `unavailable` (intentionally not selected) |
-| General `PiAssembly`, including `string \| undefined` | Optional `subagentIntegration` function | `conditional` |
-
-The checker uses TypeScript's resolved call signature in selected extension sources and recognizes
-only the canonical output witness on factories belonging to the selected adapter. Ordinary native API
-calls are not assembly evidence. The witness narrows a conditional member; it cannot hide a missing
-implementation, incompatible binding or delivery payload gap. Bare adapter analysis without extension
-sources retains its generic answer. Exact evidence and combination rules are in
-[the integration guide](integration-check.md#assembly-output-contract).
-
-An intentionally unselected integration is not itself a broken adapter. It still fails coverage if
-the extension requires it; optional demand remains a reported risk. Provider availability,
-registration acceptance and actual child loading remain separate runtime results. When a combination
-explicitly passes `childEntry` (as model-cost/pi and codebase-tools/pi do in the recorded checks), its
-loading supply is `provided`, not a warning based only on the generic factory's optional return.
-
-Type and structural completeness do not establish correct native mapping. A no-op can satisfy a type;
-reviewers, agents and behavior verification remain responsible for semantic correctness. The commands
-neither install a harness, promote support, read a verification report nor change extension loading.
-See [the integration analysis and generation boundary](integration-check.md) and
+The [assembly output contract](integration-check.md#assembly-output-contract) owns the type-only output
+witness, Pi `childEntry` overloads and concrete-assembly interpretation. Provider availability,
+registration and actual child loading remain independent runtime observations. See also
 [contract-driven upgrade review](harness-support.md#contract-driven-agent-pre-review).
 
 ### Adapter implementation navigation
@@ -352,6 +306,11 @@ and are not parameters.
 | `strategy` | `PromptStrategy` | When the slot contributes (see below). |
 | `content` | `string` | The text the slot contributes. |
 
+A run-initiation evaluation is not a provider-request clock; tool continuations can make further
+requests without another contribution. Hidden visibility does not select a model role, and an
+intermediate role does not establish the provider's serialized authority. Current delivery and
+historical evidence are separated in [harness support](harness-support.md#investigated-common-behavior-candidates).
+
 `PromptStrategy` ([`interface/prompt.ts`](../interface/prompt.ts)) — both members are bound
 (`BOUND_PROMPT_STRATEGIES`, a framework-internal set at [`definition.ts#L63`](../core/definition.ts#L63)):
 
@@ -397,7 +356,7 @@ reads it publishes nothing of its own.
 ### `config?: ExtensionConfigDeclaration`
 
 The configuration the extension requires of its own file
-([`definition.ts#L46`](../interface/details/definition.ts#L46)). Omitted — the case for every extension so far —
+([`definition.ts#L46`](../interface/details/definition.ts#L46)). Omitted
 means the extension reads no configuration at all and the capability is invisible to it.
 
 | Parameter | Type | Meaning |
@@ -435,8 +394,8 @@ sessions through its own loader, without a Pi provider registration or required-
 [`adapters/omp/native/extensibility/extensions/viewed-session.ts`](../../adapters/omp/native/extensibility/extensions/viewed-session.ts)
 owns the optional native Viewed-session variant's facts, subscription re-pointing and last-listener
 release. Like feedback and markers, its source coordinate is the extension contract, not the TUI
-controller that ultimately renders it. The variant requires the existing approved host patch; it is
-not a third-party provider and the unpatched harness continues to project each delivery's own seat. The assembly keeps one latest actual
+controller that ultimately renders it. The adapter consumes this optional outlet only when the installed harness provides it. It is
+not a third-party provider; without the outlet, the framework projects each delivery's own seat. Verification does not patch the harness. The assembly keeps one latest actual
 delivery context: both this module and context-free Subagent observations read that same source.
 Viewing grants no State-write authority. `port.ts` connects the native mappings and owns binding-scoped
 diagnostic deduplication; `native/extensibility/extensions/context.ts` keeps the binding's newest context,
@@ -754,10 +713,9 @@ The framework's own behavior runs before any handler: the identity, the round an
 before a `turn_start` handler runs, and the outcome, usage and HTTP facts are resolved before a `turn_end`
 handler does. Where these facts come from on `omp` — the request hook, the response boundary, and the finalized
 assistant message — is the adapter's mapping, and every fact a host does not report is delivered as unavailable
-rather than filled in: the recorded baseline's Codex transport reports no response boundary of its own,
-and a local patch on that baseline publishes it without changing the support record, which the
-capability-difference register records (see
-[`turn.provider-response-boundary`](./harness-support.md#capability-difference-register)). The rules above are
+rather than filled in. Verification uses the installed transport without patching it; the historical
+Codex response-boundary patch is retired. See
+[`turn.provider-response-boundary`](./harness-support.md#capability-difference-register). The rules above are
 the framework's, and they are observable at
 the adapter contract in `tests/framework/turn-facts.test.ts` and `tests/framework/turn.test.ts`, and in a
 running harness in `tests/harness-dock/turn-facts.test.ts`: one real request; one delegating run in which the
@@ -1228,7 +1186,7 @@ type BindingResult =
 ```
 
 An unbound result carries its `BindingFailure[]`. `BindingFailure`
-([`port.ts`](../runtime/port.ts)) is a closed union of three kinds:
+([`port.ts`](../runtime/port.ts)) is a closed union of two kinds:
 
 | `kind` | Payload | Meaning |
 | --- | --- | --- |
@@ -1254,13 +1212,13 @@ the deterministic text of one failure, independent of where it is reported.
 
 ## Declared requirements (verification input)
 
-The framework's contracts rest on semantics — history preservation, the two semantic lifecycle axes — and
-both the ones every binding requires and the ones an extension's assembly additionally declares are recorded
-here as *contract metadata*: what a supported harness scope must be independently verified for.
+Integration demand is derived from actual authoring and framework interface use. The internal vocabulary
+below names behavior-verification properties, including history preservation and lifecycle semantics.
+It is not an additional declaration an extension assembly supplies.
 
-They are not a runtime switch. Normal startup performs no compatibility check at all — it neither evaluates
-harness version membership nor judges a native capability surface — so a declaration neither refuses a
-binding, downgrades it nor falls back to a partial capability. A harness that cannot honor a semantic is a
+This vocabulary is not a runtime switch. Normal startup performs no compatibility check at all — it neither evaluates
+harness version membership nor judges a native capability surface — and does not refuse a
+binding, downgrade it or select a partial capability from this vocabulary. A harness that cannot honor a semantic is a
 finding of the [independent verification](harness-support.md#independent-compatibility-verification),
 reported as covered/unverified scope rather than decided at binding.
 
@@ -1305,7 +1263,7 @@ to one stderr line when the session has no UI ([`omp.ts`](../../adapters/omp/ind
 | `MarkerTransport` | [`port.ts`](../runtime/port.ts) | `{ publishMarkers(lines: readonly string[]): void }` — the internal transport for the unified marker area. It is an adapter/framework seam, not an extension-facing declaration, and no extension delivery carries it. |
 | `ViewedSessionPort` | [`port.ts`](../runtime/port.ts) | The session the host is displaying, as its adapter resolves it — the fact behind the one marker area's projection, and never authority: `read(): OwnerReference \| undefined` (the displayed session's position, re-read per publication; `undefined` means this harness publishes no outlet at all, while a resolved `unresolved` means the outlet exists and its owner could not be obtained) and `subscribe(listener: (markers: MarkerTransport) => void): () => void` (one listener per change of the display; the listener re-reads and publishes through the transport it is handed). A harness that publishes no such outlet omits the member on `HarnessPort`, and the framework then projects the position each delivery carries. |
 | `StateValues` | [`port.ts`](../runtime/port.ts) | `Readonly<Record<string, boolean>>` — the State values one write path records, by field name. |
-| `HarnessPort` | [`port.ts`](../runtime/port.ts) | The registration and feedback surface an adapter provides (`setLabel`, `reportDiagnostic`, `onSession`, `onRound`, `onDisposal` when the harness states its own session disposals, `onSessionContext`, `onTurn`, `onUserInput`, `nextTask`, `onRunInitiation`, `registerCommand`), plus the facts it resolves when it can and omits when it cannot: `modelPrices`, `providerAccess` and `viewedSession`. `onDisposal` is registered with `onRound` — a binding that observes neither the round axis nor the Turn axis holds no bookkeeping to close — and what it receives is one actual session's own end (`SessionDisposal`), whose close-out the framework answers once the edge it dispatches has settled or the close-out's own wait has run out — the host's stated wait, or fifteen seconds by default — and a close-out whose work had not concluded is stated on the diagnostic channel as unconfirmed rather than claimed either way. `onRound` is subscribed only when the assembly injected a round handler, and what it receives are the harness's run-cycle observations (`RoundObservation`), not edges: the synthesis above decides which of them is a transition. `onSessionContext` is subscribed only when a group observes a context reading, and what it receives is one collection of one session's own context (with the model that session ran at that instant) — a fact the framework records and decides about, never an edge, and never a reading the adapter deduplicates. `nextTask(callback)` is the harness's own task boundary, which is where the framework re-checks an end candidate — one callback per arrangement, no duration and no repetition. |
+| `HarnessPort` | [`port.ts`](../runtime/port.ts) | The registration and feedback surface an adapter provides (`setLabel`, `reportDiagnostic`, `onSession`, `onRound`, `onDisposal` when the harness states its own session disposals, `onSessionContext`, `onTurn`, `onUserInput`, `nextTask`, `onRunInitiation`, `registerCommand`), plus the facts it resolves when it can and omits when it cannot: `modelPrices`, `providerAccess` and `viewedSession`. `onDisposal` is registered with the Round machinery selected by the shared planner, including dependencies of other axes; and what it receives is one actual session's own end (`SessionDisposal`), whose close-out the framework answers once the edge it dispatches has settled or the close-out's own wait has run out — the host's stated wait, or fifteen seconds by default — and a close-out whose work had not concluded is stated on the diagnostic channel as unconfirmed rather than claimed either way. Round machinery is selected by the shared [integration planner](../behaviors/integration-plan.ts), including dependencies of other axes. `onRound` receives run-cycle observations (`RoundObservation`), not edges; framework synthesis decides which observations form a transition. `onSessionContext` is subscribed only when a group observes a context reading, and what it receives is one collection of one session's own context (with the model that session ran at that instant) — a fact the framework records and decides about, never an edge, and never a reading the adapter deduplicates. `nextTask(callback)` is the harness's own task boundary, which is where the framework re-checks an end candidate — one callback per arrangement, no duration and no repetition. |
 | `CanAcceptInput` | [`Command interface`](../interface/command/details/implementation.ts#L125) | `() => boolean \| undefined` — the framework's idle query: `true` when the agent can take input now, `false` when it is working, and `undefined` when the harness reports no idle fact at all (surfaced, never fabricated). It is a query and not a payload, carried by command deliveries so the arm path can read the state it starts from without waiting for any event. |
 | `CommandInvocation` | [`port.ts`](../runtime/port.ts) | Internal adapter contract. One command invocation's facts: the argument text, the owner, whether the session has a UI (`hasUI`), the idle query (`canAcceptInput`), the provider that session currently runs (`provider`, absent as `undefined` when the surface reports no current model), and the feedback, persistence and marker transports. The framework constructs the extension-facing `CommandDelivery` from its approved members; the invocation is never handed to an extension. |
 | `CommandDelivery` | [`Command interface`](../interface/command/details/implementation.ts#L137) | The delivery a directed handler receives: `args`, `owner`, `hasUI`, `canAcceptInput`, `provider`, `feedback`, the declared-value `state` seam it writes through and the owner-scoped `capability` it may retain. It is explicitly constructed, so the invocation's persistence callback and marker area transport are not reachable from the extension. |
@@ -1365,7 +1323,7 @@ with the behavior it must preserve, is
 
 | Member | Meaning |
 | --- | --- |
-| `StateRules` | The State one store serves: `{ field, persistence }`, exactly the pair an assembly resolves from the definition through `activationField` ([`definition.ts#L75`](../core/definition.ts#L75)) and `statePersistence` ([`definition.ts#L80`](../core/definition.ts#L80)), plus the two optional access seams an assembly states — `localAccess` (the owner this process serves, offered) and `follow` (the owner another process serves, read). The constructor requires the first two: a store knows its field and persistence and holds no definition. |
+| `StateRules` | The State one store serves: `{ field, persistence }`, exactly the pair an assembly resolves from the definition through `activationField` ([`definition.ts#L75`](../core/definition.ts#L75)) and `statePersistence` ([`definition.ts#L80`](../core/definition.ts#L80)), plus optional `access: SubagentAccess` for assembly-owned subagent access (see the canonical [StateRules declaration](../core/state.ts)). The constructor requires the first two: a store knows its field and persistence and holds no definition. |
 | `new StateStore(rules)` | One store per adapter factory call ([`omp.ts`](../../adapters/omp/index.ts), [`pi.ts`](../../adapters/pi/index.ts)), shared by every session binding of that extension — not a process-global registry keyed by definition id. |
 | `view(ownerKey)` | The read surface, unchanged: `read(field)` is the owner's current value, or the declared default when unset. |
 | `followed(ownerKey)` | The read surface for an owner this process may not hold: the cell first (an in-process read takes no access at all), then what the owner's access last stated, then the declared default. It is what a `follow` field's subagent reads. |

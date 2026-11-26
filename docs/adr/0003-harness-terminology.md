@@ -25,8 +25,10 @@ The framework adapts extension behavior to a host program. Its vocabulary called
   old name `agent runtime` joins the term's `_Avoid_` list in
   [`framework/GLOSSARY.md`](../../framework/GLOSSARY.md).
 - The repository's shared test infrastructure is the **harness dock（对接坞，short `dock`）**. It is
-  not a harness: it materialises an isolated exact install of one harness version and drives it as
-  a child process. It is defined under `## Verification` in the same glossary.
+  not a harness. It drives the locally selected installed harness through isolated sessions and an
+  explicit extension set. The original exact-install mechanism was retired by the
+  [installed-harness acceptance revision](0002-semantic-extension-framework.md#installed-harness-acceptance-revision-2026-11-14).
+  The term is defined under `## Verification` in the same glossary.
 - **"test runtime" was rejected.** The dock does not run the agent, it launches one; and in the test
   suites `runtime` already denotes the harness under test, so naming the driver "runtime" would
   invert the word (`IsolatedRuntime` → `IsolatedHarness`).

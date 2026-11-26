@@ -1,13 +1,6 @@
 # modelCost
 
-The consumption widget and the `/budget` command for an `omp` session: per-request cost anchored at
-the request's own peak/off-peak price, session and round totals, each subagent session's own
-accumulated native runtime, the independent Codex allowance estimate and the provider balance
-reading. The declaration is [`definition.ts`](definition.ts), the
-business rules are under [`shared-logic/`](shared-logic), the OMP assembly is
-[`harnesses/omp.ts`](harnesses/omp.ts), the operator surfaces are documented by
-[`GLOSSARY.md`](GLOSSARY.md), and the maintained model/price data is documented in
-[`docs/model-data-maintenance.md`](docs/model-data-maintenance.md).
+The consumption widget and `/budget` command for OMP and Pi show request-priced cost, session and Round totals, subagent runtime, Codex allowance estimates, and DeepSeek balance. Load the [OMP entrypoint](../../entrypoints/omp/model-cost.ts) or the [Pi entrypoint](../../entrypoints/pi/model-cost.ts). Both use [`definition.ts`](definition.ts) and [`shared-logic/`](shared-logic). See the [glossary](GLOSSARY.md) for accounting terms and [model data maintenance](docs/model-data-maintenance.md) for pricing sources.
 
 ## Codex allowance display
 
@@ -41,21 +34,38 @@ Tests are grouped by responsibility under `tests/model-cost/{business,foundation
 This is not a requirement to mirror every source file. Existing behavior cases and combination
 coverage survive changes to internal imports and wiring.
 
-This refactor does **not** change file schemas, command behavior or save timing.
-The subsequent integration tooling derives framework-mediated demand from actual source and adapter
-assembly instead of a manual `subagentRequirements` list. See [integration checks and generation](../../framework/docs/integration-check.md).
-Architecture rationale: [capability layering](../../framework/docs/capability-layering.md).
+Integration checks derive framework capability demand from source and adapter assembly. See [integration checks and generation](../../framework/docs/integration-check.md) and [capability layering](../../framework/docs/capability-layering.md).
+
+## Storage and accounting resets
+
+Set `storageDir` in [`config.yaml`](config.yaml) to the directory for `consumption.json`, `codex-usage-estimate.json`, and `archives/`. For this field, `~/` means the user's `.omp` home on either host. The shipped `~/cost-archive` is therefore `<user home>/.omp/cost-archive`. Other relative paths start at the configuration file, not the working directory. The framework validates this file at binding. A new path selects another store on restart. No data is copied or merged.
+
+`consumption.json` holds the active period and each session's own record. A session saves only its own record through coordinated read-modify-publish. A missing file at initialization is a fresh period shared by instances before the first write. An unreadable or unrecognized active document pauses accounting instead of starting over. A later initialization can re-read the document; read-only synchronization cannot clear a pause.
+
+A process confirms a session's own save before publishing its commit count. If another process serves the owner, that process adopts the on-disk document with a lock-free read. A repeated count does not cause another read; reconnection can recover a missed notice. Notices delivered together share a read, and a notice during that read schedules another. The notice adds no usage, and the owner neither saves on the child's behalf nor polls storage. Synchronization does not initialize an absent document. An invalid schema pauses the instance; a read failure preserves the existing baseline and reports the error. When synchronization adopts a newer period, it discards only the closed period’s local accumulation. Same-process sessions already share the document and do not need a read-back notice.
+
+Run `/budget clear` or `/budget holiday` only from the entry's own DeepSeek session when it is reliably idle and no save is pending. Either command archives the saved period for every session in the root and opens a new period in one coordinated operation. `clear` opens a regular period. `holiday` opens a holiday period and does nothing if the current period already has that flag. Neither command flushes unsaved or in-flight consumption. The reset writes a uniquely named archive before publishing the replacement document. Its `end` is the new period’s start. Archives are not read back into accounting. The independent Codex estimate survives a reset.
+
+## Provider account readings
+
+At initialization the extension starts DeepSeek balance and Codex allowance queries in parallel, before the first model request, without waiting for a matching model to be used. A missing credential prevents a request. DeepSeek prefetch skips missing access without a failure notice for an unused provider. Query failure does not prevent a model request.
+
+- **DeepSeek balance.** The provider query reads the CNY total at `/user/balance` on the host's provider base URL after removing a trailing `/v1`. A settled DeepSeek request can refresh the reading after the success TTL (`balanceTtlMs: 30000` as shipped). Concurrent triggers join the current query. Expiry alone does not send a request, and a failure does not change the last accepted reading or its timestamp. The next settled request can try again. A failed refresh reports unavailability rather than inventing a balance.
+- **Shared display.** Balance and Accrued follow the Total's `Cost:` field, not the current model. Monetary targets include that field. A token-only or allowance view can show both account facts beside its own context budget when the main tree has CNY cost from earlier requests or descendants. A view without `Cost:` hides both without changing the stored reading or its TTL.
+- **Reset boundary.** The reset makes one separate balance query outside file coordination and does not reuse the held reading. A CNY result sets `end_bal` on the archive and `start_bal` on the new period. Failure or missing CNY omits both fields and does not prevent reset.
+- **Codex allowance.** Read account windows from `/wham/usage`, not response headers. Assign readings by their reported duration (within 5% of five hours or seven days), not by position. A partial response updates only the windows it contains. A reset is unknown if missing, expired if past, or invalid if farther ahead than the window lasts. The original instant stays unchanged. A settled Codex request can refresh after the success TTL (`codexQuotaTtlMs: 15000` as shipped). A failed or windowless answer earns no TTL.
+- **Codex estimate.** Ratio samples pair both windows from one API response, never a new window with a held one. A qualifying pair moves both windows up, increases 5h use by at least 50 percentage points, and is not saturated. A reset of the 5h window requires a new baseline. Store the baseline immediately and refine the persisted ratio at most once a minute. Merge by baseline capture time so a newer estimate is not overwritten. A document in an unrecognized estimate format starts a new estimate rather than migrating. Display `estimating…` until a ratio is available, then `left≈N.N×5h · ratio≈R.R`. The remaining estimate is the unused weekly share multiplied by the ratio.
 
 ## What runs automatically
 
-| command | what it covers |
+| Command | Coverage |
 | --- | --- |
-| `bun test tests/model-cost` | the extension's business suite: accounting, pricing, documents, period actions, presentation. No network. |
-| `bun test tests/harness-dock` | the dock suites: a real isolated `omp` session, a local capture endpoint, the extension's own storage root read back. No real provider. |
-| `bun scripts/model-cost-data-smoke.ts`, `bun scripts/http-transport-smoke.ts` | the maintained data set against the specification's independent literals, and the HTTP transport against a local endpoint. |
+| `bun test tests/model-cost` | Accounting, pricing, storage, period actions, and presentation. |
+| `bun test tests/harness-dock/model-cost-accounting.test.ts tests/harness-dock/model-cost-balance.test.ts tests/harness-dock/model-cost-codex-quota.test.ts` | Isolated installed OMP, provider protocol with local endpoints, and storage readback. |
+| `bun scripts/pi-model-cost-smoke.ts` | Scoped installed-Pi model-cost check. See [Pi model-cost evidence](../../framework/docs/harness-support.md#pi-model-cost-migration-evidence). |
+| `bun run smoke:model-cost-data`, `bun scripts/http-transport-smoke.ts` | Independent model data check and local HTTP transport. |
 
-Those suites are the agent's evidence. They are not an acceptance: what a real account reports and
-what a real TUI draws are human-only, and nothing in this repository claims either.
+Local fixtures do not certify real provider values, rendered TUI readability, or harness support.
 
 ## Timing and detail behavior
 
@@ -66,19 +76,14 @@ and accepts later redraw requests normally. Diagnostics identify the failed boun
 the thrown value or view payload. Failures are not retried automatically; immediate observation
 adoption, same-turn merging, publication spending and disposal behavior are unchanged.
 
-The season-boundary timer is owned by this extension's harness/UI integration, not the public
-framework or Pi core. Its shared `harnesses/boundary-timer.ts` isolates each frontend redraw,
-reports failures through the same non-model diagnostics, and still schedules the next boundary.
-This also protects Pi's raw one-shot carrier without relying on a host-managed exception handler.
-A failure while reading or scheduling the next boundary is contained and diagnosed; a later ordinary
-`sync()` can resume the wait, with no automatic retry loop or change to cleanup ownership.
+The UI uses one wait for the next price boundary, not a poll. Sessions without a UI, subagent views, and holiday periods do not start their own timer. Peak windows include their endpoints: 12:00:00.000 is still peak, so the change occurs at 12:00:00.001. After sleep or blocking, use the current time and schedule the next boundary; do not replay the missed one. A redraw sends no request, writes no file, and changes no accounting.
+
+`harnesses/boundary-timer.ts` owns scheduling and catches frontend redraw errors so the next boundary can still be scheduled. OMP uses a managed one-shot timer. Pi uses an unref'd one-shot timer and clears it on release. A scheduling error is diagnosed; a later ordinary `sync()` can resume waiting without automatic retries.
 
 - A `/budget detail` descendant row states the agent definition its host reported as a leading
-  category (`[task] 检索定价`, `[scout] 检索价格`). The session's own name follows the category and
-  keeps its existing selection rules; a host that reported no agent definition leaves the row
-  unprefixed rather than showing a guessed type. The type is a host fact and is not written to the
-  consumption document, so a restored row shows its name alone until a host reports the definition
-  again.
+  category (`[task] 检索定价`, `[scout] 检索价格`) before the session name. Do not guess a
+  category if the host did not report one. The category is not persisted; a row restored from
+  storage has no prefix until the host reports it again.
 - A descendant's `Run` is accumulated working time from activities whose own Round end was observed,
   not a live stopwatch. An open first activity has no measured duration yet (`—`); a measured zero
   is `0ms`. Distinct actual child sessions remain distinct rows, including a failed foreground
@@ -90,8 +95,9 @@ A failure while reading or scheduling the next boundary is contained and diagnos
   applies to same-process and multi-process subagents alike. Result receipts use the main process's
   clock, and late Turn ends cannot move the span backwards. Progress reports, storage commits and
   descendant completions not delivered to the main session do not advance it. No timer is added:
-  the span stays fixed between these events, even when the main session is idle. Consumption still
-  saves through the existing `round_end` path; time changes add no writes.
+  span stays fixed between these events, even when the main session is idle. Resuming in the same
+  period keeps the original first input. A fork or accounting reset uses the first new input.
+  Consumption still saves at `round_end`. Late activity from a closed period does not count in the new one.
 - On pi, the displayed Effort follows the session's effective thinking level. A `/model` selection and
   a changed thinking level both redraw from the host's current `thinkingLevel`; changing the level
   issues no model request, writes no accounting and does not rewrite a descendant's startup snapshot.
@@ -114,33 +120,20 @@ A failure while reading or scheduling the next boundary is contained and diagnos
   deadline, and its own outcome (and the document it publishes) is what the extension then reports; the
   deadline itself claims no cancellation and no unwritten document. Nothing here waits for the owner's
   process: a session whose owner is not served by this one commits and closes just the same.
-- A session's response usage is accumulated and saved by the process that ran it, and a save that
-  really landed states a consumption commit notice on the framework's observation direction: the
-  count of writes that session's own process has confirmed, and nothing the document holds. A commit
-  that was refused, that paused the instance or that failed states no notice, and nothing is stated
-  before the coordinated commit has answered. The process serving that session's owner answers the
-  notice with a read-only synchronization of the same storage root — adopting what the file really
-  holds without writing anything of its own, deriving no Round, Turn or accumulation from the notice
-  — so a subagent another process ran appears in the owner's own statistics although the owner
-  committed nothing itself. A notice whose count the owner already took costs nothing, and a notice
-  that never arrived is recovered by the next connection's first word, which states the count the
-  owner has not seen. Notices delivered together cost one read, and a notice that arrives while a read
-  is under way is the reason for the read after it — the last confirmed write is not left unread. A
-  session whose process both runs it and serves its owner — every OMP session,
-  and pi's foreground path — records the notice and hands it to nobody, because that process already
-  shares the document with the session.
 - `/budget detail` is offered to an entry whose subagent integration took — the OMP entry always is.
   An entry that settled as the no-subagent mode has no descendants of its own to list, so its
   `/budget detail` answers that it was not executed and leaves the preference where it was; every
   other `/budget` action is unaffected. The condition is that settled integration mode, checked when
-  the operator invokes the command, and never the provider, the entry's activity or how many subagent
-  records exist.
+  operator invokes the command, not the provider, idle state, pending saves, UI or record count.
+  The preference is in memory. It survives model, session and view changes, returns to brief on
+  restart or reload, and is not inherited. A focused subagent always uses brief, even when
+  `/budget detail` changes the main view's preference.
 - `/budget detail` combines each child's startup snapshot as `provider/model(effort)`, for example
   `deepseek/deepseek-flash(high)`, without `Model:` or `Effort:` labels. Unknown facts remain `?` and
   a reported `off` remains `off`. A background session's reliably reported startup pair is visible
-  before its first consumption commit; later context, activity and rename readings do not erase it.
-  Same-depth rows retain aligned columns; model abbreviation keeps
-  the effort suffix where it fits, with the existing wrapping and final clipping at extreme widths.
+  before its first consumption commit; later changes do not replace it. Save the snapshot only
+  with the session's own consumption, and capture it only on a proven new conversation, not a
+  resume, fork, or reload. Missing historic snapshots stay unknown.
 - The tree lists the union of the sessions the document holds and the sessions this process observed,
   merged by the session's own identity: a subagent another process runs takes its row at the direct
   parent its own host stated — a grandchild under its own parent, never under the owner — and a
@@ -148,22 +141,20 @@ A failure while reading or scheduling the next boundary is contained and diagnos
   (its context, its activity) and with no consumption figure at all rather than a zero. A later run
   or process that continues the same session updates that row instead of adding a second one, and
   nothing of an observation is written to the storage root.
-- Observation readings are published where the host's own events are read — a session's start, a
-  finalized message, the run's execution convergence — and a reading that states what the framework's
-  source already holds is published to nobody, so a streamed response's per-chunk facts add no reading
-  traffic and a quiet process adds none either. What a moved reading costs is a drawing, and a turn's
-  readings are drawn together from their latest values: a frontend attached to this extension's
-  read-only result is handed one frame per turn however many sessions and fields moved in it, while
-  every reading is adopted where it arrives and every fact that settled a Round, counted a response or
-  saved a session is processed and published exactly as before.
+- The framework collects live context through `getContextUsage()` at session start, finalized messages, and execution convergence. The extension consumes that observation rather than subscribing to native events. It does not store it as consumption. A descendant with a supported model budget shows `Ctx: percent (tokens/budget)`. A missing or withdrawn live reading omits that field. Active names use the theme's activity color. When access ends, the row keeps its place and saved totals but loses its live color and context.
+- The framework publishes changed observations, not identical or per-chunk readings. The extension adopts changes as they arrive and coalesces redraws in one event-loop turn from the latest values. If a publication already redrew those values, it satisfies the pending redraw. Round settlement and saves are not deferred.
+
+### Widget layout
+
+- Context budgets are display-only: 450,000 tokens for monetary and token-only models, and 272,000 for the allowance channel. Hidden models have no widget. The budget does not configure the host's context window. Its bar uses dim below 36%, success at 36–63%, warning at 64–81%, and error at 82% or above.
+- The account row combines the season marker where applicable, budget bar, Effort, and any Balance and Accrued fields. Effort colors only the value. Balance is an error below ¥5, a warning from ¥5 up to ¥10, and plain from ¥10. Accrued uses 5-fen eighth blocks through ¥20, then ¥1 whole blocks. Segments follow a fixed eight-color cycle in document session order, include contributing sessions from either host, and are capped to fit. A session below the current granularity has no segment.
+- The detail tree replaces Round rows. The root name stands alone, followed by its own provider/model rows. Only those model rows have the cache-share column. Descendant names use the latest session name, spawn handle, saved name, agent definition, agent ID, then session ID. Descendant rows show their direct figures, never a subtree subtotal.
+- Model rows form one layout group. Descendant rows at the same depth share field columns even under different parents. Missing fields leave blanks. Measure names in terminal cells, preserve the Effort suffix where it fits, and abbreviate long names or models with `…`. At narrower widths all rows of a group wrap at the same break, then clip as needed. No display abbreviation changes stored data.
+- As space narrows, Codex pacing rows lose the bar and time marker first, then the reset date, reset interval, and pacing percentage. The full usage and reset facts remain in the display result.
 
 ## Human acceptance
 
-Both rounds use the locally selected installed OMP with isolated agent state, session, working and home directories. Never modify the installation, use formal configuration `~/.omp/agent/config.yml`, or reuse a running agent.
-
-### The installation under test
-
-Use `OMP_CLI` to name an existing executable, otherwise `omp` on PATH. The historical combined 18.5.0 patch artifact is retired. Required behavior must be supplied by the real installation; missing behavior is a compatibility failure, not a reason to patch the host.
+Use the installed host with isolated agent state, session, working and home directories. Do not modify the installation or use your normal configuration or a running agent. Use `OMP_CLI` to select an installed OMP, otherwise use `omp` on PATH. For Pi, use its installed CLI and the Pi entrypoint. Missing native behavior is a compatibility failure, not a reason to patch the host.
 
 ```bash
 # <run> is a throwaway root (agent-state/, sessions/, work/, home/) and <repo> this repository
@@ -172,97 +163,35 @@ PI_CODING_AGENT_DIR=<run>/agent-state HOME=<run>/home "${OMP_CLI:-omp}" \
   --no-extensions -e <repo>/entrypoints/omp/model-cost.ts --model <provider>/<model>
 ```
 
-Give that isolated state its own credential through the selected host's login or API-key mechanism. Never print credentials into requests, logs or this repository. Missing credentials block acceptance and do not establish a pass.
+For Pi, use the same isolated directories and run `pi --no-extensions -e <repo>/entrypoints/pi/model-cost.ts` from the isolated working directory with `--session-dir` and `--model`. Use credentials in the isolated state only for checks that need a real provider. Do not write credentials to logs or this repository. Record missing credentials as blocked.
 
 ### H1 — the real interactive TUI
 
-Run in a real terminal (so `process.stdout.isTTY` is true and the widget takes its component form).
-Each row names the promise, the scenario to watch, and the expectation prepared with the migration
-evidence — restated here so the check needs no external record. Where a row asks for Effort, use a
-reasoning model: a model with no thinking level shows `?` by design and cannot distinguish "the
-real value" from "unavailable".
+Run in a real terminal. When stdout is a TTY, the native host requests component lines at its width and with its theme. Headless RPC uses plain lines without terminal colors or width. Both forms use the same display result. Use a reasoning model to distinguish effective Effort from an unavailable value (`?`).
 
-| promise | what to watch in the real TUI | prepared expectation (recorded with the migration; not yet observed) |
-| --- | --- | --- |
-| P11 | Effort shows the level the request really ran with (not the configured intent), and a subagent's own view shows that subagent's level; an unreadable level is `?` | Focus a subagent spawned by a real `task` call: its own Effort (the level the host's own status line reports for it), its own context bar and its own current-model fields are the three things that must switch; the tree `Cost`/`Ref` must not move (the `Sum` column this round was recorded with is gone — no row writes it any more). Changing the subagent's thinking level updates Effort with no new model request; returning to the main session restores its values. Recorded RPC cross-checks: the shown Effort equals the host's own `thinkingLevel`; the current-model fields switch from `Cache: 67%  ¥Cache/In/Out：4:7:89` (main) to `Cache: 40%` (subagent) while `Sum: 6,100  Cost: ¥0.05` stays untouched. |
-| P10, P18, P19 | A subagent's own row states the runtime the host itself measured for that session's executions — the harness's native per-execution duration accumulated over the accounting period, saved beside that session's consumption as a number of milliseconds, neither a stopwatch of the extension's own nor the hub's creation-to-last-record span; a session nothing measured states `—` and a session whose execution really measured zero states `0ms` | After a real `task` call, `/budget detail` ends each child's row with `Run: <duration>` (milliseconds under a second, then `s`, `m` and `h`) while the root's own model row carries no such field, and a child whose host reported no duration keeps `Run: —` rather than a zero or a span. Focus, restart and resume the session, open the detail form again: the row still states what the document holds, no execution is charged twice, and a further spawn of that session adds only its own duration. Recorded dock cross-checks: a real delegating run's child record carried 754 ms — the host's own `durationMs` for that spawn, read back from the document as a number — with the main session's record carrying none, and a second process over the same storage drew that same figure rather than twice it. Restarting is judged by the row, not by a screenshot. |
-| P23 | `/budget detail` shows the Total block plus the static agent tree with a row per session and its own model — each row named by its session name, else the task handle its spawn was given, else the name the document holds, else its agent's own name (a category), and only by an id when nothing else named it — each subagent row beside the model and effective level that session *began* on (`provider/model(level)`, each `?` when nothing proved it), its own current context (`Ctx: percent (tokens/budget)`, read against that channel's fixed display budget) and its own statistics without the cached share of its conversation input, with the name of a session that is *working* right now drawn in the theme's activity colour, and no `Round:` row. A session whose own access ended — the process that ran it released it or ended, so its readings are gone — keeps its row, its name, its place and every figure already saved, and loses what was live about it: the name is drawn plain and no `Ctx:` field is written, and neither the loss nor the session's later return is accounted as a Round, a Turn or a save. | `/budget detail` keeps the context bar and the `Total:` line byte-identical, then replaces the Round rows with the static tree: the root name alone, a `│  provider / model` model row per model the root itself consumed (carrying that model's own fields; session rows carry no single-model ratio and no cached share of their own), and one `├─`/`└─`-indented row per own session. Recorded dock example (Main 6,000 tokens / `Cost: ¥0.01`; child 3,000 / `¥0.0050`; tree 9,000 / `¥0.02`): `dock-detail-main` / `│  deepseek / deepseek-flash  Cache: 50%  ¥Cache/In/Out：0:20:80  Sum: 6,000  Cost: ¥0.01` / `└─ dock-detail-child  Model: deepseek / deepseek-flash  Effort: <resolved level>  Cache: 50%  Sum: 3,000  Cost: ¥0.0050`. A subagent's own process releases its access, or is killed: its row loses the running name's colour and its `Ctx:` field while the row itself, the tree's total and the document on the storage root stay exactly as they were. |
-| P26 | Viewing a subagent shows that subagent's own context and Round in the fixed brief form; moving back restores the main preference | Focus a subagent: it must show the fixed brief form — its own Effort, context, current-model fields and its own Round — with no tree; `Cost`/`Ref` remain the whole main tree (no row writes the `Sum` column the earlier round was recorded with). Returning to the main session restores the detail tree, and a subagent row reflects consumption recorded while you were away; `/budget detail` typed while focused only flips the entry preference, visible after returning; restarting the CLI returns to brief. |
-| P27 | The one marker line follows the session you are viewing (main ↔ subagent), and viewing never grants write authority | With two marker fixtures (`◈ followMarker` = follow, `◐ noneMarker` = none) enabled in the main session: the main view shows both lines sorted by id inside the one framework marker area; focusing the subagent shows only the follow row, reading the owner's current value live (turning the follow extension off while focused removes the row); losing the view target falls back to the main session and both lines return. Viewing never grants write authority, and the main area is never blanked by the subagent's own publication — the delegation regression the recorded run fixed. |
-| P30–P33 | The detail tree lines one depth group up: the fields a row states start at the same terminal column on every row of that depth, whatever the rows' name lengths, their parents, or the fields one of them has none of, and each depth has columns of its own | `/budget detail` with a Chinese-named child and an ASCII-named child at one depth and a grandchild under each: the combined startup snapshot and `Cost:`/`Ctx:`/`Run:` columns of a depth start at the same terminal column on every row of it and at a different one at the other depth (the cached share is the root's own model rows' column, not a session depth's); a row with no amount, no context reading or no runtime leaves that column's blanks in place instead of pulling the fields after it left. Narrowing the window cuts a long name or model with `…` and, narrower still, wraps the whole group at one break — every line still starts its fields at the group's own columns and none overruns the width, and drawing the original width again answers it again. Prepared evidence: `bun run smoke:model-cost-detail-layout` prints those frames with each line's display width and each field's observed column at 160/120/100/80/60/40 columns and checks them, `tests/model-cost/presentation/detail-layout.test.ts` covers the columns, the slots, the Chinese widths, the cuts, the wraps and the resize, and the whole names, models and figures are read back from the display result and the document. Only `…`'s and the wrap's readability is this round's own judgement. |
-| P41 | Crossing a peak/off-peak boundary — and the holiday marker on the first holiday period — redraws the block once, with no request issued | At a Beijing-time peak/off-peak boundary — and on the first holiday period — the marker and the whole block redraw once, and the boundary itself issues no request. Recorded automatic cross-checks: one one-shot timer per UI process; the boundary is endpoint-inclusive (12:00:00.000 is still peak, so the next change answers 12:00:00.001); after a sleep or block it re-arms from the actual clock; holiday periods do not arm; no UI does not arm; the callback touches no network, file or ledger. |
-| P67 | The approved visual form: the single account row (season marker, bar bands, `💰 Balance:` and `Accrued` segment colours together), the balance warning thresholds (DeepSeek account facts follow the Total's Cost field, so token-only or allowance views show them when the main tree carries prior or descendant DeepSeek consumption), Codex pacing rows, and the four-step narrow-width degradation | One account row: a monetary target draws season marker + budget bar + `Effort:` + `💰 Balance:` + `⏳ Accrued:` (with its segment bar) on a single line — the form restored after the H1 review feedback of 2026-10-14 rejected the split balance/accrued rows; then `Total:` and, in detail, the tree. A token-only or allowance target keeps its own budget and, for Codex, its allowance rows, and adds `💰 Balance:` + `⏳ Accrued:` to that same account row whenever the Total writes Cost — including when the current target spent nothing but its subagent or an earlier request on the session used DeepSeek. Without a Cost field neither fact is drawn. Thresholds and colours: budget bands `<36%` dim / `36–63%` success / `64–81%` warning / `≥82%` error; balance `<5` error / `5–9.99` warning / `≥10` plain; accrued fine blocks ≤ ¥20 (5-fen granularity) and coarse > ¥20 (¥1) with the eight-colour cycle; Effort colours only the value, via the host theme. Codex 5h row narrow-width degradation: 200 → 20-cell bar + time marker + `85.0% / 80.0% · resets in 1h (dd/HH:MM)`; 50 → `5h 85.0% / 80.0% · resets in 1h (dd/HH:MM)`; 40 → `5h 85.0% / 80.0% · resets in 1h`; 20 → `5h 85.0% / 80.0%`; 10 → `5h 85.0% …`. Host-theme colours, fonts and the real narrow-width rendering are the remaining visual judgement. |
+| Scenario | Observe in the terminal |
+| --- | --- |
+| Focus a subagent where the host supports viewed sessions | Effort, context, current-model fields, and Round belong to the viewed child. Its form stays brief and the main tree's Total does not change. Changing Effort sends no request. Returning restores the main view's preference. |
+| Run a subagent, then restart and resume | In `/budget detail`, compare `Run:` with the child's native working duration and the saved record. The main model rows have no runtime. Missing duration shows `—`, measured zero shows `0ms`, and resuming does not count old work twice. |
+| Open and resize the detail tree | The context bar and Total stay fixed. The tree replaces Round rows. Check separate root model rows, a child and grandchild under their actual parents, and Chinese and ASCII names at one depth. Fields keep their columns when a value is absent. Abbreviation, wrapping, and clipping remain readable. An ended observation removes live color and context but keeps the saved row and totals. |
+| View marker fixtures in main and subagent sessions | If testing marker integration, enable `◈ followMarker` and `◐ noneMarker` in the owner. The main view shows both in ID order. Focusing a child shows only the follow marker, reflecting the owner's current state. Leaving the child restores the main view. Viewing grants no write authority. |
+| Cross a price boundary or select the first holiday period | Check that the season marker redraws without a model request. |
+| Inspect and resize the account row | Check the budget bar, Effort, Balance, Accrued, and the Codex pacing rows where applicable. Compare the [shared Cost rule](#provider-account-readings) and [layout rules](#widget-layout) with what the real terminal draws. |
 
-No screenshot or recording could be produced in the agent's environment, and what was measured there
-was read through the console's own API rather than looked at: this round's rows are still judged from
-what you see, and the limitation is recorded rather than worked around. Everything above is prepared
-material, not a result: P10, P11, P18, P19, P23, P26, P27, P41 and P67 stay unverified until you
-record this round. Of P30–P33 only the readability of an abbreviation and of a wrapped group is yours
-to judge: their column alignment, their reserved slots, their measurement of Chinese names in terminal
-columns, their cuts, their wraps and their resize are checked by `tests/model-cost/presentation/detail-layout.test.ts`
-and by two smokes — `bun run smoke:model-cost-detail-layout`, which measures the lines the frontend
-hands a host, and `bun run smoke:model-cost-detail-layout-terminal`, which draws those lines on a real
-Windows console and reads the *device's* own cells back: the column each field landed in, the colour
-each cell carries, the width the console states after a resize, and the Chinese names measured in the
-cells the console spends on them. A recorded run of the latter at 120, 100, 60 and 120 columns — once
-through a headless ConPTY session resized by its client, once in a Windows Terminal window — passed
-all 36 of its checks and left the stored document untouched. Run it in your own terminal — it resizes
-the console itself and redraws at each width — beside `bun run smoke:model-cost-data`, the heavier
-smoke recorded with this migration.
+For layout diagnostics, run `bun run smoke:model-cost-detail-layout` or `bun run smoke:model-cost-detail-layout-terminal`. The first measures the formatted lines. The second resizes its Windows console and reads the drawn cells. Neither substitutes for judging the real terminal's readability.
 
 ### H2 — a real provider's effect
 
-These checks need your real account and credential. The migration's runs never reached a provider
-and used no real key, so every reading below is still to be observed: the channel and composition
-rules are verified on the frozen isolated artifact above, but API, mock and RPC results never
-certify the real effect, and no sample may be manufactured by consuming quota.
+Use [the provider account reading runbook](../../framework/docs/harness-support.md#e-provider-account-reading) to compare a real account answer with the widget. `bun run verify:provider-account` uses the installed Pi and makes no model request. Check the DeepSeek CNY total and the Codex window percentages and reset instants against the actual replies. Record missing access or credentials as blocked, not zero or a passing check.
 
-| promise | what to watch with a real account | prepared expectation (recorded with the migration; not yet observed) |
-| --- | --- | --- |
-| P36, P38 | The provider balance reading appears and refreshes under its success TTL in normal use; an unavailable reading is omitted rather than replaced by a cached guess | After one normal DeepSeek request the monetary account row shows the account's own CNY total (`Balance: ¥<real reading>`), fetched from `<host base without trailing /v1>/user/balance`; further requests within the 30s success TTL (`balanceTtlMs: 30000` as shipped) do not query again, and a query already in flight is joined rather than duplicated. A failed refresh is surfaced as `unavailable (…)` — a broken credential reads `unavailable (no-access)`, an unreachable host `(unreachable)` — and never fabricates or silently re-dates a value: no zero, no retry storm; P36's boundary attempt is made once, outside the lock, and on failure its start/end values are omitted while the reset still proceeds. Ready-made skip: on a machine with no resolvable DeepSeek address or credential the expected result is `no-access`; record that as the skip reason — it is the designed degradation, not a pass. |
-| P39, P65 | The 5h and 7d windows come from a real Codex account API answer, refreshed on a settled Codex request under the 15s success TTL (`codexQuotaTtlMs: 15000` as shipped), each window updating independently; response headers no longer feed them | After a normal Codex request the 5h and 7d rows equal the `/wham/usage` answer's own window values and resets, assigned by reported duration (±5%), not by field position; each window updates independently, and an answer missing one side leaves that side's prior percentage, reset and obtained time untouched. Further Codex requests within the 15s success TTL do not query again, a query already in flight is joined rather than duplicated, and a failed or windowless answer earns no TTL so the next settled request asks again; response headers never create or change a window. The recorded channel proof is the account API path itself (isolated host, scripted answers): the initialization query is the same entry the settled request reuses. |
-| P66 | The ratio and remaining-allowance estimate in normal use, against the hand-computed sequence — without consuming quota to manufacture samples; too few samples is an honest "still estimating" | Use Codex normally; no quota may be consumed to manufacture a sample. Hand-computed sequence to compare against: 5h 10% / 7d 2% → `estimating…` with the (10/2) baseline written at once; 60% / 7% → `left≈9.3×5h · ratio≈10.0` (a ≥50-point five-hour rise, both windows up); 59% / 6.9% and 61% / 7% → ratio unchanged (below threshold; weekly-only movement); a saturated 5h holds the ratio; after the 5h reset moves and reports 5% / 3% a new baseline is written at once; 55% / 7.5% → `ratio≈11.1`; a restart continues from the stored ratio without re-learning; a weekly-only report is never paired with the held 5h value. If no qualifying sample occurs, `estimating…` is the honest result — record it rather than forcing one. The recorded baseline machine already holds one ratio document (`ratio: 6.5333`) written by the superseded implementation: it shows a real account produces ratios, but it is not evidence about this code. |
-
-P36, P38, P39, P65 and P66 stay unverified until you record this round; a machine that can only
-produce mock or RPC results records the skip reason instead of a substitute reading.
+Observe refresh and estimate behavior during normal use. Do not spend quota to make a sample. If no qualifying paired reading occurs, record `estimating…` rather than treating the estimate as verified. Controlled replies can exercise the rules above, but do not establish what a real account reported.
 
 ## Cutover and rollback
 
-You run this; the agent does not touch the formal instance. Precondition: both human rounds accepted
-on the isolated install above. Until then the formal instance keeps running the superseded
-implementation, and no step below has been executed.
+Use this procedure only when replacing a deployed legacy implementation. Complete the isolated acceptance checks first. Configure exactly one implementation of `model-cost`; the loader does not deduplicate by name. Use a whole-process restart, not a reload.
 
-**Mutual exclusion is by load source.** The loader does not deduplicate extensions by name, so
-exactly one implementation of `model-cost` must be discovered. The two shared steps (add the
-discovery root once, restart as a whole process — there is no hot reload) are in
-[H3 — permanent cutover and cutover smoke](../../framework/README.md#h3--permanent-cutover-and-cutover-smoke);
-adding `entrypoints/omp` also carries this repository's other migrated extensions.
-
-1. **Stop the formal instance** you run day to day. Do not stop it with a validation command attached
-   to it; this is your own restart.
-2. **Back up the formal configuration and the old statistics.** Copy `~/.omp/agent/config.yml` aside,
-   and copy the old statistics directory aside whole — the superseded implementation documented
-   `~/.omp/cost-archive`, holding `deepseek-cost.json` and `codex-usage-estimate.json`. Check the old
-   implementation's own configuration first: if it names another directory, back that one up. Keep the
-   copy until the new instance has been used normally for a while.
-3. **Prepare empty data.** The new extension reads and writes one storage root, configured by
-   `storageDir` in [`config.yaml`](config.yaml) (default `~/cost-archive`, i.e.
-   `<home>/.omp/cost-archive` — see
-   [storage root](../../framework/docs/framework-capabilities.md#extension-configuration-declaration--file)
-   for the path rules). Clear that root, or point `storageDir` at a fresh directory: nothing migrates,
-   copies or merges what an earlier value left behind. Do not let the first formal start read the old
-   documents — the old estimate file even shares the new estimate document's file name, and a
-   document that does not match the new shape reads as a first run, which would rewrite it.
-4. **Make the load source exclusive.** Add `E:/Developer/myhub/my-agent-toolkit/entrypoints/omp` to
-   the `extensions:` list of `~/.omp/agent/config.yml`, and stop loading the superseded `model-cost`
-   implementation — it lives under the `my-omp-toolkit` repository's `extensions/model-cost`. Remove
-   that implementation, or that discovery root if nothing else you still load comes from it, so
-   exactly one implementation of this extension is discovered.
-5. **Start and confirm.** After the restart, confirm: the widget draws in the form you accepted; the
-   `/budget` help answers and each action responds; the storage root was created fresh and holds the
-   new documents (`consumption.json`, `codex-usage-estimate.json`, `archives/`); no old document was
-   read, rewritten or deleted; and one request settles into the Total exactly once.
-6. **If the cutover fails:** stop the new instance, keep the new data where it is for diagnosis,
-   restore the configuration backup (and the old statistics directory if anything moved), and restart
-   the previous configuration. Do not merge new and old statistics, and do not let both
-   implementations load to "keep both" — the documents and the widget are not additive.
+1. Stop the running host. Back up its load configuration and the entire statistics directory named by the legacy implementation. Keep both backups through normal use of the replacement.
+2. Set `storageDir` in the replacement's [`config.yaml`](config.yaml) to a fresh directory. Leave legacy files untouched, even if their names match. No migration, copy, or merge occurs.
+3. Configure the replacement entrypoint and stop discovering the legacy implementation. Preserve other extensions you still need. Restart the host.
+4. Verify the widget and `/budget` help. After one normal request, check that Total includes its usage once and the new documents belong to the fresh root. Leave the old directory untouched.
+5. To roll back, stop the replacement, keep its data for diagnosis, restore the previous configuration and storage location, and restart with only the previous implementation. Never merge old and new documents or load both implementations.

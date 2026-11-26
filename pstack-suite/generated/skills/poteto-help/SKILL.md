@@ -71,7 +71,7 @@ Playbooks are steps, not slash commands. The [generated mode](../poteto-mode/SKI
 - Somebody reported success from a build alone: check the actual behavior on the corresponding surface and report missing evidence.
 - Parallel workers overwrote files: use a single owner for shared changes or separate worktrees for independent changes.
 - A handoff lost context: use an explicit resume note, branch and decision log rather than guessing from another chat.
-- An action is not shipped: say it is unavailable in this suite. See the [migration backlog](../../../MIGRATION-BACKLOG.md) for the boundaries; names there are not commands. Never claim that a generic reply or a missing tool completed the action.
+- An action is not shipped: say it is unavailable in this suite. See the [resource boundaries](../../../README.md#资源与来源) for the boundaries; names there are not commands. Never claim that a generic reply or a missing tool completed the action.
 
 ## Make pstack my own
 

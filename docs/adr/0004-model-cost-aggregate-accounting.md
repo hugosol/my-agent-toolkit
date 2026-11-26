@@ -28,4 +28,6 @@ model-cost 选择在 harness-independent shared logic 中逐响应按请求锚�
 
 ## 决议范围与溯源
 
-本 ADR 记录用户确认的聚合架构取舍与理由；本迁移的数据归属与账户周期决议（含逐代理修订、整文件周期与历次暂停的替代关系）是最终决议记录。数据票已 resolved，但迁移尚未实现；账号隔离已由 provider 单账号修订取消；正常响应去重、主／子代理分别统计和同机多 CLI 并发正确性继续有效；运行期请求详情／去重标记的寿命已确定（sessionId + turnId 标记仅内存留至观察实例销毁、不在 round_end 清空、不落盘）；存储物理 schema、保存等待／失败取舍（提交后 handler 返回前等待结果、失败丢弃未保存部分并从磁盘有效快照初始化、同进程 FIFO 与跨进程互斥合计默认 15 秒等待预算、旧版本不覆盖／同版本不同内容拒绝）已在存储决议确认；可靠原生身份／实例隔离的实际接线及最终 UI 布局仍由装配／展示／验收票落实；决定不是生产实现证明。framework 的分层与 native import 责任继续遵循[语义扩展框架 ADR](0002-semantic-extension-framework.md)，本次只落地 OMP，不实现或认证其他 harness adapter。
+本 ADR 保留用户确认的聚合架构取舍与理由。账号隔离已由 provider 单账号修订取消；正常响应去重、主／子代理分别统计和同机多 CLI 并发正确性继续有效。`sessionId + turnId` 去重标记只在观察实例内保留至其销毁，不在 round_end 清空或落盘。存储继续采用 handler 返回前等待提交结果、失败丢弃未保存部分并从磁盘有效快照初始化、同进程 FIFO 与跨进程互斥共享等待预算、旧版本不覆盖和同版本异内容拒绝的规则。
+
+迁移实现、共享 business/foundation/presentation 职责及保存协作见[model-cost 分层指南](../../framework/docs/capability-layering.md)与[扩展 README](../../extensions/model-cost/README.md)。原决议的 OMP-only 范围是历史阶段；当前 Pi 装配及已执行、未验证的路径见[Pi model-cost 证据](../../framework/docs/harness-support.md#pi-model-cost-migration-evidence)。实现不自动证明真实 provider、账户、视觉验收或正式 cutover。framework 分层与 native import 责任仍由[语义扩展框架 ADR](0002-semantic-extension-framework.md)拥有；等待预算与公共文件接口的当前默认值由[能力参考](../../framework/docs/framework-capabilities.md)维护。

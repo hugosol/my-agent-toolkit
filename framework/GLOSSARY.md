@@ -1,6 +1,6 @@
 # Semantic Extension Framework
 
-The planned cross-harness framework: my-agent-toolkit maintains one in-repository framework source tree for replacement extensions containing semantic behaviors and pi/oh-my-pi adapters. A standalone extension generator is a possible later distribution feature, not part of the initial framework.
+The cross-harness framework: my-agent-toolkit maintains one in-repository framework source tree for replacement extensions containing semantic behaviors and pi/oh-my-pi adapters. A standalone extension generator is a possible later distribution feature, not part of the initial framework.
 
 ## Language
 
@@ -81,7 +81,7 @@ One per-session period of agent activity, from starting execution until it has n
 _Avoid_: native agent run, turn (one model-response cycle), per-message interaction, whole task, semantically inferred task boundary
 
 **Session disposal（会话处置）**:
-One actual session's own end, as its host states it at an awaitable exit position of its own, and the fact the framework closes that session's round on: the end the session had already stated is confirmed, and a round it left open with no end of its own is truncated. It is not a session-axis transition — a transfer to another session, a rename and a view that moved are no disposal — and the report is answered once that edge's subscribers have settled or the close-out's own wait has run out, which is how a session's own commit is finished before its host lets it go. That wait is bounded (fifteen seconds by default, from entering the close-out, never a fresh budget for work already running): a wait it gives up is reported as the uncommitted write it is, and an update that had already begun is left to its real outcome, whose published document stays the authority.
+One actual session's end, reported by its harness at an awaitable exit position. The framework closes that session's Round and waits within a bounded close-out budget for its subscribers. A transfer, rename or view change is not disposal. A write that was not confirmed remains unconfirmed. Timing and delivery rules belong to the [Session capability reference](docs/framework-capabilities.md).
 _Avoid_: session switch, transferred session, rename, process exit, task completion, observed Round end
 
 **Agent activity state（代理活动状态）**:
@@ -97,11 +97,11 @@ The agent activity state in which no current activity or pending automatic conti
 _Avoid_: completed user goal, observed Round completion, offline, unknown
 
 **Runtime directory（运行目录）**:
-The one directory the framework's own runtime files live in, stated explicitly as the shared configuration file's `runtimeDir`; a relative value is resolved against that file's own directory. It holds the location records a process publishes for its local access, and a POSIX socket file is governed by it. It is separate from an extension's storage root, and no temporary directory, working directory or storage root stands in for it.
+The explicitly configured location for framework-owned runtime artifacts, including Local access location records. It is distinct from extension business storage and is not a temporary-directory or working-directory fallback. Configuration fields and path resolution belong to the [capability reference](docs/framework-capabilities.md).
 _Avoid_: storage root, storageDir, temp directory fallback, working directory
 
 **Local access（本机接入）**:
-The framework-managed way one process offers the declared values of an owner it serves to a session the harness runs in another process, and the way a session the harness runs in another process hands that owner's process its own *observation*: one endpoint per serving process, reached by the location record it publishes, over a Windows named pipe or a POSIX local socket. It carries declared values and their changes, and one session's observation — its own facts, the owner it follows and the readings held for it — and nothing else: a declared read is answered on demand, a value change is pushed one way, and a reading is delivered the other way. It is not an RPC surface, a remote State write, or an extension's own transport. A session read in the process that serves the seat uses no endpoint at all.
+The framework-managed exchange of an Owner's declared values and each actual session's observations between local processes. A following session reads the Owner's current value rather than a creation-time copy. The exchange grants no remote State write or business-operation authority. Transport and lifetime rules belong to the [capability reference](docs/framework-capabilities.md#local-access-adapter-facing).
 _Avoid_: RPC, remote procedure call, message channel through business documents, file queue, directory scan
 
 **Access target（接入目标）**:
@@ -113,11 +113,11 @@ The record that says where one access is: the target, the endpoint, that access'
 _Avoid_: State value, business data, liveness proof, connection state
 
 **Observation source（观察来源）**:
-One connection the process serving an owner's seat admitted, numbered by that process in the order it accepted its connections — the delivering process's own access to that seat. It is an ordering and never an identity: the session that delivered is named by the readings themselves, a source number says nothing about a process's life, and a number one process handed out is only ever compared with one it handed to the same seat. What it decides is which of two words about one session is the newer: a reading is the word of the source that stated it, so a word from an older source neither overwrites nor withdraws what a later one stated, and a source's end — the connection closing, whether the process released the access, ended or was killed — withdraws exactly the live readings that source stated, while the session's own identity, its direct parent and everything already saved stay. An unavailable observation is not idleness and states nothing about the work: no Round, Turn or accounting fact is minted for a loss.
+The origin and ordering of live observations admitted for one access target. It distinguishes a newer observation from a stale source, not one session or process from another. Losing a source withdraws its live readings, not confirmed writes or business records, and does not establish idleness or a Round ending.
 _Avoid_: liveness proof, process identity, connection state as agent state, reading as accounting fact
 
 **Storage commit notice（存储提交提示）**:
-One actual session's own confirmed write of the extension data it holds in a storage another process also reads, as the process that ran that session states it: the count of confirmed writes an observation word carries, the `session_commit` delivery that reaches a process serving the session's owner where that count moved, and nothing else. It is a *notice* and never a reading of the storage — what it states is that the file both processes share holds something this session committed, it carries no content, figure or path from that file, and a consumer that adopts it reads the storage itself — and it is not a Round, a Turn or a request: nothing of the framework's bookkeeping and nothing of an extension's accounting is accumulated from it. It is stated by the extension through `ImplementationContext.recordSessionCommit` where its own write really landed, counted by the process that confirmed the writes, so a count this process already took is the same notice rather than a new one; a count a source's end does not withdraw, because a write that landed does not become untrue; and a session whose owner the stating process serves itself is recorded there and handed to nobody.
+A notice that one actual session confirmed a write of its extension data to shared storage. It carries no business content or accounting amount; consumers read the storage itself. It creates no Round, Turn or consumption contribution, and a lost observation source does not undo a confirmed write. The reporting API belongs to the [Session capability reference](docs/framework-capabilities.md).
 _Avoid_: consumption figure, record of the document, Round or Turn fact, forced save, polling, remote write path, second accounting authority
 
 ### Facts and measurement semantics
@@ -149,7 +149,7 @@ The rule that determines an extension's initial activation choice when an agent 
 _Avoid_: implementation initialization, permanent activation lock, restored external effect
 
 **Startup policy document（启动策略文档）**:
-The one YAML document a startup mode's entrypoint selects, stating each extension's initial activation choice as `enabled: <boolean>` under the extension's id. It belongs to the deployment beside the entrypoints, not to an extension's source directory; the framework reads it once per process, validates only the loaded extension's own block, and applies that block's choice at the process's first owner session start. Naming an extension in it never loads that extension.
+The deployment document selected by a startup mode that states each extension's initial activation choice. It is distinct from extension business configuration. Naming an extension in the document does not load it. File shape and application rules belong to the [startup policy reference](docs/framework-capabilities.md#extension-startup-modes-and-the-startup-policy).
 _Avoid_: extension configuration, runtime profile, mode selector flag, environment override
 
 **Extension startup mode（扩展启动模式）**:
@@ -165,7 +165,7 @@ An extension's own `config.yaml` in its source directory, read and validated by 
 _Avoid_: harness settings, environment override, State, defaults embedded in code, startup policy document
 
 **Shared configuration（共享配置）**:
-The framework's own `framework/config.yaml`, beside the general HTTP module: the named proxy entries a request selects by name (`http.proxies.<name>.enabled` and `http.proxies.<name>.url`), the default wait budget (`http.defaultTimeoutMs`), and an explicitly configured directory for framework-owned runtime artifacts. That directory has no code-level fallback when its configuration value is absent; connection-location metadata is not persisted State. It belongs to the machine, it is read once per process — a change requires a restart — and a request that names a proxy the file cannot resolve fails as a configuration error instead of connecting directly; an entry that exists without `enabled: true` is an explicitly disabled one and connects directly, so its `url` is never read.
+The machine's configuration for framework-wide HTTP transport and runtime artifacts, distinct from extension business configuration and startup policy. Changes require a process restart. Fields, resolution and failure behavior belong to the [capability reference](docs/framework-capabilities.md#general-http-module).
 _Avoid_: extension configuration, environment variable, harness proxy setting, per-provider proxy field
 
 **Mode selection（模式设置）**:
@@ -181,7 +181,7 @@ A command that alternates between two modes on successive executions.
 _Avoid_: mode selection, idempotent switch
 
 **Directed control（定向开关）**:
-A bound control kind whose command names its target state explicitly — an empty argument activates, `off` deactivates, and any other argument is not a directive at all (the framework records and publishes nothing for it, and hands the text to the implementation's own `unrecognized` member) — and which repeats its side effect on every invocation; the framework never deduplicates or short-circuits it, so idempotence is the extension's responsibility.
+A control whose command explicitly names its target activation state and repeats its operation on each invocation. It does not toggle or deduplicate the operation; idempotence belongs to the extension. Accepted arguments and handler delivery belong to the [Command reference](docs/framework-capabilities.md#commands-readonly-commanddeclaration).
 _Avoid_: toggle, mode selection, idempotent switch, command action
 
 **Mixed control（混合控制）**:
@@ -189,7 +189,7 @@ A control scheme combining explicit mode selection and command toggling over the
 _Avoid_: a fourth mode, independent switches
 
 **Command action（命令动作）**:
-An extension subfeature invoked to perform an operation, rather than to select or alternate a mode. The framework offers it as the `actions` control kind: the definition declares the command and a table of action names with the words its help shows, the framework trims and lowercases the argument and matches it whole — an empty argument prints the help, a match runs that action and waits for its completion, and anything else prints the same help at error severity and runs nothing — and the extension supplies one implementation per declared action.
+An extension subfeature invoked to perform an operation rather than select or alternate a mode. It has no implicit framework State transition. Declaration, matching and delivery belong to the [Command reference](docs/framework-capabilities.md#commands-readonly-commanddeclaration).
 _Avoid_: mode transition, toggle, directed directive, abbreviation or default action
 
 **Authored implementation（编写态实现）**:
@@ -213,11 +213,11 @@ The framework's single current-value source for an extension, including framewor
 _Avoid_: UI-only variable bag, persistence backend, unscoped global object
 
 **State persistence（State 持久化）**:
-The per-field axis deciding whether a declared State value is written to the owner's persistence medium and seeded from the target branch at session boundaries (`session-entry`, the default) or kept only in memory and never seeded (`memory`, the choice for a value whose live external effect must not be assumed from a restored value).
+The per-field choice between restoring a declared value from its Owner's persistence medium and retaining it only in memory. Restoring a value does not prove its external effect is active. Declaration values and defaults belong to the [State reference](docs/framework-capabilities.md).
 _Avoid_: extension storage, concrete persistence backend, UI state
 
 **Subagent State inheritance（子代理 State 继承）**:
-The per-field axis deciding how a subagent relates to its owner's declared State value: `follow` — the subagent reads the owner's current value live, which for a session the harness ran in another process means reading it through the framework's local access and answering the field's declared default while that access is not reached; `none` (the default) — the subagent reads the field's declared default. Other session-owned values, such as each session's init-injection progress, remain independent.
+The per-field relationship between a subagent and its Owner's declared State value. A following field reads the Owner's current value live; a non-following field reads its declared default. Following does not copy all extension state, load an extension or inherit MCP access. Declaration values, defaults and unavailable-access behavior belong to the [State reference](docs/framework-capabilities.md).
 _Avoid_: whole-extension state copy, creation-time snapshot, process-global state, extension loading, MCP inheritance, default inheritance
 
 **Owner（所属主会话 / owning main session）**:
@@ -249,7 +249,7 @@ The decision whether and how a restored state should reacquire ongoing effects w
 _Avoid_: replaying the last command, automatic side-effect restoration
 
 **Marker area（状态标记区）**:
-The framework's single status region where each bound extension's marker is rendered, with a widget identity, placement and line order the framework owns and an activation-driven life cycle the framework derives from State; an extension contributes only its marker text and can never name or claim the widget. It is one per process, registered on the process global under a well-known symbol so that duplicated framework module graphs still share the one region. What it renders is the *displayed* session's effective State — the seat the host's public Viewed session outlet names, re-read whenever the area is published, and otherwise the position the delivery itself carries — so a subagent's seat reads a following field's Owner value and every other field's declared default rather than a copy of the Owner's lines, and being displayed grants no ownership or write path. One extension bound by several sessions registers once per binding — each session's runner keeps its own State — and a seat is answered by the newest registration whose store serves the Owner it names: a binding of a session nobody is displaying never served that Owner, so it can neither empty the region nor answer with its own value.
+The framework-owned shared status region for extension marker text. It reflects the displayed session's effective State when the harness reports that view, otherwise the delivery position. Viewing grants no ownership or write authority. Publication, ordering and registration rules belong to the [Marker reference](docs/framework-capabilities.md#marker-markerdeclaration).
 _Avoid_: extension-owned widget, per-extension marker key, extension-chosen placement, marker area per viewed session, last binding wins, one registration per extension id
 
 **Viewed session seat（当前查看席位）**:

@@ -27,7 +27,6 @@
     "manifest.json",
     "generated-ownership.json",
     "README.md",
-    "MIGRATION-BACKLOG.md",
     "omp.ts",
     "maintenance/cli.ts",
     "maintenance/delivery.ts",

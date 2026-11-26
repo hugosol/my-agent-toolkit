@@ -43,7 +43,7 @@
 | 专题（唯一操作入口） | 输入 / 方法 | 能回答 | 不能据此声称 |
 | --- | --- | --- | --- |
 | [Integration check](integration-check.md) | 静态扫描 extension 对 interface 的使用、声明与订阅，对比目标 adapter 实际组装和交付 | 源码可证明的需求是否有对应实现与接线；哪里缺失、条件可用或无法解析 | 原生行为符合公共语义、真实 harness 版本可用、TUI 或 provider 已验收 |
-| [Harness 版本检查](harness-support.md#version-verification) | 固定/候选版本、行为测试、真实宿主 smoke 与必要的人工观察 | 哪个精确版本组合、哪些功能和条件有运行证据 | 测试通过自动升级支持状态，或未覆盖路径同样可用 |
+| [Harness 版本检查](harness-support.md#version-verification) | 本地选中的已安装版本、行为测试、真实宿主 smoke 与必要的人工观察 | 哪个精确版本组合、哪些功能和条件有运行证据 | 测试通过自动升级支持状态，或未覆盖路径同样可用 |
 
 `check:authoring` 是静态表达门禁，不是上述两种验证的替代；`typecheck` 包含该门禁，但不隐含执行 `check:integrations` 或真实 harness 场景。
 
@@ -58,6 +58,6 @@
 | 静态接入检查命令、诊断、生成和能力限制 | [Integration check](integration-check.md) |
 | Harness 版本状态、检查脚本、兼容证据与升级条件 | [Harness support](harness-support.md)；机器基线在 [harness-baseline.json](harness-baseline.json) |
 | 运行、人工验收与 cutover 入口 | [Framework README](../README.md)与各 extension README；版本检查流程不再在此复制 |
-| 领域术语、决策、历史研究与未决事项 | [Glossary Map](../../GLOSSARY-MAP.md)、[ADRs](../../docs/adr/)、[research/](research/)、[backlog](semantic-extension-framework-backlog.md) |
+| 领域术语、决策与未决事项 | [Glossary Map](../../GLOSSARY-MAP.md)、[ADRs](../../docs/adr/)、[架构未决事项](capability-interface-architecture.md#91-未决事项)、[Harness 差异与证据](harness-support.md#capability-difference-register) |
 
 角色指南引用权威专题，不复制命令全集、兼容状态或证据。历史记录中的版本、测试数量与执行结果只描述当时的源码和环境，不能当作当前工作树的验证结果。
