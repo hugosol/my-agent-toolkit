@@ -1,6 +1,46 @@
 import { expect, test } from "bun:test";
 import { managerDock } from "./support/manager-dock";
 
+// S3: the actual manager tool must map the public argument to HTTP and retain the
+// public receipt. A plausible violation is stripping map_output or accepting it
+// on unrelated actions. The peer supplies literal receipts, not backend validation.
+test("manager finish submits public files once and status reads back the original public values", async () => {
+	const calls: { path: string; body: unknown }[] = [];
+	const receipt = {
+		snapshot: {
+			status: "completed", inputsReady: true,
+			mapInput: { runInput: "Review the Q3 totals", files: [{ id: "source", path: "E:/data/q3.csv" }] },
+			mapOutput: { files: [{ id: "summary", path: "E:/results/actual-q3.md" }] },
+		},
+		historyError: null,
+	};
+	const refusal = { code: "map-output-missing", message: "summary is required", stateCommitted: false };
+	const server = Bun.serve({ hostname: "127.0.0.1", port: 0, async fetch(request) {
+		const path = new URL(request.url).pathname;
+		const body = await request.json() as Record<string, unknown>;
+		calls.push({ path, body });
+		return path.endsWith("/finish") && !("mapOutput" in body) ? Response.json(refusal, { status: 409 }) : Response.json(receipt);
+	} });
+	const dock = await managerDock(`http://127.0.0.1:${server.port}`);
+	try {
+		const sessionId = await dock.nativeId();
+		expect(await dock.call({ action: "finish" }, true)).toEqual(JSON.stringify(refusal));
+		expect(await dock.call({ action: "finish", map_output: { files: [{ id: "summary", path: "E:/results/actual-q3.md" }] } })).toEqual(receipt);
+		expect(await dock.call({ action: "status" })).toEqual(receipt);
+		for (const invalid of [
+			{ action: "status", map_output: { files: [] } },
+			{ action: "finish", mapOutput: { files: [] } },
+			{ action: "finish", map_output: { files: [{ id: "summary", path: "E:/results/actual-q3.md", executionId: "forged" }] } },
+			{ action: "finish", map_output: { files: [], runId: "forged" } },
+		]) expect(await dock.call(invalid, true)).toMatch(/Validation failed|parameters|不接受/);
+		expect(calls).toEqual([
+			{ path: "/api/workflow/manager/finish", body: { sessionId } },
+			{ path: "/api/workflow/manager/finish", body: { sessionId, mapOutput: { files: [{ id: "summary", path: "E:/results/actual-q3.md" }] } } },
+			{ path: "/api/workflow/manager/status", body: { sessionId } },
+		]);
+	} finally { await dock.close(); server.stop(true); }
+}, 300_000);
+
 // S1/P10 owned basic-action partition. These are literal protocol examples, independent of
 // implementation tables. Violation: ignoring extra fields and accidentally accepting a mutation.
 // Native OMP validation AND delivered runtime guard remain real, HTTP is only a capture boundary.

@@ -4,7 +4,7 @@
 
 ## 1. 准备与独立装配
 
-1. 选择一个固定的 toolkit 提交和锁文件，部署完整源码 checkout，在其根目录运行 `bun install --frozen-lockfile`。保留 `framework/`、`adapters/`、`extensions/workflow-chat/`、`entrypoints/`、`package.json`、`bun.lock` 和已安装依赖；入口不是可独立复制的脚本。不要复制其他进程的 `framework/.runtime` 或原生 Session 数据到新部署。toolkit 与后端必须配套升级至 input_rule/output_rule、outputs 数组与报告 from/to 契约；旧 Map、Run 与报告须先执行后端的一次性迁移并保留历史与状态，普通读写不兼容旧格式，不提供旧形状新请求放行；升级前保留旧提交和部署配置，在隔离数据上复验；不要在活动 Run 中途切换定义、Task 或源码。
+1. 选择一个固定的 toolkit 提交和锁文件，部署完整源码 checkout，在其根目录运行 `bun install --frozen-lockfile`。保留 `framework/`、`adapters/`、`extensions/workflow-chat/`、`entrypoints/`、`package.json`、`bun.lock` 和已安装依赖；入口不是可独立复制的脚本。不要复制其他进程的 `framework/.runtime` 或原生 Session 数据到新部署。toolkit 与后端须停机配套切换。先核实相关在途执行和已发生效果，按后端运维指引将旧 Map/Bot 暂存到在线范围之外、归档完整旧 Run、保留 Chat 与业务文件；新版只在线读取新格式，不恢复旧 Run 的管理角色，不为旧历史补造定义或成果。
 2. 按 Task 选择可运行的 OMP 或 Pi 安装，并使用对应宿主的 auto 角色入口。Pi 原生验收使用本地已安装 CLI，并应用 workflow-chat 范围的版本下限。环境、版本政策及 Windows Node 退出故障见 [Pi acceptance versions](../../docs/agents/testing.md#pi-acceptance-versions) 和 [workflow-chat 验证基线](../../framework/docs/harness-support.md#pi-workflow-chat-verification-baseline)。OMP 与 Pi 分别核对，任一宿主的演练不证明另一宿主通过。
 3. 在部署 checkout 的 [config.yaml](config.yaml) 配置 endpoint 和四个预算，见 [稳定配置](README.md#稳定配置)。endpoint 指向实际 herdr-bot 服务，不能指向另一个 Run 的测试服务。配置装配按入口所在仓库定位，不按节点 cwd 查找；修改后重启对应 Session 进程。不要以环境变量或复制 cwd 配置代替它。
 4. 在 herdr-bot 部署中找到 `[tasks].metadata_file` 实际使用的 Task 选项目录。将 manager/node 的固定扩展条目分别指向本次部署的绝对入口；不要改成 selectable，不要重复加载同一 ID。普通 Task 保持单角色；后端合法创建的嵌套 manager 在同一原生 Session 同载下面两种对应宿主的角色入口，而非启动两个单角色进程。以下为 TOML 片段，替换示例根路径后写入**实际目录**，不是新增 toolkit 配置：
@@ -44,7 +44,7 @@
    ```
 
    目录的 schema、服务配置与 Run 生命周期由后端维护。后端 checkout 的长期入口是 `docs/workflow-runtime.md`（公开 HTTP、记录与操作）和 `meta-data/task-options.toml`（目录实例）。保留原部署所需 Herdr 官方状态/会话引用上报项；加载角色扩展不替代它们。无需加载 connect-bot，也不进行面板登记连接。
-5. manager 类型 Task 固定管理职责，node 类型 Task 固定执行与报告职责，分别选择所需的 omp 或 pi，不要求整张 Run 宿主一致；确认各宿主不会自动续接其他原生会话。由 scheduler 正常创建 Run 并建立真实原生 Session 关联。后端的稳定 `run_instructions` 应指向其已部署的 `docs/workflow-runtime.md`，运行输入提供可读的 Map、说明及三份记录绝对路径。具体输入分工见 [首次指引与输入边界](README.md#首次工具指引与输入边界)。不要把工具指引再复制进 Task.prompt 或自动复制整张 Map、上游聊天和文件正文；配套后端向 node 提供本次 userInput、业务 input 和命名输入地址。
+5. manager 类型 Task 固定管理职责，node 类型 Task 固定执行与报告职责，分别选择所需的 omp 或 pi，不要求整张 Run 宿主一致；确认各宿主不会自动续接其他原生会话。由 scheduler 正常创建 Run 并建立真实原生 Session 关联。后端的稳定 `run_instructions` 应指向其已部署的 `docs/workflow-runtime.md`，运行输入包含本 Run 的冻结 Map 副本、说明及运行记录路径。具体输入分工见 [首次指引与输入边界](README.md#首次工具指引与输入边界)。不要把工具指引再复制进 Task.prompt 或自动复制整张 Map、上游聊天和文件正文；配套后端向普通节点分开提供 Run 背景（`mapInput.runInput`）、节点委托、实际材料地址与输出要求；结束节点不加载普通节点工具。
 6. OMP 自动发现入口是 [manager 入口](../../entrypoints/omp-auto/manager-chat.ts)、[node 入口](../../entrypoints/omp-auto/node-chat.ts)，Pi 对应 [manager 入口](../../entrypoints/pi-auto/manager-chat.ts)和 [node 入口](../../entrypoints/pi-auto/node-chat.ts)。启动策略来自公共 [auto.yaml](../../entrypoints/startup/auto.yaml)；角色声明位于 [manager-chat/definition.ts](manager-chat/definition.ts) 与 [node-chat/definition.ts](node-chat/definition.ts)，原生装配位于各自的 [manager omp harness](manager-chat/harnesses/omp.ts) 与 [node omp harness](node-chat/harnesses/omp.ts)。源码职责与依赖只在 [README](README.md#workflow-chat-源码职责与依赖) 维护。这里只消费所加载角色的启动策略，不会因文件列出两种角色就加载另一种。manager 应有 `run`/`collect`，node 应有 `report`；首次启用指引由公共 Prompt 提供。普通轮次不重复注入；切换 owner 不会重新消费进程级自动启用。记录过的启用值优先，不能靠重复加载入口重置它。
 
 仅检查独立加载可在两个独立进程分别运行以下命令；它们**不会创建合法 Run 关联**，无关联错误不是要伪造 sessionId 的理由：
@@ -177,7 +177,8 @@ bun test tests/harness-dock/node-report-contract.test.ts
 
 | 现场 | 维护操作与核对 |
 | --- | --- |
-| inputsReady=false 或历史缺字段 | 读取 Map input_requirements 的非文件总体要求与各项 input_files[].description，核对 ID/required，审阅已有文本/输入文件，只问缺项；经授权写入命名文件。prepare_inputs 完整替换 fileInputs，false 保存待补齐绑定，true 记录非空语义审阅依据并要求全部必需文件可读；检查错误/historyError、changed 或 stateCommitted 及就绪快照后才 dispatch/retry；普通成功不要求出现 stateCommitted。无文件和嵌套 Run 同样准备，不增加输出验收或执行后编辑锁。 |
+| inputsReady=false | 读取冻结 Map 的 `map_input_rule.description` 与 `map_input_rule.files`，对照本次 `mapInput.runInput` 和 `mapInput.files`。`prepare_inputs.fileInputs` 整批替换实际文件绑定，`confirmed:false` 只保存待补齐绑定；按回执及就绪快照决定 dispatch/retry，不改写已派发 execution 的输入。 |
+| `canFinish` 可结束 | 用 `finish.map_output.files` 一次提交冻结 Map 声明的全部公开必交文件（未声明文件可省略），从 `mapOutput.files` 核对公开读回。子 Run 的父层批准、报告、父管理者 complete 各自独立；子管理者不在报告中重填公开地址。结束节点成功派发是把 Chat 交给用户继续，不代替 finish 或补交公开成果。 |
 | 无关联、错误角色、歧义或入口缺失 | 对照固定 Task 类型、绝对路径、后端派发现场及原生 Session 关联。保留后端拒绝，不用名称/cwd/Owner key 猜身份，不补建连接。 |
 | 派发失败且可能已创建 Chat | 检查 failure.stage、effects 和原 agent；显式 reconcile_dispatch，按人工核实选择 uncertain/not_created/created。不能用 retry 跳过核实，不能将错误当成所有目标都未执行。 |
 | 执行 failed，已修复且原 Chat 可继续 | 显式 recover 并提供 confirmed=true 与真实依据；核对执行 ID/Task/zone/Chat 不变。它只恢复跟踪，不启动、Resume 或补发输入。paused 下也可 recover。 |

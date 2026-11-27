@@ -54,10 +54,10 @@ test("P27 actual role input preserves backend fixed/work sections and adds only 
 			if (role === "manager") {
 				// Observe the actual separately delivered guide: preparation is input-only,
 				// not duplicated per-Map content or a new output-review responsibility.
-				expect(guide).toContain("input_requirements");
-				expect(guide).toContain("prepare_inputs");
-				expect(guide).toContain("完整替换");
-				expect(guide).toContain("stateCommitted");
+				expect(guide).toContain("输入准备使用 prepare_inputs");
+				expect(guide).toContain("按 Map 声明提交公开文件绑定");
+				expect(guide).toContain("保留工具返回的拒绝原因和部分结果");
+				expect(guide).not.toContain("input_requirements");
 			}
 			for (const forbidden of ["BOT-DOCUMENT-27", "BOT-PLAN-27", "BOT-NODE-27", "FULL-MAP-DOCUMENT-27", "MAP-TITLE-27"]) expect(request.raw).not.toContain(forbidden);
 			expect(request.raw).toContain("RUN-USER-INPUT-27");

@@ -1,4 +1,6 @@
 import { expect, test } from "bun:test";
+import { readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { dualRoleDock } from "../workflow-chat/support/dual-role-dock";
 import { providerMessages, roleGuidance } from "../workflow-chat/support/prompt-dock";
 
@@ -13,15 +15,35 @@ for (const host of ["omp", "pi"] as const) {
 		try {
 			expect((await dock.call("run", { action: "status" })).isError).toBe(false);
 			expect((await dock.call("collect", {})).isError).toBe(false);
-			dock.answer({ saved: true, report: { id: "controlled-external-report" }, notification: { ok: false } });
-			expect((await dock.call("report", { body: "External handoff", can_complete: true })).isError).toBe(false);
+			const progress = { saved: true, report: { id: "parent-progress", canComplete: false, outputs: [] }, notification: { status: "failed" } };
+			dock.answer(progress);
+			expect(await dock.call("report", { body: "Still checking totals", can_complete: false })).toMatchObject({ isError: false, body: { ...progress, guidance: "报告已保存；通知结果见 notification。" } });
+			const file = join(dock.root.workDir, "approved-summary.txt");
+			writeFileSync(file, "Q3 net total: 42\n");
+			const appendix = join(dock.root.workDir, "calculation-appendix.txt");
+			writeFileSync(appendix, "Q3 adjustments: 8\n");
+			const mapOutput = { files: [{ id: "summary", path: file }, { id: "appendix", path: appendix }] };
+			dock.answer({ snapshot: { status: "completed", mapOutput } });
+			expect(await dock.call("run", { action: "finish", map_output: mapOutput })).toMatchObject({ isError: false, body: { snapshot: { status: "completed", mapOutput } } });
+			// The peer supplies independent responses. The tools must not infer any
+			// automatic action, call approve in report, or synthesize an output request.
+			dock.answer({ code: "map-report-outputs-not-allowed", message: "Use the public child Run result" }, 409);
+			expect(await dock.call("report", { body: "Do not replace the file", can_complete: true, outputs: [{ id: "summary", path: "E:/other.txt" }] })).toMatchObject({ isError: true, body: { code: "map-report-outputs-not-allowed" } });
+			const handoff = { saved: true, report: { id: "parent-handoff", canComplete: true, outputs: [{ id: "summary", path: file }] }, notification: { status: "submitted" } };
+			dock.answer(handoff);
+			expect(await dock.call("report", { body: "Totals ready", can_complete: true })).toMatchObject({ isError: false, body: handoff });
+			expect(readFileSync(file, "utf8")).toBe("Q3 net total: 42\n");
+			expect(readFileSync(appendix, "utf8")).toBe("Q3 adjustments: 8\n");
 			const state = await dock.session.request({ type: "get_state" });
 			const data = state.data as { sessionId: string };
 			expect(typeof data.sessionId).toBe("string");
 			expect(dock.calls).toEqual([
 				{ path: "/api/workflow/manager/status", body: { sessionId: data.sessionId } },
 				{ path: "/api/workflow/manager/collect", body: { sessionId: data.sessionId } },
-				{ path: "/api/workflow/node/report", body: { sessionId: data.sessionId, body: "External handoff", canComplete: true } },
+				{ path: "/api/workflow/node/report", body: { sessionId: data.sessionId, body: "Still checking totals", canComplete: false } },
+				{ path: "/api/workflow/manager/finish", body: { sessionId: data.sessionId, mapOutput: { files: [{ id: "summary", path: file }, { id: "appendix", path: appendix }] } } },
+				{ path: "/api/workflow/node/report", body: { sessionId: data.sessionId, body: "Do not replace the file", canComplete: true, outputs: [{ id: "summary", path: "E:/other.txt" }] } },
+				{ path: "/api/workflow/node/report", body: { sessionId: data.sessionId, body: "Totals ready", canComplete: true } },
 			]);
 			const first = dock.capture.requests()[0]!;
 			const request = first.json;
@@ -31,19 +53,29 @@ for (const host of ["omp", "pi"] as const) {
 				return tool.function.name;
 			});
 			for (const tool of ["run", "collect", "report", "approve"]) expect(tools.filter(name => name === tool)).toHaveLength(1);
+			const schema = (name: string) => JSON.stringify((request.tools as { function: { name: string } }[])
+				.find(tool => tool.function.name === name)?.function);
+			expect(schema("run")).toContain("查询或显式推进当前管理的 Run；实际动作资格以返回结果为准。");
+			expect(schema("run")).toContain("整批替换 Run 文件绑定，不是追加；遗漏旧 ID 会删除其绑定，空数组清空。");
+			expect(schema("run")).toContain("结束 Run 时提交的公开文件成果。");
+			expect(schema("collect")).toContain("等待或取得运行现场与待处理报告标识；不返回报告正文。");
+			expect(schema("report")).toContain("如实声明本次执行是否可交接，不直接完成节点。");
+			expect(schema("approve")).toContain("按本次成果批准模式取得批准；不发送报告或推进流程。");
 			const manager = roleGuidance(first, "manager");
 			const node = roleGuidance(first, "node");
 			expect(manager).not.toBe(node);
-			// P38: both actually injected role guides describe result approval, not report sending approval.
-			for (const guide of [manager, node]) {
-				expect(guide).toContain("approve {}");
-				expect(guide).toContain("进度");
-				expect(guide).not.toContain("report_policy");
-			}
-			expect(node).toContain("当前会话的成果是否已达到预期，可以交接并推进后续流程？");
-			expect(node).toContain("结束节点没有 node 批准职责");
-			expect(manager).toContain("批准不免除报告和其他门禁");
-			expect(manager).toContain("每次原生工具展示完整载荷");
+			// S3: omitting either guide or copying backend role facts into it defeats the
+			// approved split even if the native tools remain callable.
+			expect(manager).toContain("使用 run 查询当前现场");
+			expect(manager).toContain("按 Map 声明提交公开文件绑定");
+			expect(manager).toContain("兼任父节点执行者时使用节点报告工具指引");
+			expect(manager).toContain("当本次工作由 chief 实际委派时");
+			expect(manager).toContain("chief_resend_report");
+			expect(manager).not.toContain("你是 Run 管理者");
+			expect(node).toContain("调用 approve 按本次模式取得批准，再调用 report 交接");
+			expect(node).toContain("中途情况使用 false，可不附文件");
+			expect(node).toContain("子 Map 的正式文件由系统从已完成子 Run 的公开成果取得");
+			expect(node).not.toContain("你是节点执行者");
 			const last = dock.capture.requests()[dock.capture.requests().length - 1]!;
 			for (const guide of [manager, node]) expect(providerMessages(last).filter(message => message.content === guide)).toHaveLength(1);
 			const history = (await dock.history()).split("\n").filter(Boolean).map(line => JSON.parse(line));

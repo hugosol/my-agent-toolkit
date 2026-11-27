@@ -2,6 +2,26 @@ import { expect, test } from "bun:test";
 import { customMessages } from "./session-log";
 import { promptDock, providerMessages, roleGuidance } from "../workflow-chat/support/prompt-dock";
 
+// S3: the manager must load the same chief handoff instructions as the actual
+// independent report entry; loading only the chief tools is insufficient.
+test("manager includes the tool guidance loaded by the standalone chief-report entry", async () => {
+	const standalone = await promptDock("chief-report");
+	try {
+		expect((await standalone.session.prompt("Inspect available chief reporting tools.")).status).toBe("completed");
+		const guidance = providerMessages(standalone.capture.requests()[0]!)
+			.filter(message => message.role !== "system" && message.content.includes("chief_resend_report"));
+		expect(guidance).toHaveLength(1);
+		const standaloneGuide = guidance[0]!.content;
+		const manager = await promptDock("manager");
+		try {
+			expect((await manager.session.prompt("Inspect available manager tools.")).status).toBe("completed");
+			const guide = roleGuidance(manager.capture.requests()[0]!, "manager");
+			expect(guide).toContain("当本次工作由 chief 实际委派时，使用 chief 报告工具交接结果；具体资格由后端确认。");
+			expect(guide).toContain(standaloneGuide.trim());
+		} finally { await manager.close(); }
+	} finally { await standalone.close(); }
+}, 300_000);
+
 // Approved S1; P26's independent source is the existing first-enabled-run contract:
 // identity = extensionId:tag, append-only history, no repeat and no switch reset.
 // Violation: reinjecting on every ordinary round or forgetting history on a switch.

@@ -186,7 +186,7 @@ for (const role of ["manager", "node"] as const) {
 				: { saved: true, notification: { ok: false, error: "notification unavailable" }, diagnostic: { ok: false } };
 			run.answer(body);
 			const first = await run.call(name, valid);
-			expect(first.result.details).toEqual({ httpStatus: 200, body });
+			expect(first.result.details).toEqual({ httpStatus: 200, body: role === "manager" ? body : { ...body, guidance: "报告已保存；通知结果见 notification。" } });
 			expect(first.isError).toBe(false);
 			expect(run.calls).toHaveLength(1);
 			expect(run.calls[0]!.body.sessionId).toBeString();
@@ -196,8 +196,13 @@ for (const role of ["manager", "node"] as const) {
 			if (role === "node") expect(run.calls[0]!.body).toEqual({ body: "  original report\n", canComplete: false, outputs: [{ id: "draft", path: "E:/external/pi-draft.txt" }], sessionId: state.data.sessionId });
 			const visible = run.capture.requests()[0]!.json as { tools: { function: { name: string } }[] };
 			expect(visible.tools.map(tool => tool.function.name)).toContain(name);
-			if (role === "manager") expect(visible.tools.map(tool => tool.function.name)).toContain("collect");
-			const prompt = role === "manager" ? "你是 Run 管理者" : "你是节点执行者";
+			if (role === "manager") {
+				const tools = visible.tools.map(tool => tool.function.name);
+				expect(tools).toContain("collect");
+				expect(tools).not.toContain("report");
+				expect(tools).not.toContain("approve");
+			}
+			const prompt = role === "manager" ? "使用 run 查询当前现场" : "正常成果准备好后，调用 approve";
 			expect(run.capture.requests()[0]!.raw).toContain(prompt);
 			const history = await run.history();
 			expect(history).toContain('"role":"toolResult"');
@@ -305,8 +310,8 @@ acceptanceTest("Pi tool AbortSignal releases transport, switch preserves auto st
 		expect(run.calls[count]!.body.sessionId).not.toBe(before);
 		// The fresh Owner must not receive a second automatic tools Prompt, either on
 		// the provider wire or in persisted history, despite the native tool being usable.
-		expect(run.capture.requests()[firstNewRequest]!.raw).not.toContain("你是 Run 管理者");
-		expect(await run.history()).not.toContain("你是 Run 管理者");
+		expect(run.capture.requests()[firstNewRequest]!.raw).not.toContain("使用 run 查询当前现场");
+		expect(await run.history()).not.toContain("使用 run 查询当前现场");
 		const restored = await run.session.request({ type: "switch_session", sessionPath: originalFile });
 		expect(restored.success).toBe(true);
 		const secondGate = run.holdBody();

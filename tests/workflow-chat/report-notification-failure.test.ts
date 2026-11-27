@@ -10,7 +10,7 @@ test("P16 saved report with failed auxiliary notification stays saved and is not
 	const dock = await nodeDock(`http://127.0.0.1:${server.port}`, { body: saved.report.body, can_complete: true });
 	try {
 		expect((await dock.session.prompt("提交一次已可交接结果")).status).toBe("completed");
-		expect(JSON.parse(toolText(dock))).toEqual(saved);
+		expect(JSON.parse(toolText(dock))).toEqual({ ...saved, guidance: "报告已保存；通知结果见 notification。" });
 		const results = dock.session.frames().filter(frame => frame.type === "tool_execution_end");
 		expect(results).toHaveLength(1);
 		expect(results[0]?.isError).not.toBe(true);

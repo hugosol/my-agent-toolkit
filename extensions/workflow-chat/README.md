@@ -121,7 +121,7 @@ pi -e /absolute/my-agent-toolkit/entrypoints/pi-auto/manager-chat.ts -e /absolut
 
 `run`／`collect` 定位内部 Run，`report` 定位外层对应父 execution。所有调用只提供各工具现有的业务参数；公共原生 Session observation 提供同一真实身份，后端以明确关联决定授权和层级。工具存在不证明关联合法，不能添加 session、Run、execution、from/to 或接收者字段绕过拒绝。普通单角色继续只加载自己的入口。
 
-两独立实例各有 `manager-chat:tools`／`node-chat:tools` 首次指引身份，均追加到原生历史，不覆盖对方；普通轮次与恢复原 Session 不重复注入。内部 `finish` 不是 `session_end`：不关闭 Chat、不自动生成外报或完成父节点，随后仍可独立 report。外层成果批准采用父 execution 冻结模式；内部 finish 后须先独立 approve 父成果，再 report 正常成果，父 manager 另行验收并 complete。内部批准、finish 或聊天同意不能替代父成果批准，进度／问题／失败可随时 report，无报告发送确认。
+两独立实例各有 `manager-chat:tools`／`node-chat:tools` 首次指引身份，均追加到原生历史，不覆盖对方；普通轮次与恢复原 Session 不重复注入。内部 `finish` 不是 `session_end`：不关闭 Chat、不自动发报告、不批准或完成父节点。内部 finish 后须按父 execution 冻结模式独立 `approve {}`，再 `report` 交接。父层正式文件由后端从已结束子 Run 的公开成果中按父 `outputRule` 取得同名子集；子管理者不传 `outputs` 改写地址。父管理者另行显式 `complete`；中途报告用 `can_complete:false`，可不带文件，也不提前登记 Map 成果。
 
 可复现的同载机制检查、原始材料保存方式及证据边界见 [运行手册的双角色原生 dock](OPERATIONS.md#双角色原生-dock机制验证)。这不是后端授权、真实模型遵从或完整嵌套承诺已通过的声明。
 
@@ -174,7 +174,7 @@ extensions/workflow-chat/
 
 ## 首次工具指引与输入边界
 
-三种输入各有唯一职责：`Task.prompt` 固定角色职能；后端本次 input 提供本次 `userInput`、node 业务 input、已解析的命名输入地址、运行说明及状态/历史/报告记录的路径；扩展的公共 Prompt 只说明工具使用。后端把固定文本与本次工作组合为启动输入，扩展不重拼、不替换或另发固定文本，不复制 Bot 文档、整张 Map、上游完整聊天或业务文件正文。node 按已给定命名地址消费文件，不自行筛选报告猜路径；缺失输出由业务 node 报告阻塞。
+三种输入各有唯一职责：`Task.prompt` 固定角色职能；后端供给基本流程事实及本次输入：管理者读取本 Run 的 Map 副本和实际 `mapInput`，普通节点分开取得 `mapInput.runInput` 的 Run 背景、节点委托、已解析材料地址与输出要求；扩展的公共 Prompt 只说明工具使用。后端把固定文本与本次工作组合为启动输入，扩展不重拼、不替换或另发固定文本，不复制 Bot 文档、整张 Map、上游完整聊天或业务文件正文。普通节点按本次委托在条件满足时读取适用业务文档，并执行与检查本次成果。管理者不加载 Map 专属业务标准，不重复验收节点；结束节点只将 Chat 交给用户继续，不加载普通节点指引、`approve` 或 `report`。
 
 ### plan_workflow 的真实业务验收
 
@@ -191,7 +191,7 @@ python (Join-Path $HERDR_BOT_WT 'scripts/test-workflow-file-handoff.py') `
 
 分别核对用户确认方案和[成果批准](#approve-成果批准)。`report` 登记 `id=outline` 的输出并声明真实 `can_complete`，不能代替批准。manager 明确完成和派发，generate_map 从初始化命名地址读取。另核对能力缺失时保持阻塞，不自动创建 Task 或 Bot；缺少新业务管理者配置时不沿用自举配置。保留 `business-requirements.json`、`evidence.json`、真实文件和服务读回。受控 dock 不能代替这个业务验收。
 
-完整指引由 [manager init.md](manager-chat/shared-logic/prompts/init.md)与 [node init.md](node-chat/shared-logic/prompts/init.md)持有，由各自声明引用，不要求部署者再复制到 Task。manager 的首次指引覆盖全部十一种 run action、collect 五种 reason 与完整等待预算、报告标识查阅、依赖与终态、派发核实、recover/retry、当前执行最新报告完成门禁、拒绝后 collect 等待及部分效果；node 的首次指引覆盖报告策略、如实声明 can_complete、简短编排报告、命名 outputs、允许后续收尾、报告不等于完成，以及已保存但通知失败不重报。
+完整指引由 [manager init.md](manager-chat/shared-logic/prompts/init.md)与 [node init.md](node-chat/shared-logic/prompts/init.md)持有，由各自声明引用，不要求部署者再复制到 Task。根与子管理者使用同一份工具指引；子管理者另加载节点报告指引来向父层交接。管理者与独立 chief-report 入口使用同一份 chief 报告工具指引，仅实际委派可以向 chief 报告，由后端确认资格。OMP/Pi 不分别维护业务政策。
 
 两条隐藏、持久化的 Prompt 身份分别为 `manager-chat:tools` 与 `node-chat:tools`，使用公共 `first-enabled-run` 的分支历史规则，不另存“已注入”标记。普通轮次保留历史中的一份指引，不追加副本；切换回来也不重置。公共自动启动策略每进程只消费一次，切到新的未启用 owner 不会再次自动启用；历史分支不带该身份时，由公共规则决定首次贡献，不由角色代码另建状态机。
 
@@ -218,16 +218,16 @@ collectTimeoutMs: 5460000
 
 ## run 输入准备
 
-所有新 Run（包括无文件的 Run）及历史缺少 `inputsReady` 的 Run 均从输入未就绪开始。manager 先读取该 Map 唯一的 `input_requirements`（缺省 `""`），审阅已提供的文本和文件正文，只追问缺项；经授权将材料写入明确命名的文件，并绑定 Map 声明的输入 ID。`request`、`materials` 等 ID 没有特殊语义。嵌套 Run 使用同一规则，不能借用外层准备状态。
+管理者可在必需材料未齐时启动。准备输入以本 Run 冻结 Map 的 `map_input_rule.description` 和 `map_input_rule.files` 为准；实际原始说明与绑定分别从 `snapshot.mapInput.runInput` 和 `snapshot.mapInput.files` 读取。审阅已有说明和材料，只追问缺项；经授权可将材料写成文件并绑定声明的输入 ID。`inputsReady` 是独立状态；无文件及嵌套 Run 也使用同一准备动作。
 
 ```json
 {"action":"prepare_inputs","fileInputs":[{"id":"source","path":"E:/work/source.txt"}],"confirmed":false,"reason":"尚缺用户确认的范围"}
 {"action":"prepare_inputs","fileInputs":[{"id":"source","path":"E:/work/source.txt"}],"confirmed":true,"reason":"已按 Map 输入要求审阅现有文本和文件内容"}
 ```
 
-工具使用 `POST /api/workflow/manager/prepare_inputs`，仅自动加入公共 `sessionId`；模型必须提交 `fileInputs`、boolean `confirmed`、字符串 `reason`，严格拒绝额外字段（包括绑定条目内）。`fileInputs` **完整替换** Run 绑定：省略旧 ID 删除旧绑定，`[]` 清空。false 可保存有效的部分绑定，即使仍缺必需文件，且始终使 `inputsReady=false`；true 需非空 reason、全部必需文件可读，并由 agent 如实声明语义审阅完成。后端不实现逐流程内容校验；任何 supplied 绑定仍须合法、已声明、无重复且可读。
+工具使用 `POST /api/workflow/manager/prepare_inputs`，仅自动加入公共 `sessionId`；模型必须提交 `fileInputs`、boolean `confirmed`、字符串 `reason`，严格拒绝额外字段（包括绑定条目内）。`fileInputs` **完整替换** `mapInput.files`：遗漏旧 ID 删除旧绑定，`[]` 清空；不改写 `mapInput.runInput`。false 可保存有效的部分绑定，即使仍缺必需文件，且始终使 `inputsReady=false`；true 需非空 reason、全部必需文件可读，并由 agent 如实声明语义审阅完成。后端不实现逐流程内容校验；任何 supplied 绑定仍须合法、已声明、无重复且可读。
 
-检查错误、`changed`、`stateCommitted`、`historyError` 和 `snapshot.inputsReady` 后才能派发；普通成功可用 `changed:true` 加就绪快照确认，不要求存在仅可能在部分失败时提供的 `stateCommitted`。错误/历史错误须保留处理，不当作干净成功；不确定先 status，不自动重提。dispatch/retry 在未就绪时被后端拒绝，所有必需输入须在任何业务节点启动前齐备。已执行不锁定后续输入编辑，但不会修改已冻结 execution 输入。本门槛只针对输入，不增加输出复核或输出就绪规则，成果验收仍由 Map 的 node 承担。
+检查错误、`changed`、`stateCommitted`、`historyError` 和 `snapshot.inputsReady` 后才能派发；普通成功可用 `changed:true` 加就绪快照确认，不要求存在仅可能在部分失败时提供的 `stateCommitted`。错误/历史错误须保留处理，不当作干净成功；不确定先 status，不自动重提。dispatch/retry 在未就绪时被后端拒绝，所有必需输入须在任何业务节点启动前齐备。已执行不锁定后续输入编辑，但不会修改已冻结 execution 输入。本门槛只针对输入；Run 公开成果通过 `finish` 提交，业务成果检查仍由节点承担。
 
 ## 无 Chat 的 TypeScript 脚本节点
 
@@ -257,6 +257,7 @@ manager 的 `run` 工具以 `action` 选择显式动作。传输为 `POST /api/w
 {"action":"fail","nodeId":"B","reason":"已核实缺少源文件；保留原 Chat 与部分产物"}
 {"action":"pause"}
 {"action":"resume"}
+{"action":"finish","map_output":{"files":[{"id":"summary","path":"E:/results/q3.md"}]}}
 {"action":"finish"}
 ```
 
@@ -267,9 +268,9 @@ manager 的 `run` 工具以 `action` 选择显式动作。传输为 `POST /api/w
 | fail | 仅将 running node 记为执行失败，保留原执行与首次原因。不暂停 Run、不重试、不终止实际 Chat。 |
 | pause | 只禁止新执行，已有工作、report、核实和 complete 仍可继续；不等已有 Chat 退出。 |
 | resume | 只恢复派发资格，不是普通 Chat Resume，不自动派发、重试或补发输入。 |
-| finish | running/paused 且全部 node completed 才可结束，活动 Chat 不阻止。终态 `canFinish=false`，不重新打开 Run。 |
+| finish | 以 `canFinish` 为准显式结束。结束节点成功派发仅表示将 Chat 交给用户继续，不等待其报告或完成。按 `map_output_rule.files` 一次提交所有必交的 `{id,path}` 绑定；无声明文件可省略 `map_output`。终态不重新打开 Run。 |
 
-重复 complete/fail 保留首次事实，重复 pause/resume 不重复转换，重复 finish 返回首次结束事实；终态拒绝变更。工具保留后端 `changed`、拒绝 code/原因、`reports`、`pendingReports`、`historyError`、`stateCommitted` 与已发生效果，不把 HTTP 200 或动作取消解释成全部成功/回滚。
+`finish` 将 `map_output` 作为 HTTP `mapOutput` 提交。后端检查无重复、均为已声明 ID、全部必交项和文件合法可读；拒绝不代表完成。公开读回为 `snapshot.mapOutput.files`；重复 `finish` 保留首次成果，不分批或提前登记。结束节点未来对话不能补交本次必交成果。重复 complete/fail 保留首次事实，重复 pause/resume 不重复转换；终态拒绝变更。工具保留后端 `changed`、拒绝 code/原因、`reports`、`pendingReports`、`historyError`、`stateCommitted` 与已发生效果，不把 HTTP 200 或动作取消解释成全部成功/回滚。
 
 OMP 使用等价的 singleton object type union 避免宿主把显式可选 null 删成省略；开放命名映射与标量保留原值，校验仍由 shared logic 负责。所有动作严格拒绝额外身份或不适用字段（如 status 的 nodeId、complete 的 confirmed）。OMP 18.5.0 会修复 closed schema 并删除未知字段，因此原生 schema 刻意保留未知键供工具逐 action 拒绝，避免非法调用被“修好”后意外执行；这不是业务参数扩展。Pi schema 对业务值保留原值并说明准确类型，防止宿主在执行前转换参数，由同一份 shared logic 严格校验；例如字符串 `"false"` 不得变成确认值，数字 body 不得变成字符串。Pi 同样保留额外键以拒绝整次非法调用，而非删除身份字段后执行。缺失/非字符串字段由宿主或工具拒绝，空白 reason 的业务拒绝交由后端，不复制状态机。
 
@@ -324,25 +325,25 @@ OMP 使用原生 ANSI/TSP 的同一直接调用；Pi 将 collect 注册为只供
 
 ## 文件规则与派发快照
 
-Map node 的 `input` 工作文本保持原样；文件交接使用 `input_rule` 数组（`{id,type:"file",path}` 或 `{id,type:"node",node_id,output_id}`）与 `output_rule: [{id}]`，无交接时缺省为空。每个数组内 ID 唯一，输出 ID 为节点局部标识而非文件名；引用须指向已声明 node 和 output_id。输入引用不隐含 `blocked_by` 依赖。派发冻结规则至 execution 的 `inputRule`/`outputRule`，内部规则字段仍为 snake_case；真正解析的文件另存 `inputs: [{id,path}]`。Map 后续修改不会改变冻结执行。新派发的三个字段均为数组（无交接时为 `[]`）；迁移历史中无法证明原声明或实际解析结果时，`inputRule`、`outputRule`、`inputs` 为 `null`，不能从部分报告反推完整声明。未知冻结输出声明的历史 execution 新报告会被后端以 `output-rule-unknown` 拒绝，不按当前 Map 猜测。必需上游输出尚未登记时派发报错，不猜地址、不启动工作。
+Map node 的 `input` 保留本次委托。文件 `input_rule` 可引用固定文件 `{id,type:"file",path,zone_id?}`、上游节点 `{id,type:"node",node_id,output_id}` 或本 Run 输入 `{id,type:"run",input_id}`。`output_rule` 只声明 `{id}`；每侧 ID 独立，材料引用不补 `blocked_by`。派发冻结 `inputRule`、`outputRule` 及解析出的 `inputs: [{id,path}]`。Run 始终按自己的 Map 副本工作，后续输入替换不改写已派发 execution。父输入仅按同名公开 ID 接入子 Map，不寻址子图内部节点；父输出只要求子 Map 已声明公开输出的同名子集。
 
 ## report 协议与交接
 
-模型业务参数是字符串 `body`、必填严格 boolean `can_complete` 和可选 `outputs`（`{id,path}` 数组，id 为本次执行冻结 `output_rule` 中的局部输出 ID，不是文件名）：
+模型业务参数是字符串 `body`、必填严格 boolean `can_complete` 和普通 Task 节点可用的 `outputs`（`{id,path}` 数组，id 为本次执行冻结 `output_rule` 中的局部输出 ID，不是文件名）：
 
 ```json
 {"body":"摘要已生成，可供下游使用；限制：未经过生产验证。","can_complete":true,"outputs":[{"id":"summary","path":"E:/artifacts/summary.txt"}]}
-{"body":"草稿已生成；源数据不全，需要用户补齐后继续。","can_complete":false,"outputs":[{"id":"draft","path":"D:/external/draft.txt"}]}
-{"body":"无文件工作已可交接。","can_complete":true}
+{"body":"源数据不全，需要用户补齐后继续。","can_complete":false}
+{"body":"已结束子 Run 并批准父成果，公开摘要可交接。","can_complete":true}
 ```
 
-详细成果由业务工具或程序生成并留在文件中；body 只保留结论、阻塞、失败、部分效果、限制及必要干预，不要求重复完整成果、输出地址或框架已知身份。省略 outputs 或未提及某 ID 保留本 execution 已登记输出；同 ID 更新地址，新增 ID 按登记顺序追加，重试的新 execution 不继承。重复 ID 或冻结声明外的 ID 整份拒绝，不部分保存。声明输出允许尚未登记，不新增报告或完成门禁。登记不生成、复制、移动、发布或验收文件，不校验文件存在、可读、格式、数量或完整性；地址可位于任意 zone 外，但必须是绝对路径且不含 NUL。无文件成果也可声明 true。
+详细成果由业务工具或程序生成并留在文件中；body 只保留结论、阻塞、失败、部分效果、限制及必要干预，不要求重复完整成果、输出地址或框架已知身份。省略 outputs 或未提及某 ID 保留本 execution 已登记输出；同 ID 更新地址，新增 ID 按登记顺序追加，重试的新 execution 不继承。重复 ID 或冻结声明外的 ID 整份拒绝，不部分保存。Task 节点登记不是生成、复制或业务验收；地址是本次实际绝对路径。子 Map 不用报告登记地址：中途报告 `can_complete:false` 可不附文件，正式交接只从已完成子 Run 的 `mapOutput.files` 取得父层所需同名文件，不接受报告覆盖地址。
 
 使用公共 Session 观测取得原生 sessionId，传输为 `POST /api/workflow/node/report` 的 JSON `{sessionId, body, canComplete, outputs?}`；模型字段 `can_complete` 映射为既有 HTTP camelCase `canComplete`，后端报告记录和结果也使用 `canComplete`。不让模型填写 Run、node、执行、来源或接收者，不用 Owner key、名称或 cwd 猜身份。OMP 自身可能在模型工具 schema 中加入全局追踪字段 `i`；这是宿主元数据，不是角色业务字段，OMP 在执行前移除它。
 
 后端唯一决定并生成报告 `id`、毫秒时间 `at`、`type=report`、`runId`、`nodeId`、`executionId`、`from`、`to`，扩展原样返回，不在本地改写归属。新请求缺 can_complete、字符串 "false"、错误 body/outputs 类型或额外身份字段均拒绝，不做类型转换、补 true 或删字段后执行。body 保留既有字符串限制，包括空字符串合法；后端校验绝对路径与调用归属。历史报告缺新增字段仍可读取，但不能据此放行新请求或首次完成。部署须配套更新 toolkit 与 herdr-bot；没有旧形状新请求兼容放行。
 
-每份报告的 `outputs` 保存本次提交的实际 `{id,path}` 数组，省略时为 `[]`，不是全执行累计快照；后端按同一 execution 的报告顺序推导当前累计输出，不在 execution 中另存 `outputs`。
+普通 Task 报告的 `outputs` 是本次登记而非全 execution 累计快照；中途无文件报告可以省略 `outputs`。子 Map 的正式报告即使请求不带 `outputs`，也可返回后端从公开成果取得的文件。
 
 结果保留 `saved`、`report`、`notification`、`diagnostic`、`guidance`：
 
@@ -353,7 +354,7 @@ Map node 的 `input` 工作文本保持原样；文件交接使用 `input_rule` 
 | 保存成功、诊断 `failed` | 诊断失败不撤销报告，也不改变通知的真实结果；不自动重报。 |
 | 保存成功、通知 `submitted` | 只表示辅助输入提交，不证明已阅读、严格顺序、打断 collect 或强制续轮。 |
 
-工具文本为后端 JSON；HTTP 状态及原始解析结果也保留于工具 details。辅助通知或诊断失败不会把已保存报告标成工具提交失败。每次显式 report 都可能追加独立报告，不是客户端幂等更新；有新结果或需更正正文时才明确再次提交。
+工具文本与 details 保留后端报告、通知、诊断及拒绝事实；HTTP 状态保留于 details。已保存与结果不确定分别有明确 `guidance`，无回执不声称未保存。辅助通知或诊断失败不会把已保存报告标成工具提交失败。每次显式 report 都可能追加独立报告，不是客户端幂等更新；有新结果或需更正正文时才明确再次提交。
 
 ## approve 成果批准
 
