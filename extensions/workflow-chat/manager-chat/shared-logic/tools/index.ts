@@ -30,11 +30,11 @@ export const MANAGER_TOOLS: readonly ToolDeclaration<ManagerToolState>[] = [
 				required: ["action", "nodeId", "confirmed", "reason"], additionalProperties: false,
 			},
 			{
-				type: "object", properties: { action: { type: "string", enum: ["retry"] }, nodeId: string, confirmed, reason: string, zoneId: { type: "string", description: "动态 zone 节点每次重试必须重新指定已登记的 zone ID；固定 zone 节点不得提供。" } },
+				type: "object", properties: { action: { type: "string", enum: ["retry"] }, nodeId: string, confirmed, reason: string, zoneId: { type: "string", description: "人工动态 zone 每次重试须指定已登记的 zone ID；配置了 input_id 的动态节点由后端重新读取输入材料选址，与固定 zone 节点一样不得提供覆盖。" } },
 				required: ["action", "nodeId", "confirmed", "reason"], additionalProperties: false,
 			},
 			{
-				type: "object", properties: { action: { type: "string", enum: ["dispatch"] }, nodes, zoneIds: { type: "object", properties: {}, additionalProperties: true, description: "动态节点 ID → 本次已登记 zone ID；每次派发显式提供，不填固定或未选节点。根据上游 report 决定，不自动继承。" } },
+				type: "object", properties: { action: { type: "string", enum: ["dispatch"] }, nodes, zoneIds: { type: "object", properties: {}, additionalProperties: true, description: "人工动态节点 ID → 本次已登记 zone ID，每次派发显式提供。配置了 input_id 的动态节点由后端读取指定输入 JSON 的 zone_id；不为输入驱动、固定或未选节点提供覆盖。" } },
 				required: ["action", "nodes"], additionalProperties: false,
 			},
 			{
