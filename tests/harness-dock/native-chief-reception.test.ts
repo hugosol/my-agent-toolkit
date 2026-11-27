@@ -7,7 +7,7 @@ import { chiefDock, type ChiefDock } from "../workflow-chat/support/chief-dock";
 // This proves protocol gating, not real backend persistence or model judgment.
 for (const host of ["omp", "pi"] as const) test(`${host} receives before model processing and absorbs already received notifications`, async () => {
 	const report = { id: "report-native-18", from: "sender-18", delegationId: "delegation-18", at: 1700000000000,
-		body: { background: "Invoice capability", execution: "Create Task Bot", result: "blocked", summary: "Draft saved; publication blocked", deliverables: ["draft.md"], pendingDecisions: ["Approve publication?"] } };
+		body: { background: "Invoice capability", execution: "Create Task Bot", result: "blocked", summary: "Draft saved; publication blocked", deliverables: ["draft.md"], pendingDecisions: ["Approve publication?"], outputs: [{ id: "unfamiliar-output", path: "E:/owned/audit.md" }] } };
 	const calls: { path: string; body: unknown }[] = [];
 	const arrived = Promise.withResolvers<void>();
 	const release = Promise.withResolvers<void>();
@@ -37,7 +37,10 @@ for (const host of ["omp", "pi"] as const) test(`${host} receives before model p
 		expect(calls).toEqual([{ path: "/api/chief/reports/report-native-18/receive", body: { sessionId: expect.any(String) } }]);
 		release.resolve(); await pending; pending = undefined;
 		expect(dock.capture.requests()).toHaveLength(1);
-		expect(JSON.stringify(dock.capture.requests()[0]!.json)).toContain("Draft saved; publication blocked");
+		const presented = JSON.stringify(dock.capture.requests()[0]!.json);
+		expect(presented).toContain("Draft saved; publication blocked");
+		expect(presented).toContain("unfamiliar-output");
+		expect(presented).toContain("E:/owned/audit.md");
 		await dock.input(`Chief report\nReport: ${report.id}\n\n${JSON.stringify(report)}`);
 		expect(calls).toHaveLength(2);
 		expect(dock.capture.requests()).toHaveLength(1);

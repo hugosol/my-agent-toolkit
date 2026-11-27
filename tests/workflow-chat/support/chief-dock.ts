@@ -16,7 +16,7 @@ export interface ChiefLookupResult {
 
 export interface ChiefDock {
 	readonly capture: CaptureServer;
-	call(params: unknown, tool?: "chief_definitions" | "chief_read_report"): Promise<ChiefLookupResult>;
+	call(params: unknown, tool?: "chief_definitions" | "chief_read_report" | "read"): Promise<ChiefLookupResult>;
 	input(text: string): Promise<void>;
 	state(): Promise<Readonly<Record<string, unknown>>>;
 	history(): Promise<string>;

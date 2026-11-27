@@ -12,7 +12,8 @@ for (const host of ["omp", "pi"] as const) {
 	for (const kind of ["task", "map"] as const) {
 		test(`${host} ${kind} chief dispatches only the complete native-approved preview`, async () => {
 			const requests: { route: string; body: unknown }[] = [];
-			const params = { botId: `literal-${kind}-bot`, zoneId: "work/manager", input: "Summarize only the approved draft", materials: [{ id: "draft", zoneId: "work/source", path: "draft.txt" }], ...(kind === "map" ? { managerTaskId: "literal-manager" } : {}) };
+			const work = { botId: `literal-${kind}-bot`, zoneId: "work/manager", input: "Summarize only the approved draft", materials: [{ id: "draft", zoneId: "work/source", path: "draft.txt" }], ...(kind === "map" ? { managerTaskId: "literal-manager" } : {}) };
+			const params = { ...work, output_rule: [{ id: "published-summary" }] };
 			let facts: unknown;
 			const server = Bun.serve({ hostname: "127.0.0.1", port: 0, async fetch(request) {
 				const route = new URL(request.url).pathname;
@@ -33,7 +34,7 @@ for (const host of ["omp", "pi"] as const) {
 				const sessionId = data.sessionId;
 				pending = dock.call(params);
 				const dialog = await dock.confirmation();
-				expect(requests).toEqual([{ route: "/api/chief/delegations/preview", body: { ...params, sessionId } }]);
+				expect(requests).toEqual([{ route: "/api/chief/delegations/preview", body: { ...work, outputRule: [{ id: "published-summary" }], sessionId } }]);
 				expect(dialog.message).toContain(JSON.stringify(facts, null, 2));
 				expect(dialog.message).toContain(JSON.stringify({ previewId: `literal-preview-${kind}`, sessionId }, null, 2));
 				dock.answerConfirmation(String(dialog.id), true);

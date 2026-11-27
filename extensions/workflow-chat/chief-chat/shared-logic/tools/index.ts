@@ -7,10 +7,10 @@ type ChiefToolState = { readonly requests: WorkflowRequests };
 
 export const CHIEF_TOOLS: readonly ToolDeclaration<ChiefToolState>[] = [{
 	name: "chief_definitions", label: "Chief definitions",
-	description: "只读查询现有 Bot.when 与能力定义；不派发、不创建、不授予 chief 身份。",
+	description: "只读查询 Bot 能力目录、Task/Map 定义及已登记 zone。",
 	parameters: { type: "object", properties: {
-		kind: { type: "string", enum: ["bots", "tasks", "maps", "zones"], description: "bots 优先按 when 寻找能力；tasks/maps 核对执行目标，zones 读取显式位置。" },
-		id: { type: "string", description: "仅 tasks/maps 可选：Task ID 或完整 Map JSON 文件名。maps 的 id 从 Bot.map_file 原样使用，包含 .json 后缀，不用 Bot ID 或去后缀名称；省略时列出目录。不接受 endpoint、目录路径或会话身份。" },
+		kind: { type: "string", enum: ["bots", "tasks", "maps", "zones"], description: "bots 查询能力；tasks/maps 核对实际目标；zones 查询执行位置。" },
+		id: { type: "string", description: "Task ID 或包含 .json 的完整 Map 文件名；省略时列目录。" },
 	}, required: ["kind"], additionalProperties: false },
 	async execute(state, params, delivery) {
 		const invalid = () => workflowToolResult({ isError: true, body: { code: "invalid-parameters", message: "需要 kind=bots/tasks/maps/zones；仅 tasks/maps 可提供非空字符串 id，不接受额外字段。" } });
@@ -34,9 +34,9 @@ export const CHIEF_TOOLS: readonly ToolDeclaration<ChiefToolState>[] = [{
 	},
 }, {
 	name: "chief_read_report", label: "Read chief report",
-	description: "按原报告 ID 只读完整结果，供没有原派发上下文的新 chief 如实呈现。读取不声明可靠接收、呈现完成、已读或业务验收，不重发或启动业务。",
+	description: "按报告 ID 读取完整已保存结果和结构化成果地址；读取不代表用户验收。",
 	parameters: { type: "object", properties: {
-		id: { type: "string", description: "已保存的原报告 ID；不得填写接收者、Session 或归属。" },
+		id: { type: "string", description: "已保存报告的身份。" },
 	}, required: ["id"], additionalProperties: false },
 	async execute(state, params, delivery) {
 		if (!params || typeof params !== "object" || Array.isArray(params)
@@ -48,15 +48,18 @@ export const CHIEF_TOOLS: readonly ToolDeclaration<ChiefToolState>[] = [{
 	},
 }, {
 	name: "chief_delegate", label: "Chief delegate",
-	description: "按 Bot 委派独立 Task Chat 或真实 Map Run。调用前先用 chief_definitions 的 tasks/maps 加目标 id 成功读取实际执行定义；Bot 目录不是执行定义。再解析完整目标/位置/输入供用户原生确认，仅批准本次预览后启动；不等待业务完成，不自动重试。聊天同意不是批准。",
+	description: "按 Bot 委派 Task 或 Map，经原生预览与确认后启动；返回启动结果，不等待业务完成。",
 	parameters: { type: "object", properties: {
-		botId: { type: "string", description: "从 chief_definitions 的实际 Bot 对象逐字复制其 id；不得由 name、Map 文件名、任务名拼接或改写，不是 Task ID。" },
-		zoneId: { type: "string", description: "显式登记的稳定 zone ID：Task 执行目录或 Map manager 目录；不覆盖 Map 内部节点 zone。" },
+		botId: { type: "string", description: "实际 Bot ID，不是 Task ID 或 Map 文件名。" },
+		zoneId: { type: "string", description: "Task 或 Map 管理者的执行位置，不覆盖子图内部节点。" },
 		input: { type: "string", description: "本次完整业务要求，吸收用户最新修正，不是固定 Task 职能。" },
-		materials: { type: "array", description: "本次必要材料；无材料传 []。Map 的 id 对应 input_files。路径相对于显式材料 zone。", items: { type: "object", properties: {
+		materials: { type: "array", description: "本次材料；无材料时传空数组。Map 输入 ID 对应 map_input_rule.files；路径相对于显式材料 zone。", items: { type: "object", properties: {
 			id: { type: "string", description: "唯一材料 ID。" }, zoneId: { type: "string", description: "材料所属登记 zone ID。" }, path: { type: "string", description: "该 zone 中的文件路径。" },
 		}, required: ["id", "zoneId", "path"], additionalProperties: false } },
-		managerTaskId: { type: "string", description: "Map 型 Bot 必填：明确选择 manager 类型 Task；Task 型 Bot 禁止此参数。" },
+		managerTaskId: { type: "string", description: "Map 型调用的管理者 Task；Task 型调用不使用。" },
+		output_rule: { type: "array", description: "本次委派要求的文件 ID，不是 Bot 的文字输出摘要。Map 只能选取公开输出 ID；省略表示不要求文件。", items: { type: "object", properties: {
+			id: { type: "string", description: "本次要求的输出 ID。" },
+		}, required: ["id"], additionalProperties: false } },
 	}, required: ["botId", "zoneId", "input", "materials"], additionalProperties: false },
 	execute: (state, params, delivery) => delegate(state.requests, params, delivery),
 }];

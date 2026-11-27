@@ -30,11 +30,11 @@ pi -e /absolute/my-agent-toolkit/entrypoints/pi-auto/chief-chat.ts
 
 首次指引把需求判断与工具启动分开：已知匹配按 Bot.when 说明复用理由，再读取实际 Task／Map 与登记 zone，核对用途、输入和材料；含糊需求先澄清，不借当前 cwd 或唯一候选暗补，不把读取失败当作无匹配。Map 明确 manager Task 与 manager zone，保留内部节点位置。
 
-无匹配时，单执行者缺口选择既有完整创建 Task 能力 Bot，多步骤缺口选择完整创建 Map 能力 Bot，按 when 和实际定义而非名称或创建者自身执行类型判断；无有效能力则说明受阻，不发明工具或保存裸 Task。仅否决复用时等待，明确创建 Task／Map 才核对相应能力，明确放弃则停止。缺必要信息先澄清，缺原生批准不启动。创建 input 不夹带创建后执行业务的指令，既有每阶段审批仍生效，创建授权不代替新业务批准。启动回执不是最终交付；最终结果后呈现、询问是否满足并等待，不自动检索下一方案、请求下一执行确认或启动新业务。
+用 Bot 的 `when`、`description`、`input_rule`、`output_rule` 发现和比较能力，以实际 Task／Map 定义核实调用约束。发现能力缺口时与用户确定下一步，不内置能力建设入口。能力建设与执行原业务是不同委派，前者的批准不授权后者。缺必要信息先澄清，缺原生批准不启动。收到结果不自动扫描积压、补派工作或启动业务。
 
 这些是模型职责指引，不是自然语言授权解析器或本机安全沙箱。
 
-`chief_read_report {"id":"原报告ID"}` 仅在用户明确要求查看时，通过 `POST /api/chief/reports/{id}/view` 以活动原生 Session 读取完整原报告及持久接收事实；后端实时检查当前 chief，失权返回真实拒绝。只接受非空 id，不接收 Session 或归属参数，不新建接收授权（`process:false`），不重派业务。新 chief 可仅凭报告的 background、execution、result、summary、deliverables、pendingDecisions 呈现成功、失败、受阻或能力创建结果，逐项明确说明原始需求背景与授权限制、实际执行对象、结果、交付物及待判断项；受阻或无交付物也不省略背景与执行对象。未知明确说未知，呈现后询问是否满足要求并等待，不发起下一执行确认、不启动业务。已给出完整权威报告时直接据此呈现，不调用 read、shell、HTTP 等工具自行读取或核验交付物，不重做报告中的操作；按报告来源转述，未知保留为未知。
+`chief_read_report {"id":"原报告ID"}` 仅在用户明确要求查看时，通过 `POST /api/chief/reports/{id}/view` 以活动原生 Session 读取完整原报告及持久接收事实；后端实时检查当前 chief，失权返回真实拒绝。只接受非空 id，不接收 Session 或归属参数，不新建接收授权（`process:false`），不重派业务。接替后的 chief 依据完整报告呈现背景、实际执行、结果、交付及待决事项，无需记得原委派。`deliverables` 是文字说明，`outputs` 提供命名成果的实际文件地址；需要理解成果时按地址读取实际文件，不从 ID 推测内容。文件不可读或含义不明就如实说明，不重做原业务。已有权威报告时不自动重复查询，也不依据读取结果擅自重发、接收确认或追加委派。
 
 本入口不注册能力定义写入或 chief 报告发送占位工具，也不能通过 run/report 冒充其他角色；委派使用下述 chief_delegate 原生确认，不建议直接 HTTP 绕过确认。加载本入口不建立后端当前 chief 身份，herdr-bot 固定角色装配、发起／恢复与有效身份需要跨仓联调。
 
@@ -50,9 +50,11 @@ pi -e /absolute/my-agent-toolkit/entrypoints/pi-auto/chief-chat.ts
 
 独立执行者通过固定 `entrypoints/omp-auto/chief-report.ts` 或 `entrypoints/pi-auto/chief-report.ts` 加载 `chief_report`；直接 Map manager 在原 manager-chat 中加载同一个 common 静态工具与 Session 绑定原生确认。chief-report 不冒充 node 角色，不与 manager-chat 同载；内部 node-chat 不加载 chief 工具，合法 nested manager 仍同载 manager+node。后端固定扩展登记须在实际 chief 委派的独立 Chat 启动及恢复时装配对应宿主 chief-report 入口，不因加载入口新建委派或重播业务输入；普通独立 Task 不因此获得委派关联。跨仓装配验收独立于本仓原生工具协议。工具仅向 `POST /api/chief/reports` 提交 `{sessionId,body}`，Session 取实际原生身份，后端以真实委派关联授权；工具可见、相同 Task 或模型不授予资格。不提供接收者／归属参数，内部节点仍用原 `report` 向自己的 manager 报告，嵌套 finish/can_complete 门禁不变。
 
-body 必须完整包含非空 `background`、`execution`、`summary`，`result: "success"|"failure"|"blocked"`，以及 `deliverables: string[]`、`pendingDecisions: string[]`（无项明确 `[]`）。每次原生对话框展示包含实际 Session 的完整 HTTP JSON，只有该次明确批准才发送；聊天同意、业务完成或节点 auto 策略不替代。拒绝、关闭、取消、超时及无确认能力均不发送，不自动重试。
+`body` 保留非空 `background`、`execution`、`summary`，`result: "success"|"failure"|"blocked"`，以及文字 `deliverables: string[]` 与 `pendingDecisions: string[]`（无项明确 `[]`）。Task 通过可选 `outputs: [{id,path}]` 提交实际文件绝对地址，成功文件交付必须满足本次委派的输出要求；失败或受阻可如实报告实际部分文件，也可以不附文件。Map 正式文件由后端从已完成 Run 取得本次要求的公开子集，不重复提交地址，不缩减 Map 自身必交项。未完成的 Map 可以无文件报告失败或受阻；不为发报告强行 `finish`，也不对所有 success 设置统一 `finish` 门禁。
 
-分别解释 `saved`、原 `report`、`notification` 与不确定事实：保存不等于通知；`submitted` 仅为 Herdr 接受输入，不是可靠接收、呈现、已读或验收。`failed`／`not-attempted` 不撤销保存，`uncertain` 及传输／解析错误不证明未发生或回滚。工具不为通知失败重提业务报告，不自动补投。
+manager-chat 与独立 chief-report 共享同一报告指引、工具和动态回执。每次原生对话框展示包含实际 Session 的完整 HTTP JSON，只有该次明确批准才发送；聊天同意、业务完成或节点 auto 策略不替代。拒绝、关闭、取消、超时及无确认能力均不发送，不自动重试。普通 node `report` 不加入发送确认。
+
+分别解释 `saved`、原 `report`、`notification` 与不确定事实：明确的保存失败保留后端拒绝，无有效保存回执先核实实际结果。`saved:true` 后的通知失败不撤销报告，不重做业务、不重复提交或自动补投。`submitted` 仅为 Herdr 接受输入，不是可靠接收、呈现、已读或验收。通知 `uncertain` 或请求传输／解析失败不证明外部效果未发生或回滚。
 
 
 只有用户在原发送方 Chat 明确要求重发时，调用 `chief_resend_report {"id":"原报告ID"}`（独立 chief-report 与直接 manager 共用）。工具先 `GET /api/chief/reports/{id}` 核对并预览完整原 ID/原内容，再原生确认本次 `POST /api/chief/reports/{id}/resend`；请求仅加入实际 Session，不接受 body、身份或批准参数。拒绝、关闭、取消、超时、不可用、Session 结束不重发；原生迟到批准无效。未发送本次重发不抹去已读回的原保存事实，返回 `saved:true,report,sent:false`，不是撤销原报告。后端沿真实持久委派关联授权恢复的发送方；同 Task 的其他 Chat 不获资格。改内容使用 `chief_report` 的新确认和新报告身份。已接收时后端只反馈原接收事实，不再通知；`received:true` 不是呈现完成、用户已读或业务验收。不确定结果不解释成外部效果回滚，也不自动重新确认或发送。
@@ -70,19 +72,19 @@ python scripts/accept-chief-recovery.py --herdr-bot-worktree "$HERDR_BOT_WT" --t
 `chief_delegate` 同时支持 Task 型与 Map 型 Bot，不注册占位工具或通过 run/report 冒充其他角色。模型仅提供业务参数：
 
 ```json
-{"botId":"draft-summary","zoneId":"work/worker","input":"只总结用户已修订的草稿","materials":[{"id":"draft","zoneId":"work/source","path":"draft.txt"}]}
+{"botId":"draft-summary","zoneId":"work/worker","input":"只总结用户已修订的草稿","materials":[{"id":"draft","zoneId":"work/source","path":"draft.txt"}],"output_rule":[{"id":"summary"}]}
 {"botId":"review-flow","zoneId":"work/manager","managerTaskId":"review-manager","input":"执行已确认的复核流程","materials":[]}
 ```
 
 `chief_definitions(kind="zones")` 返回的 `creation.available` 仅描述新建 zone 是否可用，不是创建 Task／Map／Bot 能力的开关；已有登记 zone 仍可用于委派，创建能力按 Bot.when 与实际定义核对。
 
-`botId` 逐字使用目录中 Bot 的 `id`，不从名称或 Map 文件名拼接；查询 Map 定义时逐字使用 `map_file`（保留 `.json`），派发前先成功读取实际 Task／Map 执行定义。`zoneId` 是已登记的稳定 ID；Map 时它只指定 manager 目录，内部节点仍使用自己的 zone。`materials` 必须显式给出（无材料为 `[]`），每项严格为 `{id,zoneId,path}`；材料路径在其登记 zone 内解析，Map 的 ID 对应 `input_files`。Map 必须明确提供 manager 类型 `managerTaskId`，Task 禁止该字段；用途与必需材料由后端权威检查。工具拒绝身份、previewId、批准 boolean、endpoint 和其他额外字段，不能用模型参数伪造用户批准。
+`botId` 逐字使用目录中 Bot 的 `id`，不从名称或 Map 文件名拼接；查询 Map 定义时逐字使用 `map_file`（保留 `.json`），派发前先成功读取实际 Task／Map 执行定义。`zoneId` 是已登记的稳定 ID；Map 时它只指定 manager 目录，内部节点仍使用自己的 zone。`materials` 必须显式给出（无材料为 `[]`），每项严格为 `{id,zoneId,path}`；材料路径在其登记 zone 内解析，Map 材料 ID 对应 `map_input_rule.files`；管理者可以先启动，缺少的必需材料在派发前准备齐全。Map 必须明确提供 manager 类型 `managerTaskId`，Task 禁止该字段。可选 `output_rule: [{id}]` 指定本次所需文件，不是 Bot 的文字摘要；省略表示无文件要求，Map 只可选择自己声明的公开输出。工具在预览中以 `outputRule` 传输并核对该要求，后端随委派持久保存。工具拒绝身份、previewId、批准 boolean、endpoint 和其他额外字段，不能用模型参数伪造用户批准。
 
 工具以公共活动原生 Session 发 `POST /api/chief/delegations/preview`，加入真实 `sessionId`；后端返回 `{previewId,facts}`。工具核对 facts.request 与冻结的本次请求一致，完整展示后端解析的 Bot、Task、Map/manager、zoneBindings、材料与实际输入，以及即将提交的 `{previewId,sessionId}` JSON。完整事实不从模型摘要重构。仅当前原生批准才发 `POST /api/chief/delegations`，提交单次预览 ID，不允许批准后再指定替代业务参数。后端消费预览并重核当前 chief 资格、定义、目标、zone 和材料语义；变更返回 `delegation-preview-stale`，不自动重新预览或把旧批准转授新工作。用户重新要求后，重新核对受影响参数并取得新确认。
 
 批准等待复用共同 `reportConfirmationTimeoutMs`（部署默认 20000ms），独立于 `requestTimeoutMs`；每次调用都重新确认。聊天同意、业务批准、能力创建批准均不替代本次原生批准。拒绝、关闭、取消、超时、无 UI、交互异常或 Session 结束不提交；迟到批准无效。预览请求不启动 Chat/Run；不提交的预览不得人工直接发 HTTP 复用。
 
-Task 的 HTTP 202/`stage:starting` 仅表示启动请求已接受；Map 的 HTTP 201 仅表示 Run 启动结果，都不是业务完成。工具不等待执行者、不自动轮询或重试。启动失败保留后端完整 HTTP、Run/Chat、阶段与部分效果；提交后传输/解析错误保持结果不确定，不能解释为未发生或回滚。新调用需要用户的新决定与原生确认。能力缺口只能委派已存在的完整创建能力 Bot，创建结果不自动授权新业务；不提供裸定义写入或 chief 报告/接收占位工具。
+Task 的 HTTP 202/`stage:starting` 仅表示启动请求已接受；Map 的 HTTP 201 仅表示 Run 启动结果，都不是业务完成。工具不等待执行者、不自动轮询或重试。启动失败保留后端完整 HTTP、Run/Chat、阶段与部分效果；提交后传输/解析错误保持结果不确定，不能解释为未发生或回滚。新调用需要用户的新决定与原生确认。创建结果不自动授权新业务；不提供裸定义写入、chief 报告发送或可靠接收确认占位工具。
 
 门禁只约束该工具的委派操作，不是任意 HTTP/本机能力安全沙箱；加载入口不建立后端当前 chief 身份。固定角色装配、发起／恢复和实际有效身份仍由后端权威负责。
 
@@ -417,7 +419,7 @@ bun test tests/workflow-chat/chief-report-recovery.test.ts tests/harness-dock/na
 bun test tests/harness-dock/node-report-contract.test.ts tests/harness-dock/nested-role-completion.test.ts
 ```
 
-这些检查覆盖原生加载、确认、接收前阻止模型请求、重复通知去重，以及配对后端持久接收和原节点兼容。受控对端不能证明真实模型职责；跨仓范围和证据设置见 [Chief report compatibility acceptance](../../docs/agents/testing.md#chief-report-compatibility-acceptance)。
+受控 native dock 覆盖原生加载、确认、结构化参数和回执、按实际文件地址读取、本地接收与去重；绑定安全壳的 dock 另核对其对应版本的后端持久接收和故障表现。两者都不是新版配对产品的端到端证据，也不证明真实模型职责或实际业务验收。跨仓范围、匹配安全壳及具名证据设置见 [Chief report compatibility acceptance](../../docs/agents/testing.md#chief-report-compatibility-acceptance)。
 
 真实后端 dock 需要同级 herdr-bot checkout（或测试环境 `HERDR_BOT_REPO`），并先在该 checkout 构建：
 

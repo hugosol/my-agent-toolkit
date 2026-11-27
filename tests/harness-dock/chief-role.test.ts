@@ -29,31 +29,16 @@ for (const host of ["omp", "pi"] as const) {
 		for (const absent of ["run", "collect", "report", "chief_dispatch", "chief_report"]) expect(names).not.toContain(absent);
 		// Injection/history proves native consumption only, never responsibility adherence.
 		expect(await dock.history()).toContain("chief-chat:tools");
-		// Ticket 11, approved S3 consumer: the injected routing contract must
-		// distinguish an ambiguous request from an executable match. A sole
-		// candidate must not silently supply unknown inputs or the chief's zone.
-		// This checks delivered guidance, not real-model responsibility (12/13).
+		// S3, approved §§8–9: ask the user about a capability gap, not a
+		// prescribed creation branch. Checking delivered guidance is not model evidence.
 		const messages = JSON.stringify(dock.capture.requests()[0]!.json);
-		expect(messages).toContain("只有一个候选都不能代替核对与用户决定");
-		expect(messages).toContain("补齐缺项后再进入派发");
-		// AC2 oracle: a single-executor gap needs complete Task creation,
-		// a multi-step gap complete Map creation. Violation: generic creation
-		// guidance reaches the model but never distinguishes the two routes.
-		expect(messages).toContain("能力缺口通过已有的完整创建能力 Bot 处理");
-		expect(messages).toContain("单执行者能力缺口选择创建 Task");
-		expect(messages).toContain("多步骤流程缺口选择创建 Map");
-		// AC3: explicit abandonment must stop this request, not be treated as
-		// a veto that permits an alternative. Observe the delivered distinction.
-		expect(messages).toContain("仅否决复用就停止等待");
-		expect(messages).toContain("明确要求创建 Task 或 Map 就核对对应创建能力，不互换");
-		expect(messages).toContain("明确放弃就结束本次需求");
-		// AC4: a creation request must not grant later-stage or business
-		// execution authority. Violation: guidance asks the creator to also
-		// execute the original work, or searches for a next plan on return.
-		expect(messages).toContain("不夹带执行原始业务的指令");
-		expect(messages).toContain("创建流程各阶段审批仍由对应流程取得，chief 不代批或跳过");
-		expect(messages).toContain("收到结果不是后续执行授权");
-		expect(messages).toContain("不自动检索方案、提出下一次执行确认");
+		expect(messages).toContain("补齐影响本次委派的必要信息");
+		expect(messages).toContain("存在能力缺口时，与用户确定下一步");
+		expect(messages).toContain("创建能力与执行原始业务是不同委托");
+		expect(messages).not.toContain("单执行者能力缺口选择创建 Task");
+		expect(messages).not.toContain("多步骤流程缺口选择创建 Map");
+		expect(messages).toContain("用户明确要求委派后");
+		expect(messages).toContain("不自主扫描积压或重放报告，不因收到成果发起后续执行");
 	} finally { try { await dock?.close(); } finally { await backend.close(); } }
 	}, 180_000);
 
