@@ -1,6 +1,6 @@
 # 能力接口架构（framework 维护者指南）
 
-**状态：** Session、State、Prompt/Marker、Feedback、Provider、Subagent、根 authoring 契约、Command 与 General 均已实现；2026-10-19 的 full-capability cutover 完成了非增量的接口切换。2026-10-20 的可检查 authoring/assembly 与源码推导接入分析已落地。本文记录当前方向、维护原则和仍有意的未决项，不逐文件报告完成度。
+**状态：** Session、State、Prompt/Marker、Tool、Feedback、Provider、Subagent、根 authoring 契约、Command 与 General 均已实现；2026-10-19 的 full-capability cutover 完成了非增量的接口切换。2026-10-20 的可检查 authoring/assembly 与源码推导接入分析已落地。本文记录当前方向、维护原则和仍有意的未决项，不逐文件报告完成度。
 
 **范围：** `framework/`、`adapters/`、`extensions/` 之间的依赖 seam、capability 深度、单一路运行时规划与可检查性。
 
@@ -140,6 +140,7 @@ adapter seam 因此保持小而内部：framework runtime 里一个 port module�
 | **Command** | command 声明、invocation 事实、action delivery、directed implementation | toggle/directed/actions 路由、State transition、feedback | Control 领域 |
 | **Prompt** | prompt 声明与 strategy | run 事实、contribution 结果、选择规则、branch-progress 匹配 | Prompt 领域 |
 | **Marker** | marker 声明文本 | marker area transport、进程级 area、行序、viewed-session 投影、发布触发 | Marker 领域 |
+| **Tool** | 工具声明、参数 schema、执行交付与结果 | 业务实例与寿命绑定、执行派发 | adapter 原生注册与参数映射 |
 | **Feedback** | notification level 与 feedback transport | delivery wiring；没有独立 behaviour module | Feedback 领域 |
 | **Provider** | provider access、catalog price、provider HTTP 事实 | factory hand-over 与 adapter 查询映射；没有 framework 策略 | Provider 领域 |
 | **Subagent** | 初始化后稳定的接入结果（`subagents` / `none` / `failed`）与需求词汇 | 执行模式、adapter 覆盖清单、provider 协议与注册 | Subagent 领域 |
@@ -399,13 +400,13 @@ Tool 的 canonical 契约位于 [`framework/interface/tool.ts`](../interface/too
 | --- | --- | --- |
 | `HarnessPort` 粒度 | 暂时保持一个 port | 只有真实 adapter 或 test double 需要更窄 port 时，按 capability 拆分才有收益 |
 | 内部布局 | 保持 `core` / `behaviors` / `modules` 在 `framework/interface` 后面；interface 稳定后再考虑按 capability 移动 | 接口稳定前的大目录移动只增加 churn，不改变 extension-facing seam |
-| `BindingResult` / `BindingFailure` | 留在 `framework/runtime/port.ts` | 它们是 adapter factory 的结果，不是 extension capability 调用 |
-| Session observation | 属于 Session capability，但读接口与事件订阅分开 | 读表面积和事件表面积共享 Session 身份，却是两种 interface |
-| Coverage tools（已实现） | `check:integrations` 与 `generate:integrations` | source-derived demand、实际 assembly supply 和缺失 implementation 引用共享一个模型 |
-| Structural extraction（已实现） | 复用受限 authoring resolver、canonical TypeScript symbols、framework rules 和有界 adapter traversal | 不执行 extension/adapter，不评估配置 |
-| Diagnostic policy（已定） | required gaps 与 unresolved 返回非零；显式 optional absence 只报告 | 开发者输出不改变加载 |
-| Verified status 来源 | 独立行为验证；绝不从 structural evidence 推断 | 行为正确性仍在 checker 之外 |
-| Requirement inventories（已定） | 从实际源码推导；删除重复公共数组和手工 supply catalog | 语义依赖规则仍由 framework 拥有 |
+| Hot reload | 仍只承诺整个进程重启 | 需验证原生 reload 是否重载修改后的源码、缓存可见性，以及 State 恢复与注册幂等性；Session resume 不是 hot reload |
+| 多个 main session | 保持单 main 限制，见 [harness support](harness-support.md#first-release-limitation-one-main-session-per-process) | 并存 main 或旧子会话跨越 `/new` 时，需要可靠的 Owner 消歧 |
+| 同一 prompt slot 的多个规则 | 继续将第二个规则报告为配置冲突 | composition、precedence 与冲突处理尚未决定，不能借原生注册顺序隐式决定 |
+| State persistence media | 保持现有 `session-entry` 与 `memory` | 是否允许可配置的 extension-owned file 映射尚未决定；这不同于已实现的通用协调文件更新 |
+| 受限 custom logic | history-affecting 写入仍只走 append-only contribution | 任意进程内 TypeScript 不受沙箱限制；更强约束的接口与执行方式尚未决定 |
+| 其他 control kinds | 维持已交付的 `toggle`、`directed`、`actions` | 模式选择与参数设置需要具体 consumer 契约，不新增公共 required-semantics 数组 |
+| Codemode 对比 | 先确认实际 execution 与 State scope，见 [差异登记](harness-support.md#capability-difference-register) | 尚无经验证的 State 继承需求，不从嵌套执行推断新继承策略 |
 
 ### 9.2 考虑过但未采纳
 
@@ -413,7 +414,7 @@ Tool 的 canonical 契约位于 [`framework/interface/tool.ts`](../interface/too
 | --- | --- |
 | 分离的公共 `definition/` 与 `assembly/` 目录层，或纯分类的 `extension.ts` 入口 | authoring contract 是一个根入口加公开 `details/` 文件。分离层重复同一批声明，增加浅 module，不改变 extension leverage。 |
 | 按 capability 分组的 implementation context（`context.provider`、`context.config`） | 会为了分类破坏每个 extension factory。context 保持 `session` 加扁平的 `config`、`modelPrices`、`providerAccess`。 |
-| General 作为 adapter-backed capability，或聚合 `general/index.ts` | General 是三个独立、宿主无关 module 的导航分组。每个有自己的直接入口；没有 registry、adapter 或聚合入口。 |
+| General 作为 adapter-backed capability，或聚合 `general/index.ts` | General 是独立、宿主无关 module 的导航分组。每个有自己的直接入口；没有 registry、adapter 或聚合入口。 |
 | delivery 上暴露公共 Marker transport，或 extension 级 marker-area 操作 | marker area 是进程级、framework-owned。delivery 不携带 transport；extension 只声明文本，并通过 managed State 影响显示。 |
 | 在 `HarnessPort` 上再加一层 `framework/adapter.ts` | 不改变 port 宽度或翻译工作，只造第二条路径；见 §2.4。 |
 | 运行时 capability registry 或启动时版本门禁 | 需求由源码推导，支持由证据记录和维护者决定；运行时加载不读取版本列表。 |
@@ -434,7 +435,7 @@ Tool 的 canonical 契约位于 [`framework/interface/tool.ts`](../interface/too
 - extension 开发者只读 `framework/interface/` 和选定的 adapter assembly entry 就能实现新 extension；
 - adapter 开发者只读 `framework/runtime/port`、interface delivery facts 和 native harness 就能实现新 harness；
 - framework 维护者修改深 module 不需要改变 extension import；
-- import-boundary test 会在 extension import framework 内部、或 extension import adapter 代码时失败；
+- import-boundary test 会在 extension import framework 内部或 adapter 内部代码时失败；extension 的宿主装配可以使用选定的公共 adapter assembly entry；
 - 同一份 extension definition 和 shared logic 能在两个受支持 harness 上运行，不需要 framework 内部条件分支；
 - harness-specific 代码留在 `adapters/<harness>` 与 `extensions/<id>/harnesses`，不进入 interface 或深 module；
 - 静态检查、行为验证和版本支持三个结论各自独立，且都不能被另一个冒充。

@@ -8,7 +8,7 @@ export function workflowReportResult(result: WorkflowResponse): WorkflowResponse
 		if ("saved" in body && typeof body.saved === "boolean") return { ...result, isError: result.isError || !body.saved };
 	}
 	if (result.isError) return result;
-	return { ...result, isError: true, body: {
+	return { ...result, isError: true, uncertain: true, body: {
 		error: { kind: "protocol", message: "后端报告响应缺少 boolean saved，无法核实保存结果。", response: body },
 		guidance: "报告结果不确定；后端可能已保存，不表示未发送、未发生或已回滚。不要自动重试，请核实已保存事实。",
 	} };

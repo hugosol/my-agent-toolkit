@@ -85,28 +85,8 @@ pi --no-extensions -e builtin:mcp -e builtin:codemode -e builtin:tool-search \
 
 ```sh
 bun test tests/pi-suite
-bun run typecheck
-bun run check:integrations
-bun run test
 ```
 
-The regression resolves the installed Pi CLI (`PI_CLI` may name an installed bundle), runs its
-actual public CLI bundle under the repository's required Bun runtime, and loads the shipped
-entrypoint. The exercised combination is Pi **1.5.0**, Windows x64 and Bun **1.4.4**;
-this does not promote a repository-wide harness support row. Pi must publicly export
-`createCodemodeExtension` and provide `registerMcpServer`. With the same installed Pi bundle
-under Windows Node **24.18.0**, the real file-call assertions succeeded, but normal EOF after
-QuickJS use aborted in libuv (`UV_HANDLE_CLOSING`, exit 9). That Node shutdown path is not
-verified clean and is not hidden by the Bun regression. To reproduce the exercised launch,
-use `bun <installed-pi-package>/dist/bundle/cli.js` in place of `pi` in the commands above. It owns isolated native state, dynamic loopback model/MCP servers and file sentinels;
-it continuously consumes process output and awaits process exit on success and failed startup.
-It compares no-Suite native baselines, both mode overrides, real `tools.read` in `only`, empty
-and additive MCP, native `/mcp` status, unchanged native configuration, and invalid factory input.
-Only the test harness uses isolated agent directories; production never redirects one for Suite.
+The regression loads the shipped entrypoint with an installed Pi CLI bundle under Bun. Set `PI_CLI` to select the bundle. The exercised combination is Pi 1.5.0, Windows x64 and Bun 1.4.4. Pi must export `createCodemodeExtension` and provide `registerMcpServer`. To reproduce the launch manually, use `bun <installed-pi-package>/dist/bundle/cli.js` in place of `pi` in the loading examples. For the Windows Node EOF caveat and scoped version policy, see [Pi acceptance versions](../../docs/agents/testing.md#pi-acceptance-versions). The Bun regression does not verify Node shutdown.
 
-These are extension regressions, **not** the full Herdr S4 acceptance or a claim that
-P19/P23/P24/P26/P27 are complete across repositories. MCP responses and model decisions are
-controlled; Pi loading, codemode execution, native config consumption, transport and disk I/O
-remain real. Native noninteractive `/mcp` reports state but not the TUI source column: source
-preservation is checked by consuming an endpoint declared only in native `mcp.json` and leaving
-that file byte-identical.
+The test uses isolated native state, loopback model and MCP servers, and real file I/O. It checks both modes, `tools.read` in `only`, native `/mcp` status, empty and additive server lists, and rejection of invalid factory input. Noninteractive `/mcp` does not show the TUI source column. To check that native file configuration still works, the test calls an endpoint declared only in `mcp.json` and checks that the file is unchanged. Controlled MCP and provider responses verify extension behavior, not real model decisions, full Herdr acceptance or general Pi support.

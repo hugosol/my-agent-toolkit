@@ -10,19 +10,22 @@ const text = (value: unknown): value is string => typeof value === "string" && v
 
 /** The backend owns target resolution, one-use preview identity and commit-time revalidation. */
 export async function delegate(requests: WorkflowRequests, params: unknown, delivery: ToolExecutionDelivery) {
-	const invalid = () => workflowToolResult({ isError: true, body: { code: "invalid-parameters", message: "需要非空 botId、zoneId、input 与 materials:[{id,zoneId,path}]；Map 还须 managerTaskId。不得提供身份、预览 ID、批准字段或额外参数。" } });
-	if (!record(params) || Object.keys(params).some(key => !["botId", "zoneId", "input", "materials", "managerTaskId"].includes(key))
+	const invalid = () => workflowToolResult({ isError: true, body: { code: "invalid-parameters", message: "需要非空 botId、zoneId、input 与 materials:[{id,zoneId,path}]；可选 output_rule:[{id}]，Map 还须 managerTaskId。不得提供身份、预览 ID、批准字段或额外参数。" } });
+	if (!record(params) || Object.keys(params).some(key => !["botId", "zoneId", "input", "materials", "managerTaskId", "output_rule"].includes(key))
 		|| !text(params.botId) || !text(params.zoneId) || !text(params.input) || !Array.isArray(params.materials)
 		|| params.materials.some(material => !record(material) || Object.keys(material).some(key => !["id", "zoneId", "path"].includes(key)) || !text(material.id) || !text(material.zoneId) || !text(material.path))
-		|| ("managerTaskId" in params && !text(params.managerTaskId))) return invalid();
+		|| ("managerTaskId" in params && !text(params.managerTaskId))
+		|| ("output_rule" in params && (!Array.isArray(params.output_rule)
+			|| params.output_rule.some(rule => !record(rule) || Object.keys(rule).length !== 1 || !text(rule.id))))) return invalid();
 	// Snapshot before the first await: neither caller mutation nor a second call can
 	// substitute this operation's inputs while its resolved preview awaits approval.
-	const input: Record<string, unknown> = JSON.parse(JSON.stringify(params));
+	const { output_rule: outputRule, ...input }: Record<string, unknown> = JSON.parse(JSON.stringify(params));
+	if (outputRule !== undefined) input.outputRule = outputRule;
 	const preview = await requests.post(delivery.sessionId, "/api/chief/delegations/preview", input, delivery.signal);
 	if (preview.isError) return workflowToolResult(preview);
 	const body = preview.body;
-	if (!record(body) || !text(body.previewId) || !record(body.facts)
-		|| !isDeepStrictEqual(body.facts.request, { ...input, sessionId: delivery.sessionId })
+	if (!record(body) || !text(body.previewId) || !record(body.facts) || !record(body.facts.request)
+		|| !isDeepStrictEqual({ outputRule: [], ...body.facts.request }, { ...input, outputRule: outputRule ?? [], sessionId: delivery.sessionId })
 		|| !record(body.facts.bot) || !record(body.facts.task) || !text(body.facts.cwd) || !text(body.facts.name)
 		|| !Array.isArray(body.facts.materials) || !text(body.facts.prompt)
 		|| ("managerTaskId" in input && !record(body.facts.map))) {

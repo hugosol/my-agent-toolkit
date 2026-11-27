@@ -67,7 +67,7 @@ for (const receipt of [null, [], {}, { saved: "true" }, { sent: false }]) {
 		try {
 			const result = await roles.node.report(roles.sessionId, { body: "May already be saved", can_complete: false });
 			expect(result.isError).toBe(true);
-			expect(result.body).toMatchObject({ error: { kind: "protocol", response: receipt }, guidance: expect.stringContaining("不确定") });
+			expect(result.body).toMatchObject({ error: { kind: "protocol", response: receipt }, guidance: "无法确认报告是否已保存；请先核实实际结果。" });
 			expect(result.body).not.toHaveProperty("saved", false);
 			expect(result.body).not.toHaveProperty("sent", false);
 			expect(sent).toBe(1);
@@ -100,7 +100,7 @@ for (const scenario of [
 	{
 		name: "an HTTP refusal remains a failure even if the body says saved=true",
 		status: 503,
-		body: { saved: true, report: { id: "report-saved-93", body: "E:/handoff.txt" }, error: "backend unavailable after save" },
+		body: { saved: true, report: { id: "report-saved-93", body: "E:/handoff.txt" }, error: { kind: "parse", message: "backend could not parse its own diagnostic after save" }, guidance: "backend-specific recovery", uncertain: true },
 		isError: true,
 	},
 ]) {
@@ -113,7 +113,8 @@ for (const scenario of [
 		const roles = businessRoles(`http://127.0.0.1:${server.port}`);
 		try {
 			const result = await roles.node.report(roles.sessionId, { body: "E:/handoff.txt；只读，尚未验收。", can_complete: false });
-			expect(result).toMatchObject({ body: scenario.body, httpStatus: scenario.status, isError: scenario.isError });
+			const expected = scenario.isError ? scenario.body : { ...scenario.body, guidance: "报告已保存；通知结果见 notification。" };
+			expect(result).toMatchObject({ body: expected, httpStatus: scenario.status, isError: scenario.isError });
 			expect(result.message).toBeUndefined();
 			expect(requests).toBe(1);
 		} finally { roles.close(); server.stop(true); }

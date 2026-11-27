@@ -310,7 +310,7 @@ adapter 的公共入口创建 binding、把 port 交给框架，并导出 native
 
 ### 5.4 extension 侧装配不携带 harness 词汇
 
-`ExtensionAssembly` 只包含 `implementation` 和 `configBaseDir`。adapter 原样消费它；一个 assembly 不声明某个 harness，也不新增 “required semantics” 列表。需求由实际 authoring 与 interface 使用推导，见[静态接入检查](integration-check.md)。
+`ExtensionAssembly` 包含可选的 `implementation`、`configBaseDir` 和 `startupPolicy`。`startupPolicy` 指向 entrypoint 选定的启动策略文档。adapter 原样消费它；一个 assembly 不声明某个 harness，也不新增 “required semantics” 列表。需求由实际 authoring 与 interface 使用推导，见[静态接入检查](integration-check.md)。
 
 `pi` 的 `childEntry` 等字段是 extension 自己的 harness assembly 对 adapter 的补充，不是 framework 的通用 assembly 词汇。新增 harness 时，先判断事实是否属于 extension 的宿主实现，不要把它塞进公共 `ExtensionAssembly`。具体 assembly 的输出凭据、overload 与 witness 规则见[assembly 输出契约](integration-check.md#assembly-output-contract)。
 

@@ -14,10 +14,6 @@ test("generated default routing and help point to real resources, not deferred s
   const selected = manifest.files.flatMap(({ output }) => /^skills\/([^/]+)\/SKILL\.md$/.exec(output)?.[1] ?? []);
   expect([...delivered].sort()).toEqual(selected.sort());
 
-  const backlog = readFileSync(join(suite, "MIGRATION-BACKLOG.md"), "utf8");
-  expect(backlog).toContain("`automations/benny/FOR_AGENTS.md`");
-  expect(backlog).toContain("`skills/make-bot-ui/SKILL.md`");
-  for (const name of ["recall", "automate-me", "reflect", "correct"]) expect(backlog).toContain(`\`skills/${name}/\``);
   for (const name of deferred) expect(delivered.has(name)).toBe(false);
 
   const modeFile = join(skills, "poteto-mode/SKILL.md");

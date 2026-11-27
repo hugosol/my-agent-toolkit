@@ -89,14 +89,22 @@ export type WidgetDrawing = "component" | "lines";
 /**
  * The native theme one drawn line is coloured with, as a component factory is handed it.
  *
- * Only the two members this frontend maps are named: a colour token, and the colour a thinking level
- * is drawn with — the effort value is coloured by its level rather than by one fixed token, because
- * the level is what the colour means.
+ * Only the foreground painter is needed. Thinking levels use their own colour tokens, just like
+ * other emphasis; the host need not expose a separate thinking-colour helper.
  */
 export interface WidgetTheme {
 	fg(color: string, text: string): string;
-	getThinkingBorderColor(level: string): (text: string) => string;
 }
+
+const EFFORT_COLORS = new Map<string, string>([
+	["off", "thinkingOff"],
+	["minimal", "thinkingMinimal"],
+	["low", "thinkingLow"],
+	["medium", "thinkingMedium"],
+	["high", "thinkingHigh"],
+	["xhigh", "thinkingXhigh"],
+	["max", "thinkingMax"],
+]);
 
 /** The component a component factory answers with: the lines one host has asked for at one width. */
 export interface WidgetComponent {
@@ -909,7 +917,9 @@ function paintedLine(line: DisplayLine, theme: WidgetTheme | undefined): string 
 		.map((piece, index) => {
 			const separator = index === 0 ? "" : (piece.separator ?? "  ");
 			if (piece.emphasis === undefined) return `${separator}${piece.text}`;
-			if (piece.emphasis === "effort") return `${separator}${theme.getThinkingBorderColor(piece.text)(piece.text)}`;
+			if (piece.emphasis === "effort") {
+				return `${separator}${theme.fg(EFFORT_COLORS.get(piece.text) ?? "thinkingOff", piece.text)}`;
+			}
 			return `${separator}${theme.fg(EMPHASIS_COLORS[piece.emphasis], piece.text)}`;
 		})
 		.join("");

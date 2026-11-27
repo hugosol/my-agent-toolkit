@@ -119,7 +119,7 @@ export function providerMessages(request: CapturedRequest): { role: string; cont
 }
 
 export function roleGuidance(request: CapturedRequest, role: "manager" | "node"): string {
-	const marker = role === "manager" ? "你是 Run 管理者" : "你是节点执行者";
+	const marker = role === "manager" ? "使用 run 查询当前现场" : "正常成果准备好后，调用 approve";
 	const messages = providerMessages(request).filter(message => message.content.includes(marker));
 	if (messages.length !== 1) throw new Error(`Expected one actual ${role} Prompt contribution, received ${messages.length}`);
 	return messages[0]!.content;

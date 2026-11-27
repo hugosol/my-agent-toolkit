@@ -25,17 +25,8 @@ export default function probe(api: OmpExtensionApi | PiExtensionApi): void {
 			handler: async args => { record("native-command-input", args); },
 		});
 		omp.on("session_start", async (_event, ctx) => {
-			// The public widget factory lends this observer the native TUI without taking focus.
-			// It does not set the editor, write its text, or intercept input.
-			const ui = ctx.ui as typeof ctx.ui & {
-				setWidget(key: string, factory: (tui: { getFocused(): { disableSubmit?: boolean } | null }) => { render(): string[]; invalidate(): void }): void;
-			};
-			ui.setWidget("dock-gate-observation", tui => {
-				const native = ctx.sessionManager as typeof ctx.sessionManager & { getSessionFile(): string | undefined };
-				record(tui.getFocused()?.disableSubmit === true ? "native-gate-closed" : "native-gate-not-closed", native.getSessionId(), native.getSessionFile());
-				return { render: () => [], invalidate() {} };
-			});
-			ui.setWidget("dock-gate-observation", undefined);
+			const native = ctx.sessionManager as typeof ctx.sessionManager & { getSessionFile(): string | undefined };
+			record("native-start-held", native.getSessionId(), native.getSessionFile());
 			const release = process.env.DOCK_READY_RELEASE!;
 			const deadline = Date.now() + 12_000;
 			while (!existsSync(release)) {

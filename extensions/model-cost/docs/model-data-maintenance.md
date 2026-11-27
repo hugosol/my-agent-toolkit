@@ -17,24 +17,18 @@
 
 未列出的 provider／模型对一律 `hidden`（不记账、不展示），不按 base URL、`owned_by`、前缀、后缀或别名升级分类。
 
-模式是展示门控本身：`monetary` 的入口才有官方金额、峰谷／holiday 标记与官方余额行，`token-only` 只有批准的 token usage／上下文／Effort／Session／Round 与既定 detail（没有自身金额、结构参考比例、峰谷价格或余额），`hidden` 不创建 widget。给一个 ID 标错模式，等于给它标错整块展示。
+`monetary` 为当前模型计算金额并显示峰谷或 holiday 标记。`token-only` 显示用量和上下文，不计算当前模型的金额、费用结构比例或峰谷价格。`hidden` 不创建 widget。余额和 Accrued 是共享 Total 的账户信息，不是当前模型的计价属性。只要 Total 有 `Cost:`，token-only 和额度视图也可显示这些信息。初始化时，有 DeepSeek 账户访问能力的实例会在首次模型请求前发起余额预取。详情见 [账户读数与展示](../README.md#provider-account-readings)。
 
 ## 当前覆盖与来源
 
 | 覆盖 | 来源 |
 | --- | --- |
-| 官方 `deepseek`：`deepseek-v4-pro`（pro）、`deepseek-flash`（flash） | 实际鉴权 `GET https://api.deepseek.com/models`（2026-10-12，秘密只用于该次请求，未打印、未入库）＋ 用户确认的收窄范围；价格取自[官方模型与价格文档](https://api-docs.deepseek.com/zh-cn/quick_start/pricing)（2026-09-10 12:00 北京时间调价后） |
-| `opencode-go` 五个 token-only ID：`deepseek-v4-pro`、`deepseek-flash`、`deepseek-v4-flash`、`deepseek-v4.1-flash`、`deepseek-v4-flash-vision-exp` | [OpenCode 一方文档](https://opencode.ai/v2/docs/console/go) ＋ 匿名 `GET https://opencode.ai/zen/go/v1/models`（2026-10-12）；该接口返回 38 个 ID，其中只有这五个 DeepSeek 家族 ID 获批 |
-| `openai-codex` 全 provider 走额度渠道 | 既有行为；其金额来自 framework 提供的对应 provider／模型 catalog 价格，不在本数据内 |
-| 峰段 09:00–12:00、14:00–18:00（含端点）、周末与 holiday 谷价、共用系数 2 | 既有行为与官方价格文档；不自动识别法定节假日 |
+| 官方 `deepseek`：`deepseek-v4-pro`（pro）、`deepseek-flash`（flash） | 鉴权 `GET https://api.deepseek.com/models`（2026-10-12）核对精确 ID。价格取自[官方模型与价格文档](https://api-docs.deepseek.com/zh-cn/quick_start/pricing)（2026-09-10 12:00 北京时间调价后）。 |
+| `opencode-go` token-only：`deepseek-v4-pro`、`deepseek-flash`、`deepseek-v4-flash`、`deepseek-v4.1-flash`、`deepseek-v4-flash-vision-exp` | [OpenCode Go 官方文档](https://opencode.ai/docs/console/go)和匿名 `GET https://opencode.ai/zen/go/v1/models`（2026-10-12）。 |
+| `openai-codex` 全 provider 走额度渠道 | 参考金额来自 framework 提供的对应 provider／模型 catalog 价格，不在本数据内。 |
+| 峰段 09:00–12:00、14:00–18:00（含端点）、周末与 holiday 谷价、共用系数 2 | DeepSeek [官方价格文档](https://api-docs.deepseek.com/zh-cn/quick_start/pricing)和扩展的既有计价规则。不自动识别法定节假日。 |
 
-以上范围的确认链（2026-10-12，用户逐项确认后批准发布）：
-
-- **官方两 ID**：来自一次经用户授权的实际发现请求 `GET https://api.deepseek.com/models`（凭据只用于该次请求，未打印、未入库；未鉴权调用返回 401）。返回的 Model ID 恰为 `deepseek-v4-pro` 与 `deepseek-flash`（各自 1048576 context／393216 max output／`effort.supported_levels=[low,high,max]`，响应没有任何价格／币种／峰谷字段，也没有另外两个旧别名）；用户随后明确把官方名单限定为这两个 ID，不补旧别名、不自动支持未收录模型。
-- **Go 五 ID**：来自匿名的 `GET https://opencode.ai/zen/go/v1/models`，返回 38 个条目，其中 DeepSeek 家族恰为表中五个 ID；用户确认只取这五个、按 token-only 维护，不取全部 38 个、不接 Zen／PAYG 金额。发现字段 `owned_by=opencode` 不等于接入 provider ID；provider 身份按第一方文档映射为 `opencode-go`。
-- 比例由价格派生（不维护第二套比例配置）、缺价策略与「单元测试用自造数据、不固定真实价格／名单」等决定同样出自本轮确认，见上表与下文。
-
-发现只辅助开发维护，**不**证明模型调用、账单或账户权益；时点证据不构成未来名单保证。原始访谈原话、完整 38-ID 快照与证据限度随迁移工作材料保存，本文件只保留维护所需的事实。
+发现名单只用于维护，不是价格、实际模型调用或账户权益的证据，也不承诺未来覆盖。只维护明确选定的精确 ID；费用结构比例从价格派生。
 
 已退役、不得恢复的取值：官方旧 `deepseek-v4-flash`／`deepseek-v4-flash-vision-exp` 的默认支持、任意非官方 provider 的 pro／v4-flash 通配、全部 Go 模型、Zen／PAYG 金额、按当前价重算历史金额、独立比例配置表。
 

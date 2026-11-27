@@ -3,6 +3,11 @@ import { collectWithScriptOutput, type ScriptOutputObservation } from "./script-
 
 type ActionResult = WorkflowResponse & { readonly message?: string; readonly scriptOutput?: ScriptOutputObservation };
 
+function isFileBindings(value: unknown): value is { id: string; path: string }[] {
+	return Array.isArray(value) && value.every(file => file && typeof file === "object" && !Array.isArray(file)
+		&& Object.keys(file).every(key => key === "id" || key === "path") && typeof file.id === "string" && typeof file.path === "string");
+}
+
 /** Manager protocol and parameter rules, independent of the tool's harness. */
 export class ManagerActions {
 	constructor(private readonly requests: WorkflowRequests) {}
@@ -14,11 +19,14 @@ export class ManagerActions {
 		const confirmation = input?.action === "recover" || input?.action === "retry";
 		const nodeAction = input?.action === "complete" || input?.action === "fail" || reconcile || confirmation;
 		const dispatch = input?.action === "dispatch";
-		const allowed = prepare ? ["action", "fileInputs", "confirmed", "reason"] : dispatch ? ["action", "nodes", "zoneIds"] : reconcile ? ["action", "nodeId", "finding", "reason"] : input?.action === "retry" ? ["action", "nodeId", "confirmed", "reason", "zoneId"] : confirmation ? ["action", "nodeId", "confirmed", "reason"] : nodeAction ? ["action", "nodeId", "reason"] : ["action"];
-		if (!input || typeof input !== "object" || Array.isArray(input) || (!prepare && !dispatch && !nodeAction && input.action !== "status" && input.action !== "pause" && input.action !== "resume" && input.action !== "finish") ||
+		const finish = input?.action === "finish";
+		const output = input?.map_output;
+		const allowed = prepare ? ["action", "fileInputs", "confirmed", "reason"] : dispatch ? ["action", "nodes", "zoneIds"] : reconcile ? ["action", "nodeId", "finding", "reason"] : input?.action === "retry" ? ["action", "nodeId", "confirmed", "reason", "zoneId"] : confirmation ? ["action", "nodeId", "confirmed", "reason"] : nodeAction ? ["action", "nodeId", "reason"] : finish ? ["action", "map_output"] : ["action"];
+		if (!input || typeof input !== "object" || Array.isArray(input) || (!prepare && !dispatch && !nodeAction && !finish && input.action !== "status" && input.action !== "pause" && input.action !== "resume") ||
 			Object.keys(input).some(key => !allowed.includes(key)) ||
-			(prepare && (typeof input.confirmed !== "boolean" || typeof input.reason !== "string" || !Array.isArray(input.fileInputs) || input.fileInputs.some(file =>
-				!file || typeof file !== "object" || Array.isArray(file) || Object.keys(file).some(key => key !== "id" && key !== "path") || typeof file.id !== "string" || typeof file.path !== "string"))) ||
+			(prepare && (typeof input.confirmed !== "boolean" || typeof input.reason !== "string" || !isFileBindings(input.fileInputs))) ||
+			("map_output" in input && (!output || typeof output !== "object" || Array.isArray(output) || !("files" in output)
+				|| Object.keys(output).some(key => key !== "files") || !isFileBindings(output.files))) ||
 			("zoneId" in input && (typeof input.zoneId !== "string" || !input.zoneId.trim())) ||
 			("zoneIds" in input && (!input.zoneIds || typeof input.zoneIds !== "object" || Array.isArray(input.zoneIds) || Object.values(input.zoneIds).some(zone => typeof zone !== "string" || !zone.trim()))) ||
 			(confirmation && typeof input.confirmed !== "boolean") ||
@@ -27,7 +35,7 @@ export class ManagerActions {
 			(nodeAction && (typeof input.nodeId !== "string" || typeof input.reason !== "string"))) {
 			return { body: null, message: JSON.stringify({ error: { kind: "parameters", message: "run 参数不符合所选 action；不接受身份或不适用字段。" } }), isError: true };
 		}
-		const body = prepare ? { fileInputs: input.fileInputs, confirmed: input.confirmed, reason: input.reason } : dispatch ? { nodes: input.nodes, ...("zoneIds" in input ? { zoneIds: input.zoneIds } : {}) } : reconcile ? { nodeId: input.nodeId, finding: input.finding, reason: input.reason } : confirmation ? { nodeId: input.nodeId, confirmed: input.confirmed, reason: input.reason, ...("zoneId" in input ? { zoneId: input.zoneId } : {}) } : nodeAction ? { nodeId: input.nodeId, reason: input.reason } : {};
+		const body = prepare ? { fileInputs: input.fileInputs, confirmed: input.confirmed, reason: input.reason } : dispatch ? { nodes: input.nodes, ...("zoneIds" in input ? { zoneIds: input.zoneIds } : {}) } : reconcile ? { nodeId: input.nodeId, finding: input.finding, reason: input.reason } : confirmation ? { nodeId: input.nodeId, confirmed: input.confirmed, reason: input.reason, ...("zoneId" in input ? { zoneId: input.zoneId } : {}) } : nodeAction ? { nodeId: input.nodeId, reason: input.reason } : finish && "map_output" in input ? { mapOutput: output } : {};
 		return this.requests.post(sessionId, "/api/workflow/manager/" + input.action, body, signal);
 	}
 

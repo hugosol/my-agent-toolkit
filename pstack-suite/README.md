@@ -35,7 +35,14 @@ Windows 比较示例：`bun run pstack:upstream -- --local "C:/src/cursor/plugin
 | 资料 | 上游技能内 `references/`，或 `pstack/docs/`；pstack MIT | 随实际消费项登记。当前包括决策日志 TSV 模板与 TypeScript 模式参考。 |
 | 必要外部技能 | Cursor Team Kit 1.2.0 的 `cursor-team-kit/skills/{deslop,control-cli,control-ui}/SKILL.md`；[单独的 MIT 授权](generated/licenses/cursor-team-kit.txt) | 仅交付这三个技能，不加载整个插件。使用原生 `/skill:deslop`、`/skill:control-cli`、`/skill:control-ui` 显式读取。 |
 
-直接打开生成文件可阅读方法；文件存在不能证明任务调用、运行取证或其他工具机制已经接上。[交付闭包](delivery-closure.json) 分开声明固定来源及许可证、包内引用、嵌入探针、运行工具和项目产物。herdr-bot 的 `scripts/check-pstack-delivery.py` 只读取实际文件和引用，不替代本包的生成检查，也不认证原生宿主行为。纯本地方法与需要后续资产的工作流分开；不在清单的专题见[待迁移说明](MIGRATION-BACKLOG.md)。
+直接打开生成文件可阅读方法；文件存在不能证明任务调用、运行取证或其他工具机制已经接上。[交付闭包](delivery-closure.json) 分开声明固定来源及许可证、包内引用、嵌入探针、运行工具和项目产物。herdr-bot 的 `scripts/check-pstack-delivery.py` 只读取实际文件和引用，不替代本包的生成检查，也不认证原生宿主行为。纯本地方法与需要后续资产的工作流分开。当前不交付以下上游能力；没有默认路由或占位技能，读取普通模型回复不表示已执行这些能力。
+
+| 未交付能力 | 上游来源与边界 |
+| --- | --- |
+| Benny 自动分流 | `automations/benny/FOR_AGENTS.md`；不提供 Slack 事件接入、凭据托管或自动建票服务。 |
+| 云端并行环境 | `skills/swarm/SKILL.md` 及 shipping/autopilot playbooks；本包使用 OMP task 和本地 checkout，不提供云 VM、退出后续跑或云接管。 |
+| 事件驱动自动化 | `skills/make-bot-ui/SKILL.md`；不提供常驻 webhook 接收器，页面手动发起不等于外部事件接入。 |
+| 历史与学习增强 | `skills/recall/`、`skills/automate-me/`、`skills/reflect/`、`skills/correct/`；不提供自动历史检索或未经批准的学习更新。生成资源的适配仍由映射维护。 |
 
 ## OMP 持续模式
 
@@ -87,7 +94,7 @@ Windows 机械检查：`bun test tests/pstack/forge-delivery.test.ts`。设置 `
 
 ## 更新流程
 
-[manifest.json](manifest.json) 记录上游仓库、固定提交和版本，以及每个源文件及其确切交付位置。上游授权保留在[交付许可证](generated/LICENSE)。[待迁移事项](MIGRATION-BACKLOG.md) 不属于当前资源清单。
+[manifest.json](manifest.json) 记录上游仓库、固定提交和版本，以及每个源文件及其确切交付位置。上游授权保留在[交付许可证](generated/LICENSE)。未交付能力的来源和边界见[资源与来源](#资源与来源)。
 
 1. 在本地上游 Git 仓库选择目标 HEAD。可先用 `pstack:upstream -- --local <绝对目录>` 比较工作区文件；注意该只读比较读取工作区，未提交修改不代表 HEAD 内容。
 2. 运行 `bun run pstack:update -- --local <上游仓库根目录的绝对路径>`。命令固定一次 HEAD，读取同一提交内的原始文件字节；工作区未提交修改、上游新增但未登记的文件都不会进入快照。命令不 fetch、不 pull，也不改上游仓库。
@@ -179,13 +186,13 @@ bash pstack-suite/generated/skills/poteto-mode/scripts/worktree-audit.sh \
 
 - [决策日志](generated/skills/show-me-your-work/SKILL.md)使用随包的 [TSV 模板](generated/skills/show-me-your-work/references/decision-log-template.tsv)。辅助命令需要六个参数，创建缺失父目录，为新建或空文件追加表头，再追加一行 UTC 记录。单元格内 Tab、CR 和 LF 各替换为一个空格；前导 `=`, `+`, `-`, `@` 加单引号。已有行不改写；同一日志使用一个写入者。
 - [worktree 审计](generated/skills/poteto-mode/playbooks/worktree-cleanup.md)输出按大小排序的 TSV，排除主 worktree。`--base` 指定合入比较基线；不提供时尝试 `origin/HEAD` 所指分支、`origin/main`、`origin/master`。`origin/<branch>` 会尝试 fetch，可能更新远端跟踪 ref、`FETCH_HEAD` 和 Git 对象；即使之后返回错误，之前的效果也不会回滚。fetch 失败但本地 ref 可用时输出陈旧警告并继续。若要避免这一步，传已核实的本地 ref 或 SHA。默认可用 `jq` 和已授权的 `origin` 或 `gh` 查询 PR；`--no-pr` 跳过查询，不等于禁止 Git fetch。`PR` 为 `-` 不能证明没有 PR；`LAST_CHAT` 为 `-` 不代表没有活动会话。用法错误退出 `2`，无法完成审计退出 `1`，出错时表格可能不完整。辅助命令不删除 worktree、分支或证据；分类仅作建议。
-- [安全暂停](generated/skills/poteto-mode/playbooks/pause-safely.md)仅按明确请求，在安全边界保存本次工作及可明确读取的续接笔记。[本地续接](generated/skills/poteto-mode/playbooks/session-pickup.md)使用当前上下文与明确提供的笔记、日志、WIP 或分支，不自动读取其他会话历史或云 agent。
+- [安全暂停](generated/skills/poteto-mode/playbooks/pause-safely.md)仅按明确请求，在安全边界保存本次工作及可明确读取的续接笔记。[本地续接](generated/skills/poteto-mode/playbooks/session-pickup.md)使用当前上下文与明确提供的笔记、日志、WIP 或分支，不自动读取其他会话历史或云 agent。明确交接不等于通用跨会话检索、宿主恢复或后端重启后的旧 Run 接管；这些能力需要各自的授权与验证。
 
 本分区使用 `bun run test:pstack --test-name-pattern=logs-audit`（包含 P36 的日志／审计代码分区）。Windows 可用 `PSTACK_GIT_BASH` 显式选择现有的 `Git/bin/bash.exe`。设置 `PSTACK_LOGS_AUDIT_EVIDENCE_DIR` 保留日志字节、Git refs、进程退出与原生 OMP 读取记录。测试不执行删除或评价模型选择暂停点的能力。
 
 ### H1：真实 OMP TUI 开关与恢复
 
-下面使用已安装的 OMP 和本地受控 provider。实际 TUI 的显示只由操作者确认；RPC 的 marker 事件、请求及日志不是屏幕验收。先完成自动检查：`bun run test:pstack --test-name-pattern 'Pstack native mode'`。如需留存自动证据，运行前把 `PSTACK_MODE_EVIDENCE_DIR` 指向本次独占证据目录；其中有双向切换前后 JSONL、RPC frames、请求内容、进程退出和 Git 副作用对照。
+下面使用已安装的 OMP 和本地受控 provider。实际 TUI 的显示由操作者确认；RPC 事件和日志不替代屏幕观察。自动检查入口为 `bun run test:pstack --test-name-pattern 'Pstack native mode'`；设置 `PSTACK_MODE_EVIDENCE_DIR` 可保留该次运行记录。
 
 1. 在 toolkit 根目录打开 PowerShell 7。用第一个终端启动只监听动态回环端口的受控 provider，保持它运行，并记下输出的目录：
 
@@ -227,7 +234,7 @@ bash pstack-suite/generated/skills/poteto-mode/scripts/worktree-audit.sh \
    Copy-Item $session "$root/after-resume.jsonl"
    ```
 
-5. 恢复后首条输入前后均应没有 `◈ Poteto mode`，且早先的消息仍可见。发一条新消息后正常退出。停止第一个终端的 provider（`Ctrl+C`）。保留截图、两份 JSONL、两次退出状态、`home/.omp/logs/` 下的 OMP 原生日志及本地请求。若未生成某个日志文件，记录该事实，不用 RPC 记录冒充 TUI 观察。不要上传 `/record` 或使用生产配置。H1 只有操作者回传并确认实际显示后才通过。
+5. 恢复后首条输入前后均应没有 `◈ Poteto mode`，且早先的消息仍可见。发一条新消息后正常退出。停止第一个终端的 provider（`Ctrl+C`）。记录实际显示和两次退出结果。需要保留的运行材料放在本次独占目录，不用 RPC 记录代替 TUI 观察。不要上传 `/record` 或使用生产配置。
 
 ### Windows statechart
 

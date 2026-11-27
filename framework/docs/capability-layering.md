@@ -89,6 +89,3 @@ presentation 的字段和原生绘制不是 definition.ts 要求 framework adapt
 
 这些是架构词汇，不写入消费领域 GLOSSARY。领域术语仍以 [model-cost glossary](../../extensions/model-cost/GLOSSARY.md) 为准；公共与原生职责遵循 [ADR-0002](../../docs/adr/0002-semantic-extension-framework.md)，聚合、周期和提交政策遵循 [ADR-0004](../../docs/adr/0004-model-cost-aggregate-accounting.md)。
 
-## 8. 历史测量的限度
-
-初始过渡布局见 `aac8936`；当时 request-accounting 约 1,380 行、display 约 1,685 行。它们只是审阅线索，不是深浅判据，也不是重构后规模或性能证据。重构不以抽象数量、目录数、行数下降为完成标准；行为保持、职责完整与依赖方向才是标准。

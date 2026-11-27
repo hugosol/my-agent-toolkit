@@ -11,7 +11,7 @@ test("P15 node auto report sends explicit handoff parameters plus native Session
 		executionId: "execution-41", from: { sessionId: "backend-source", tabId: 82 },
 		to: { sessionId: "manager-native", tabId: 83 }, body: "E:/artifacts/alpha.txt；UTF-8；只读草稿，不可用于生产。",
 	};
-	const response = { saved: true, report, notification: { status: "submitted", reason: "input-submission-confirmed" }, diagnostic: { status: "written" }, guidance: "报告不等于节点完成" };
+	const response = { saved: true, report, notification: { status: "submitted", reason: "input-submission-confirmed" }, diagnostic: { status: "written" }, guidance: "报告已保存；通知结果见 notification。" };
 	const server = Bun.serve({ port: 0, hostname: "127.0.0.1", async fetch(request) {
 		calls.push({ path: new URL(request.url).pathname, method: request.method, json: await request.json() });
 		return Response.json(response);

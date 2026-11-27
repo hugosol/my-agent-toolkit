@@ -1,13 +1,13 @@
 import { expect, test } from "bun:test";
 import { defineExtension } from "../../framework/interface";
 import { WorkflowRequests } from "../../extensions/workflow-chat/common/requests";
-import { CHIEF_RESEND_REPORT_TOOL } from "../../extensions/workflow-chat/common/chief-report";
+import { CHIEF_REPORT_TOOL, CHIEF_RESEND_REPORT_TOOL } from "../../extensions/workflow-chat/common/chief-report";
 import { CHIEF_TOOLS } from "../../extensions/workflow-chat/chief-chat/shared-logic/tools";
 import { portDouble } from "../framework/support/harness-port-double";
 import type { ToolExecutionDelivery } from "../../framework/interface/tool";
 
 const report = { id: "original/report-18", from: "sender-native-18", delegationId: "delegation-18", at: 1700000000000,
-	body: { background: "Invoice capability", execution: "Create Task Bot", result: "blocked", summary: "Draft saved; publication blocked", deliverables: ["draft.md"], pendingDecisions: ["Approve publication?"] } };
+	body: { background: "Invoice capability", execution: "Create Task Bot", result: "blocked", summary: "Draft saved; publication blocked", deliverables: ["draft.md"], pendingDecisions: ["Approve publication?"], outputs: [{ id: "publication-audit", path: "E:/owned/audit.md" }] } };
 let fixture = 0;
 function scene(peer: (request: Request) => Promise<Response>) {
 	const server = Bun.serve({ hostname: "127.0.0.1", port: 0, fetch: peer });
@@ -23,6 +23,41 @@ function scene(peer: (request: Request) => Promise<Response>) {
 	requests.start(sessionId);
 	return { requests, sessionId, close() { requests!.close(); server.stop(true); } };
 }
+
+// S3: the approved body keeps textual deliverables independent of named files.
+// Violation: it drops outputs, infers them from text, or gates a fileless Map result.
+test("chief report previews and submits structured Task files and fileless Map outcomes unchanged", async () => {
+	const calls: unknown[] = [];
+	const s = scene(async request => {
+		expect(new URL(request.url).pathname).toBe("/api/chief/reports");
+		calls.push(await request.json());
+		return Response.json({ saved: true, notification: { status: "failed", reason: "input refused" } });
+	});
+	try {
+		const task = { background: "Check the invoice", execution: "Invoice Task", result: "success", summary: "Audit saved",
+			deliverables: ["Printed copy supplied separately"], pendingDecisions: [], outputs: [{ id: "audit", path: "E:/results/audit.md" }] };
+		const map = { background: "Check the invoice", execution: "Invoice Map", summary: "No file exchange", deliverables: [], pendingDecisions: [] };
+		const cases = [task, { ...map, result: "failure" }, { ...map, result: "blocked" }, { ...map, result: "success" }];
+		for (const [index, body] of cases.entries()) {
+			const wire = { body, sessionId: "sender-native-18" };
+			const result = await CHIEF_REPORT_TOOL.execute({ requests: s.requests }, { body }, {
+				sessionId: s.sessionId, callId: `chief-output-${index}`, confirm: async preview => {
+					expect(preview.message).toContain(JSON.stringify(wire, null, 2));
+					expect(calls).toHaveLength(index);
+					return true;
+				},
+			});
+			expect(result).toMatchObject({ isError: false, details: { body: { saved: true, notification: { status: "failed", reason: "input refused" } } } });
+			expect(calls).toHaveLength(index + 1);
+			expect(calls[index]).toEqual(wire);
+		}
+		for (const body of [{ ...task, outputs: [{ id: "audit", path: 123 }] }, { ...task, can_complete: true }]) {
+			const result = await CHIEF_REPORT_TOOL.execute({ requests: s.requests }, { body }, { sessionId: s.sessionId, callId: "invalid-chief-result", confirm: async () => { throw new Error("Must not ask for approval"); } });
+			expect(result).toMatchObject({ isError: true, details: { body: { code: "invalid-parameters" } } });
+		}
+		expect(calls).toHaveLength(4);
+	} finally { s.close(); }
+});
 
 // S3 public model-callable tool seam; the native companion checks registration/UI.
 // Ticket 18 oracle: resend previews the saved ID AND original content, never caller

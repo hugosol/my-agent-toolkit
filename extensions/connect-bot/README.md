@@ -145,12 +145,7 @@ Entry availability and a complete static check do not promote a harness support 
 native semantic equivalence, or deploy anything formally. Version evidence belongs to the
 [host support record](../../framework/docs/harness-support.md).
 
-**Pi verification limit:** full lifecycle parity is not established. Pi 1.4.0 RPC has known
-lifecycle gaps: `new_session` can trigger another automatic registration despite the intended
-process-first-start-only policy, and closing RPC stdin must not be relied on to unregister an
-armed session. Use `/connect-bot off` before closing that path. Entrypoint availability is not
-complete lifecycle acceptance; consult the [host support record](../../framework/docs/harness-support.md)
-for version support and verification requirements.
+**Pi verification limit:** full lifecycle parity is not established. Do not rely on RPC stdin close to unregister an armed session. Run `/connect-bot off` before closing it. See the [Pi connect-bot evidence](../../framework/docs/harness-support.md#pi-connect-bot-entrypoint-evidence) for the historical startup observation and the remaining unregister gap.
 
 **Loading is not enabling, and a startup target is not a connection.** The automatic document states
 `enabled: true`, and the framework hands that enabling intent to the same business operation
@@ -195,7 +190,7 @@ holds the attempt across an `off`, a transfer and a disposal on a controlled clo
 [`tests/harness-dock/connect-bot-startup.test.ts`](../../tests/harness-dock/connect-bot-startup.test.ts)
 loads the real entrypoint files into the fixed harness, reads the panel double's requests and the
 marker frames, and restores sessions across independent processes — including a planted old
-`{enabled:true}` payload and the no-payload control (P19, P22, P24);
+`{enabled:true}` payload and the no-payload control;
 [`tests/harness-dock/connect-bot-lifecycle.test.ts`](../../tests/harness-dock/connect-bot-lifecycle.test.ts)
 runs the races, the post-start navigation and a policy edit beside codebase-tools in real isolated
 sessions.
@@ -222,7 +217,7 @@ binding instead of letting it run on an invented one.
 
 | Key | Meaning |
 | --- | --- |
-| `endpoint` | The panel base URL. |
+| `endpoint` | The panel base URL. For a same-host panel, use loopback to avoid spending the request budget on mDNS resolution. |
 | `requestTimeoutMs` | The wait budget of **one** HTTP request, in **milliseconds** (a whole number, 1–2147483647). |
 
 `requestTimeoutMs` is one budget for every request the extension makes — `register` (`/connect-bot`),
@@ -327,7 +322,7 @@ answers, the notification `已接入 herdr-bot 面板（当前 1 个在线会话
 panel's own) and the marker line appears with it. A recording from before launch through that
 notice is the evidence; the first request may already have been sent while no marker was shown —
 that is the non-blocking behavior, not a missing startup. The panel's read side
-(`curl -N http://127.0.0.1:18787/api/sessions/events`) shows the same row arriving, so the
+(`curl -N http://127.0.0.1:18788/api/sessions/events`) shows the same row arriving, so the
 terminal and the panel's own table carry the same order. The pre-receipt interval is asserted
 exactly by the held-register case above; the visual check confirms how those two states render.
 
@@ -344,79 +339,10 @@ terminal draws them.
 
 ## H3b — cut over connect-bot
 
-> Historical note: this section records the migration before the panel product was renamed. The
-> panel is now `herdr-bot`; the extension id, command and route named below are unchanged.
+Check registration, state changes and explicit disconnect on an isolated panel before replacing a deployed implementation. For automatic startup, use the interactive drill above. Follow the load-source and restart rules in [H3](../../framework/README.md#h3--permanent-cutover-and-cutover-smoke).
 
-Precondition: H1 passed and the connect-bot acceptance round has been run and recorded — this
-repository claims neither yet — so the old implementation is still the one in use. That round is
-manual and is never an automated gate: the
-user loads this repository's entrypoints from the explicit-only root
-(`--no-extensions -e entrypoints/omp`) on an isolated install, against a running omp-bot panel whose
-`listen_addr` matches `config.yaml`'s `endpoint`, and records each step's observation (screenshots
-or logs) — panel ready; `/connect-bot` registering the row (a new session is `空闲`); idempotent
-re-register (one row, no flicker, count unchanged); round-end transitions (`工作中` →
-`等待用户输入`, with the panel's own finished-round count and dot, cleared by its acknowledgement
-while the dot stays); terminal states after an aborted or assistant-less turn; active
-`/connect-bot off`; a killed process (the row stays, then passes offline); a panel outage (one
-first-failure notice, auto-disarm about 30s later, no automatic reconnect); the guards (`--no-ui`,
-unknown argument); multi-session isolation; coexistence with codebase-tools; load-source
-exclusivity; and the configuration switch. Its record must name the frozen source baseline,
-the runtime (`@oh-my-pi/pi-coding-agent@18.5.0` + `bun --version` + the lockfiles), the panel
-revision, the `config.yaml` content, the executor and the date. Before acceptance, run `bun test`
-and `bun run typecheck` against those exact baselines and save their results with the acceptance
-record under `.scratch/connect-bot/evidence/`; an older passing run is not the current release gate.
-The two shared cutover steps (add the discovery root once,
-restart the harness) are in
-[H3 — permanent cutover and cutover smoke](../../framework/README.md#h3--permanent-cutover-and-cutover-smoke);
-what differs here is the configuration file, the panel rows the old implementation leaves behind, and
-the smoke list.
-
-1. Recommended before switching: with the implementation still loaded, disconnect best-effort with
-   `/connect-bot off`. It stops the heartbeat locally, unregisters the session with the panel and
-   removes the row, so the cutover does not leave a row to age out.
-2. Remove the superseded implementation: delete `my-omp-toolkit/extensions/connect-bot` (repository
-   `my-omp-toolkit` at revision `@34d7c40`). The parent discovery entry stays for the remaining
-   unmigrated extensions.
-3. Move the endpoint by hand. The new implementation reads
-   `my-agent-toolkit/extensions/connect-bot/config.yaml`, and the framework reads and validates that
-   file before the extension registers anything: a missing or illegal file refuses the extension instead
-   of letting it connect to an invented address. The committed file points at the panel on the same
-   host (`http://127.0.0.1:18787`) instead of the old `config.json`'s `http://omp-bot.local:8787`: the
-   panel listens on `0.0.0.0:18787`, a loopback address answers in milliseconds, and resolving the mDNS
-   name can take longer than the configured request budget on first use (1000ms as shipped, which reads
-   as a failed arm). Copy the old value only when the panel runs on another host; then write the address
-   this machine can reach. There is no automatic conversion and no state migration — the new
-   implementation persists only `{enabled}`.
-4. Expect the old implementation's panel rows to expire without an `unregister`: it is no longer
-   running, so its rows pass the panel's windows — offline after the online window (10s by default,
-   ≤15s with the panel's 5s scan) and removed after both windows (≤45s by default) — and stay until
-   an `unregister` or a panel restart. The new implementation starts unconnected, so no new row
-   appears until a session runs `/connect-bot`.
-5. Smoke once after the cutover: start the harness normally (no `--no-extensions`) against a running
-   panel whose `listen_addr` covers `config.yaml`'s `endpoint`, and confirm:
-
-   - **接入** — `/connect-bot` registers the current session: the marker `◐ connectBot` appears, the
-     panel shows one row within the configured request budget (about 1s as shipped; a new session is
-     `空闲`), and the notification reports the online-session count.
-   - **重注册** — `/connect-bot` again reuses and refreshes the same row: one row, no flicker, count
-     unchanged.
-   - **轮次结束** — the row moves `工作中` → `等待用户输入` when a turn ends.
-   - **主动离线** — `/connect-bot off` notifies the disconnect, clears the marker and removes the row.
-   - **失联** — with the panel stopped, the first failed push notifies once, and about 30s (three
-     consecutive failures) later the extension disarms itself with a notice and the marker disappears;
-     it does not reconnect on its own.
-   - **切会话** — a session switch unregisters the old id best-effort, drops the local connection and
-     leaves the new session unconnected, while `/reload`, a same-file `/resume`, `/clear` and `/tree`
-     change nothing.
-   - **多会话隔离** — two instances keep two independent rows, and subagent activity neither adds a row
-     nor changes the parent's state.
-   - **与 codebase-tools 共存** — both markers share the framework's marker area in id order, and both
-     commands work without affecting each other.
-   - and exactly one `connect-bot` implementation loads (no duplicate registration).
-
-6. Roll back on failure: restore the deleted directory from the original git revision
-   (`git -C ../my-omp-toolkit checkout 34d7c4061a74a73b478067882cba7956821f3c1d -- extensions/connect-bot`),
-   which brings the old `config.json` back with it, drop the added configuration entry if no other
-   migrated extension still needs that root, and restart. The rollback is symmetric: the new
-   implementation also sends no `unregister`, so its rows age out the same way, and persistence
-   compatibility was abandoned in both directions.
+1. Back up the current load configuration and preserve the implementation it selects. Before stopping it, run `/connect-bot off` and check the old panel row. Disconnect stops local reports and attempts unregister. If the panel did not confirm removal, check its row and expiry settings rather than treating a timeout or process exit as an unregister.
+2. Set `endpoint` in the replacement's [`config.yaml`](config.yaml) to the intended panel. Use `http://127.0.0.1:18787` for a same-host panel on the default port. The panel listener must accept that address.
+3. Switch to exactly one replacement entrypoint in the desired startup mode. Stop discovering the old implementation without removing other extensions you still use. Restart the harness as a whole process.
+4. Check that the panel shows one row for the current session and the TUI shows `◐ connectBot` after the registration receipt. Use `/connect-bot` to register in manual mode. A second `/connect-bot` must reuse the row. Run a turn and check that the panel moves from `工作中` to `等待用户输入`. Run `/connect-bot off` and verify both marker and row are gone.
+5. To roll back, explicitly disconnect the replacement before stopping it. Restore the previous configuration and implementation as the only load source, then restart and verify against the intended panel.

@@ -43,8 +43,8 @@
 | 不同上下文的领域词汇 | [Glossary Map](GLOSSARY-MAP.md) |
 | 为什么采用当前架构、哪些方案被接受或否决 | [架构决策目录](docs/adr/) |
 | Framework 接入契约与静态检查边界 | [能力接口架构](framework/docs/capability-interface-architecture.md)；[静态接入检查](framework/docs/integration-check.md) |
-| Prompt contribution 的研究依据 | [Prompt injection research](framework/docs/research/prompt-injection-research.md) |
-| 尚未解决的 framework 研究与工作项 | [Framework backlog](framework/docs/semantic-extension-framework-backlog.md) |
+| Prompt contribution 的宿主差异与验证边界 | [Harness support](framework/docs/harness-support.md) |
+| Framework 尚未解决的架构问题 | [能力接口架构](framework/docs/capability-interface-architecture.md) |
 | Agent 工作约定与协作流程 | [AGENTS.md](AGENTS.md)；[Agent 文档目录](docs/agents/) |
 
 历史记录只说明记录时点的源码、版本和覆盖范围，不代替当前验证结果。工作票不作为长期接口或运行手册的替代。

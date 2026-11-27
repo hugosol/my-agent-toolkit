@@ -114,143 +114,61 @@ which also states the exercised host version and the remaining limitations.
 
 ## H1 — interactive TUI acceptance (visual)
 
-```bash
-# from the repository root; <state> is a throwaway directory, e.g. .cache/tui-accept/agent-state
-PI_CODING_AGENT_DIR=<state> "${OMP_CLI:-omp}" \
-  --no-extensions -e entrypoints/omp --model <provider>/<model>
-```
-
-Accept only when all of these hold in the real TUI:
-
-1. a clean session starts default-off: no marker, nothing contributed;
-2. `/codebase-tools` → notification `codeBaseTools enabled` and the marker `◈ codeBaseTools` appears;
-3. the marker is republished on every enabled turn (run two turns and watch it settle again);
-4. `/codebase-tools` again → notification `codeBaseTools disabled` and the marker is cleared.
-
-Compare the visuals against the automatic equivalents — same strings, observed as RPC/UI frames
-rather than rendered output: notify frames in
-[`tests/codebase-tools/command-toggle.test.ts`](../../tests/codebase-tools/command-toggle.test.ts), the
-marker area (`semantic-extensions`, above the editor, text `◈ codeBaseTools`) in
-[`tests/codebase-tools/marker-lifecycle.test.ts`](../../tests/codebase-tools/marker-lifecycle.test.ts),
-the startup-mode frames in
-[`tests/codebase-tools/startup-modes-dock.test.ts`](../../tests/codebase-tools/startup-modes-dock.test.ts),
-the declaration in [`definition.ts`](definition.ts), and the migration's recorded green run below.
-
-## H1b — automatic startup mode interactive acceptance (P8, human-led marker display)
-
-Same isolated state directory and selected local harness installation as H1; the only change is the entrypoint:
+Run each host with its own temporary agent state, session and working directories. Do not use your normal configuration or a running session. From the repository root, set up both launch commands. If you set `OMP_CLI`, use an absolute path. Authenticate a model in each isolated agent directory before making requests.
 
 ```bash
-# from the repository root; <state> is a throwaway directory, e.g. .cache/tui-accept/agent-state-auto
-PI_CODING_AGENT_DIR=<state> "${OMP_CLI:-omp}" \
-  --no-extensions -e entrypoints/omp-auto/codebase-tools.ts --model <provider>/<model>
+REPO="$PWD"
+ACCEPT_ROOT=$(mktemp -d)
+mkdir -p "$ACCEPT_ROOT"/{omp,pi}/{agent-state,sessions,work}
 
-# pi — the same automatic startup mode through pi's own entrypoint
-PI_CODING_AGENT_DIR=<state> pi \
-  --no-extensions -e <repository>/entrypoints/pi-auto/codebase-tools.ts --model <provider>/<model>
+omp_run() (
+	cd "$ACCEPT_ROOT/omp/work" || exit
+	PI_CODING_AGENT_DIR="$ACCEPT_ROOT/omp/agent-state" "${OMP_CLI:-omp}" \
+		--no-extensions -e "$REPO/entrypoints/$1/codebase-tools.ts" \
+		--session-dir "$ACCEPT_ROOT/omp/sessions" "${@:2}"
+)
+pi_run() (
+	cd "$ACCEPT_ROOT/pi/work" || exit
+	PI_CODING_AGENT_DIR="$ACCEPT_ROOT/pi/agent-state" pi \
+		--no-extensions -e "$REPO/entrypoints/$1/codebase-tools.ts" \
+		--session-dir "$ACCEPT_ROOT/pi/sessions" "${@:2}"
+)
+
+omp_run omp --model '<provider>/<model>'
+pi_run pi --model '<provider>/<model>'
 ```
 
-Accept only when all of these hold in the real TUI:
+### Startup and toggle
 
-1. a clean session starts **enabled with no command typed**: the marker `◈ codeBaseTools` is on the
-   framework's area from the session's start, and the first turn's request carries the init prompt;
-2. no `codeBaseTools enabled` notification appears: startup is not a command and announces nothing;
-3. `/codebase-tools` → notification `codeBaseTools disabled` and the marker is cleared; the next turn
-   adds no new contribution;
-4. `/codebase-tools` again → notification `codeBaseTools enabled`, the marker returns, and the next turn
-   contributes again (the reminder, not a second init);
-5. start a new session in the same TUI (`/new`): it starts **off** (no marker, no contribution) until its
-   own `/codebase-tools` — the startup choice applies once per process;
-6. restart the harness with `--resume <the enabled session file>`: the marker is on from the session's
-   start, the first turn contributes, and the session file gains no second startup record.
+1. Start a fresh process with the manual entrypoint. Check that the marker is absent and the first turn adds no contribution. Run `/codebase-tools` and check for `codeBaseTools enabled` and the `◈ codeBaseTools` marker above the editor. Run two turns and check that the marker remains visible. Toggle off and check for `codeBaseTools disabled` and no marker.
+2. Start a fresh process with `omp_run omp-auto` or `pi_run pi-auto`, passing the same model selection. Check that the marker appears without an enabled notice and the first request carries the init prompt. Toggle off and verify the next turn adds nothing. Toggle on and check that the next turn adds the reminder, not a second init.
+3. Use `/new` in that process. Check that this session starts off until you enable it with `/codebase-tools`.
 
-The automated face of every point above is asserted in
-[`tests/codebase-tools/startup-modes-dock.test.ts`](../../tests/codebase-tools/startup-modes-dock.test.ts)
-on the real OMP harness and in
-`bun scripts/pi-codebase-tools-smoke.ts --mode auto` on the real pi CLI; the visual check confirms only
-what a rendered terminal shows. Until the user confirms that rendered observation, the visual part of
-P8 stays **unverified**; the automated results prove the State, contribution and frame behavior, not
-the terminal's drawing.
+### Resume from a fresh process
 
-## H1c — startup recovery interactive acceptance (P9, human-led marker display)
+For each host, seed one session per row below. Send a turn so the host writes the session, then exit. Select the JSONL that the seed process wrote under its host’s session directory. Use `find "$ACCEPT_ROOT/pi/sessions" -type f -name '*.jsonl' -print` to include Pi subdirectories. Repeat the selection for each case; do not reuse an OMP session file in Pi.
 
-The recovery rule is automated at both seams — see the dock suite and both pi smoke modes below —
-but whether the marker *renders* on the restored session's start is a terminal observation. Use a
-throwaway state and session directory; never the formal configuration or a running session.
+| Session record | Seed | Resume entrypoint | Expected |
+| --- | --- | --- | --- |
+| `{enabled: true}` | Automatic; leave enabled | Manual | Marker is visible before the first input. No enabled notice. First turn contributes the reminder. |
+| `{enabled: false}` | Automatic; toggle off before the turn | Automatic | No marker or new contribution. `/codebase-tools` can still enable the session. |
+| No record | Manual; never toggle | Automatic | Marker is visible at startup without an enabled notice. First turn contributes the init prompt. |
 
-Prepare one state set for both hosts and keep the state directory out of the formal location:
+Use `--resume` for OMP and `--session` for Pi. For the first case, set `OMP_SESSION_FILE` and `PI_SESSION_FILE` to their respective absolute paths, then run:
 
 ```bash
-ACCEPT_ROOT=.cache/startup-recovery-accept   # any throwaway directory
-mkdir -p "$ACCEPT_ROOT/agent-state" "$ACCEPT_ROOT/sessions" "$ACCEPT_ROOT/work"
+omp_run omp --resume "$OMP_SESSION_FILE"
+pi_run pi --session "$PI_SESSION_FILE"
 ```
 
-**Scenario A — a recorded true restored under the opposite (manual) default.** Seed an enabled
-session with the automatic entrypoint, exit, then resume it with the manual entrypoint:
+Use `omp-auto` and `pi-auto` for the other two cases. Restoring an existing record must not append a second startup record. Only a branch without a record takes the automatic default.
 
-```bash
-# 1. seed: automatic entrypoint, type one prompt, confirm the marker appears, then exit
-PI_CODING_AGENT_DIR="$PWD/$ACCEPT_ROOT/agent-state" "${OMP_CLI:-omp}" \
-  --no-extensions -e entrypoints/omp-auto/codebase-tools.ts \
-  --session-dir "$PWD/$ACCEPT_ROOT/sessions" --cwd "$PWD/$ACCEPT_ROOT/work" \
-  --model <provider>/<model>
-
-# 2. restore: manual entrypoint, resuming the session file the seed saved
-SESSION_FILE=$(ls -t "$PWD/$ACCEPT_ROOT/sessions"/*.jsonl | head -1)
-PI_CODING_AGENT_DIR="$PWD/$ACCEPT_ROOT/agent-state" "${OMP_CLI:-omp}" \
-  --no-extensions -e entrypoints/omp/codebase-tools.ts \
-  --session-dir "$PWD/$ACCEPT_ROOT/sessions" --resume "$SESSION_FILE"
-```
-
-Capture the second terminal right after the resume: the marker `◈ codeBaseTools` must already be
-on the framework's area before you type anything, no `codeBaseTools enabled` notification may
-appear, and the first turn must carry the extension's contribution even though the manual policy
-states `false`. A recording of both launches, or screenshots of the restored area before the first
-turn and after it, is the evidence for the ticket.
-
-**Scenario B — a recorded false restored under the enabling automatic default.** Seed with the
-automatic entrypoint, type `/codebase-tools` (the marker clears), exit, and resume with the
-automatic entrypoint. The restored terminal must show **no** marker at its start and its first turn
-must add no contribution; `/codebase-tools` then announces `codeBaseTools enabled` and the marker
-returns.
-
-**Scenario C — no record at a startup resume uses the automatic default.** Seed with the manual
-entrypoint (a turn with no marker, no state entry), exit, then resume the file with the automatic
-entrypoint. The restored terminal must show the marker from its start and the first turn must carry
-the init prompt.
-
-On pi the same three scenarios use the pi entrypoints and pi's session storage:
-
-```bash
-PI_CODING_AGENT_DIR="$PWD/$ACCEPT_ROOT/agent-state" \
-  pi --no-extensions -e entrypoints/pi-auto/codebase-tools.ts \
-  --session-dir "$PWD/$ACCEPT_ROOT/sessions" --model <provider>/<model>
-PI_CODING_AGENT_DIR="$PWD/$ACCEPT_ROOT/agent-state" \
-  pi --no-extensions -e entrypoints/pi/codebase-tools.ts \
-  --session-dir "$PWD/$ACCEPT_ROOT/sessions" --session "$SESSION_FILE"
-```
-
-The automated face of every step is
-[`tests/codebase-tools/startup-recovery-dock.test.ts`](../../tests/codebase-tools/startup-recovery-dock.test.ts)
-on the real OMP harness, and the recovery phases of
-`bun scripts/pi-codebase-tools-smoke.ts --mode manual` / `--mode auto` on the real pi CLI. Both
-assert the captured request, the session-entry payloads and the adapter's `setWidget` frames; only
-the rendered terminal marker is left to this check.
+The OMP [startup dock](../../tests/codebase-tools/startup-modes-dock.test.ts) and [recovery dock](../../tests/codebase-tools/startup-recovery-dock.test.ts) check contribution, state records and marker frames. On Pi, run `bun scripts/pi-codebase-tools-smoke.ts --mode manual` and `bun scripts/pi-codebase-tools-smoke.ts --mode auto`. Frames are not a substitute for observing the rendered marker.
 
 ## H3a — cut over codebase-tools
 
-Precondition: H1 passed. The two shared cutover steps (add the discovery root once, restart the agent
-harness) are in [H3 — permanent cutover and cutover smoke](../../framework/README.md#h3--permanent-cutover-and-cutover-smoke);
-the codebase-tools-specific steps are:
+After H1 passes on the isolated installation, follow the load-source and restart rules in [H3](../../framework/README.md#h3--permanent-cutover-and-cutover-smoke).
 
-1. Remove the superseded implementation: delete `my-omp-toolkit/extensions/codebase-tools` (repository
-   `my-omp-toolkit` at revision `@34d7c40`). The parent discovery entry
-   `E:/Developer/myhub/my-omp-toolkit/extensions` stays for the remaining unmigrated extensions.
-2. Smoke once after the cutover: start the harness normally (no `--no-extensions`) and run
-   `/codebase-tools` on→off, confirming the marker and both notifications, and that exactly one
-   `codebase-tools` implementation loads (no duplicate registration).
-3. Roll back on failure: restore the deleted directory from the original git revision
-   (`git -C ../my-omp-toolkit checkout 34d7c4061a74a73b478067882cba7956821f3c1d -- extensions/codebase-tools`),
-   drop the added configuration entry if no other migrated extension still needs that root, and restart.
-   Persistence compatibility was deliberately abandoned in both directions, so rollback does not read or
-   migrate the new `{enabled}` data.
+1. Save the previous implementation and load configuration. Stop discovering the old `codebase-tools` and configure exactly one new entrypoint. Keep any discovery source that other extensions still need, but exclude the old implementation from it.
+2. Restart normally. Run `/codebase-tools` on and off, check both notifications and the marker, and confirm that only one implementation loaded.
+3. To roll back, restore the previous implementation and its configuration, remove the replacement from the load set, and restart. Do not copy or translate the replacement's State records into the old implementation.

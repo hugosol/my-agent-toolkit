@@ -5,22 +5,22 @@ import { displayScriptOutput } from "../script-output";
 
 type ManagerToolState = { readonly operations: ManagerActions };
 
-const string: ToolParameterSchema = { type: "string", description: "必须是字符串；不进行类型转换。" };
-const confirmed: ToolParameterSchema = { type: "boolean", description: "必须是 boolean；不接受字符串或数字。" };
-const nodes: ToolParameterSchema = { type: "array", items: { type: "string" }, description: "必须是字符串数组。" };
+const string: ToolParameterSchema = { type: "string" };
+const confirmed: ToolParameterSchema = { type: "boolean", description: "人工确认所选恢复动作。" };
+const nodes: ToolParameterSchema = { type: "array", items: { type: "string" }, description: "本次显式选择派发的节点 ID。" };
 
 export const MANAGER_TOOLS: readonly ToolDeclaration<ManagerToolState>[] = [
 	{
 		name: "run", label: "Run",
-		description: "显式查询与推进当前管理者 Run；仅后端决定运行事实，不附加自动流转。",
+		description: "查询或显式推进当前管理的 Run；实际动作资格以返回结果为准。",
 		parameters: { anyOf: [
 			{
 				type: "object", properties: {
 					action: { type: "string", enum: ["prepare_inputs"] },
-					fileInputs: { type: "array", description: "完整替换 Run 文件绑定；省略旧 ID 会删除其绑定，[] 清空。", items: {
+					fileInputs: { type: "array", description: "整批替换 Run 文件绑定，不是追加；遗漏旧 ID 会删除其绑定，空数组清空。", items: {
 						type: "object", properties: { id: string, path: string }, required: ["id", "path"], additionalProperties: false,
 					} },
-					confirmed: { type: "boolean", description: "true 表示已按 Map input_requirements 审阅全部输入；false 仅保存待补齐绑定，禁止派发。" },
+					confirmed: { type: "boolean", description: "管理者确认输入已满足本次要求；false 仅保存待补齐绑定。" },
 					reason: string,
 				},
 				required: ["action", "fileInputs", "confirmed", "reason"], additionalProperties: false,
@@ -30,11 +30,11 @@ export const MANAGER_TOOLS: readonly ToolDeclaration<ManagerToolState>[] = [
 				required: ["action", "nodeId", "confirmed", "reason"], additionalProperties: false,
 			},
 			{
-				type: "object", properties: { action: { type: "string", enum: ["retry"] }, nodeId: string, confirmed, reason: string, zoneId: { type: "string", description: "动态 zone 节点每次重试必须重新指定已登记的 zone ID；固定 zone 节点不得提供。" } },
+				type: "object", properties: { action: { type: "string", enum: ["retry"] }, nodeId: string, confirmed, reason: string, zoneId: { type: "string", description: "人工动态 zone 每次重试须指定已登记的 zone ID；配置了 input_id 的动态节点由后端重新读取输入材料选址，与固定 zone 节点一样不得提供覆盖。" } },
 				required: ["action", "nodeId", "confirmed", "reason"], additionalProperties: false,
 			},
 			{
-				type: "object", properties: { action: { type: "string", enum: ["dispatch"] }, nodes, zoneIds: { type: "object", properties: {}, additionalProperties: true, description: "动态节点 ID → 本次已登记 zone ID；每次派发显式提供，不填固定或未选节点。根据上游 report 决定，不自动继承。" } },
+				type: "object", properties: { action: { type: "string", enum: ["dispatch"] }, nodes, zoneIds: { type: "object", properties: {}, additionalProperties: true, description: "人工动态节点 ID → 本次已登记 zone ID，每次派发显式提供。配置了 input_id 的动态节点由后端读取指定输入 JSON 的 zone_id；不为输入驱动、固定或未选节点提供覆盖。" } },
 				required: ["action", "nodes"], additionalProperties: false,
 			},
 			{
@@ -57,7 +57,20 @@ export const MANAGER_TOOLS: readonly ToolDeclaration<ManagerToolState>[] = [
 				required: ["action"], additionalProperties: false,
 			},
 			{
-				type: "object", properties: { action: { type: "string", enum: ["finish"] } },
+				type: "object", properties: {
+					action: { type: "string", enum: ["finish"] },
+					map_output: {
+						type: "object", description: "结束 Run 时提交的公开文件成果。",
+						properties: { files: {
+							type: "array", items: {
+								type: "object", properties: {
+									id: { type: "string", description: "本次声明的输出 ID。" },
+									path: { type: "string", description: "实际成果文件的绝对地址。" },
+								}, required: ["id", "path"], additionalProperties: false,
+							},
+						} }, required: ["files"], additionalProperties: false,
+					},
+				},
 				required: ["action"], additionalProperties: false,
 			},
 			{
@@ -75,7 +88,7 @@ export const MANAGER_TOOLS: readonly ToolDeclaration<ManagerToolState>[] = [
 	},
 	{
 		name: "collect", label: "Collect",
-		description: "直接调用，勿从 codemode/eval 包装；等待或立即收取后端原因、快照与报告标识待办。脚本日志仅在用户可见的工具行中显示；不含报告正文，不清除交接待办。",
+		description: "等待或取得运行现场与待处理报告标识；不返回报告正文。直接调用，不经 codemode/eval 包装。",
 		directOnly: true,
 		displayOutput: displayScriptOutput,
 		parameters: { type: "object", properties: {}, required: [], additionalProperties: false },
