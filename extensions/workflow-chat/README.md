@@ -327,7 +327,7 @@ OMP 使用原生 ANSI/TSP 的同一直接调用；Pi 将 collect 注册为只供
 
 ## 文件规则与派发快照
 
-Map node 的 `input` 保留本次委托。文件 `input_rule` 可引用固定文件 `{id,type:"file",path,zone_id?}`、上游节点 `{id,type:"node",node_id,output_id}` 或本 Run 输入 `{id,type:"run",input_id}`。`output_rule` 只声明 `{id}`；每侧 ID 独立，材料引用不补 `blocked_by`。派发冻结 `inputRule`、`outputRule` 及解析出的 `inputs: [{id,path}]`。Run 始终按自己的 Map 副本工作，后续输入替换不改写已派发 execution。父输入仅按同名公开 ID 接入子 Map，不寻址子图内部节点；父输出只要求子 Map 已声明公开输出的同名子集。
+Map node 的 `input` 保留本次委托。文件 `input_rule` 可引用固定文件 `{id,type:"file",path,zone_id?}`、上游节点 `{id,type:"node",source_node_ref,node_output_ref}` 或本 Run 的单项文件输入 `{id,type:"run",run_file_ref}`。`id` 是本节点的输入身份，`*_ref` 引用来源，来源名与本地名可以不同。`run_file_ref` 引用 `mapInput.files` 中的一项，不引用 `mapInput.runInput` 文字；`node_output_ref` 必须结合 `source_node_ref` 定位。`output_rule` 只声明 `{id}`；每侧 ID 独立，材料引用不补 `blocked_by`。旧来源字段不受支持，旧 Run 离线保留，不恢复或重试，后续工作另起新 Run。派发冻结 `inputRule`、`outputRule` 及解析出的 `inputs: [{id,path}]`。Run 始终按自己的 Map 副本工作，后续输入替换不改写已派发 execution。父输入仅按同名公开 ID 接入子 Map，不寻址子图内部节点；父输出只要求子 Map 已声明公开输出的同名子集。
 
 ## report 协议与交接
 
