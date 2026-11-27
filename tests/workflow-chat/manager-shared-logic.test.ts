@@ -35,6 +35,12 @@ test("manager shared logic rejects identity and inapplicable fields without rely
 		}
 		for (const input of [
 			{ action: "status", nodes: ["A"] },
+			{ action: "status", map_output: { files: [] } },
+			{ action: "finish", mapOutput: { files: [] } },
+			{ action: "finish", map_output: null },
+			{ action: "finish", map_output: { files: [{ id: "summary" }] } },
+			{ action: "finish", map_output: { files: [{ id: "summary", path: "E:/report.md", runId: "forged" }] } },
+			{ action: "finish", map_output: { files: [], runId: "forged" } },
 			{ action: "prepare_inputs", fileInputs: [], reason: "missing confirmation" },
 			{ action: "prepare_inputs", fileInputs: [], confirmed: "false", reason: "wrong boolean" },
 			{ action: "prepare_inputs", fileInputs: [], confirmed: false },
@@ -69,7 +75,11 @@ test("manager shared logic rejects identity and inapplicable fields without rely
 
 test("prepare_inputs forwards complete replacements and preserves committed or rejected backend results without retry", async () => {
 	const calls: { path: string; body: unknown }[] = [];
-	let response: unknown = { stateCommitted: true, snapshot: { inputsReady: false }, historyError: "history append failed" };
+	const receipts = [
+		{ stateCommitted: true, snapshot: { inputsReady: false, mapInput: { runInput: "Review Q3 totals", files: [{ id: "source", path: "E:/source.txt" }] } }, historyError: "history append failed" },
+		{ changed: true, snapshot: { inputsReady: false, mapInput: { runInput: "Review Q3 totals", files: [] } }, historyError: null },
+	];
+	let response: unknown;
 	let status = 200;
 	const server = Bun.serve({ hostname: "127.0.0.1", port: 0, async fetch(request) {
 		calls.push({ path: new URL(request.url).pathname, body: await request.json() });
@@ -81,6 +91,7 @@ test("prepare_inputs forwards complete replacements and preserves committed or r
 			{ fileInputs: [{ id: "source", path: "E:/source.txt" }], confirmed: false, reason: "仍缺范围" },
 			{ fileInputs: [], confirmed: false, reason: "清空绑定" },
 		]) {
+			response = receipts[calls.length];
 			const result = await roles.manager.run(roles.sessionId, { action: "prepare_inputs", ...preparation });
 			expect(result).toMatchObject({ body: response, httpStatus: 200, isError: false });
 			expect(calls[calls.length - 1]).toEqual({ path: "/api/workflow/manager/prepare_inputs", body: { sessionId: roles.sessionId, ...preparation } });

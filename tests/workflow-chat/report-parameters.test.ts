@@ -9,7 +9,7 @@ import { beginRoleCall, lastRoleResult, nativeIdentity, roleCall } from "./suppo
 // can_complete must be mapped, not sent verbatim (the real backend rejects snake_case).
 test("report forwards explicit handoff declarations and rejects malformed model parameters without HTTP", async () => {
 	const calls: unknown[] = [];
-	const saved = { saved: true, notification: { status: "not-attempted" } };
+	const saved = { saved: true, notification: { status: "not-attempted" }, guidance: "报告已保存；通知结果见 notification。" };
 	const server = Bun.serve({ hostname: "127.0.0.1", port: 0, async fetch(request) {
 		calls.push(await request.json());
 		return Response.json(saved);

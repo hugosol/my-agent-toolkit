@@ -65,7 +65,15 @@ export class NodeReports {
 			body: params.body, canComplete: params.can_complete,
 			...("outputs" in params ? { outputs: (params.outputs as { id: string; path: string }[]).map(({ id, path }) => ({ id, path })) } : {}),
 		};
-		const result = await this.requests.post(sessionId, "/api/workflow/node/report", payload, signal);
-		return workflowReportResult(result);
+		const result = workflowReportResult(await this.requests.post(sessionId, "/api/workflow/node/report", payload, signal));
+		const receipt = result.body;
+		if (!receipt || typeof receipt !== "object" || Array.isArray(receipt)) return result;
+		if (!result.isError && "saved" in receipt && receipt.saved === true) {
+			return { ...result, body: { ...receipt, guidance: "报告已保存；通知结果见 notification。" } };
+		}
+		if (result.uncertain) {
+			return { ...result, body: { ...receipt, guidance: "无法确认报告是否已保存；请先核实实际结果。" } };
+		}
+		return result;
 	}
 }

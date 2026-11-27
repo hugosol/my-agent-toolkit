@@ -49,7 +49,7 @@ for (const host of ["omp", "pi"] as const) {
 				if (failure === "cancel") await dock.cancel();
 				await pending;
 				const result = dock.lastResult();
-				expect(result).toMatchObject({ details: { body: { error: { kind: failure === "cancel" ? "cancelled" : failure === "lost-response" ? "transport" : failure === "invalid-json" ? "parse" : "protocol" }, guidance: expect.stringContaining("不") } } });
+				expect(result).toMatchObject({ details: { body: { error: { kind: failure === "cancel" ? "cancelled" : failure === "lost-response" ? "transport" : failure === "invalid-json" ? "parse" : "protocol" }, guidance: "无法确认报告是否已保存；请先核实实际结果。" } } });
 				expect(result).not.toMatchObject({ details: { body: { sent: false } } });
 				expect(result).not.toMatchObject({ details: { body: { saved: false } } });
 				// Cross-process real timer observation covers the configured confirmation budget.

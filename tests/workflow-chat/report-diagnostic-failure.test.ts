@@ -10,7 +10,7 @@ test("P16 failed diagnostic preserves saved report and submitted notification wi
 	const dock = await nodeDock(`http://127.0.0.1:${server.port}`, { body: response.report.body, can_complete: false });
 	try {
 		expect((await dock.session.prompt("报告 beta 的结果一次")).status).toBe("completed");
-		expect(JSON.parse(toolText(dock))).toEqual(response);
+		expect(JSON.parse(toolText(dock))).toEqual({ ...response, guidance: "报告已保存；通知结果见 notification。" });
 		expect(dock.session.frames().filter(frame => frame.type === "tool_execution_end")[0]?.isError).not.toBe(true);
 		// Bounded external-process observation, not an assertion about infinite future behavior.
 		await Bun.sleep(150);
