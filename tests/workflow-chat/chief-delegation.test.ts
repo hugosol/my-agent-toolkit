@@ -83,6 +83,43 @@ for (const kind of ["task", "map"] as const) test(`${kind} approval pins all inp
 	} finally { approval.resolve(false); testScene.close(); }
 });
 
+// S3: an output rule participates in the same Task/Map preview, approval and
+// commit as the other inputs; a substituted rule must never be approved.
+test("chief previews and pins the requested output IDs for Task and Map", async () => {
+	const requests: unknown[] = [];
+	let substitute = false;
+	const testScene = scene(async request => {
+		const body = await request.json();
+		requests.push(body);
+		if (new URL(request.url).pathname.endsWith("/preview")) return Response.json({
+			previewId: "output-preview", facts: {
+				request: substitute ? { ...body, outputRule: [{ id: "unexpected-result" }] } : body,
+				bot: {}, task: {}, map: {}, cwd: "E:/work", name: "Literal Chat", materials: [], prompt: "Literal input",
+			},
+		});
+		return Response.json({ id: "queued-task", stage: "starting" }, { status: 202 });
+	});
+	try {
+		const params = { botId: "worker", zoneId: "work/explicit", input: "Literal input", materials: [], output_rule: [{ id: "requested-result" }] };
+		const prompts: string[] = [];
+		const confirm = async ({ message }: { message: string }) => { prompts.push(message); return prompts.length === 1; };
+		const result = await testScene.call(params, confirm);
+		expect(result.details).toMatchObject({ body: { id: "queued-task", stage: "starting" } });
+		await testScene.call({ ...params, managerTaskId: "map-manager" }, confirm);
+		substitute = true;
+		const changed = await testScene.call(params, confirm);
+		expect(changed).toMatchObject({ isError: true, details: { body: { error: { kind: "protocol" } } } });
+		expect(prompts).toHaveLength(2);
+		for (const prompt of prompts) expect(prompt).toContain('"id": "requested-result"');
+		expect(requests).toEqual([
+			{ botId: "worker", zoneId: "work/explicit", input: "Literal input", materials: [], outputRule: [{ id: "requested-result" }], sessionId: "chief-native-session" },
+			{ previewId: "output-preview", sessionId: "chief-native-session" },
+			{ botId: "worker", zoneId: "work/explicit", input: "Literal input", materials: [], outputRule: [{ id: "requested-result" }], managerTaskId: "map-manager", sessionId: "chief-native-session" },
+			{ botId: "worker", zoneId: "work/explicit", input: "Literal input", materials: [], outputRule: [{ id: "requested-result" }], sessionId: "chief-native-session" },
+		]);
+	} finally { testScene.close(); }
+});
+
 test("chief keeps a successful HTTP response with no startup receipt uncertain", async () => {
 	const testScene = scene(async request => {
 		const body = await request.json();

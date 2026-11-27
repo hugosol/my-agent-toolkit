@@ -1,5 +1,8 @@
 import { expect, test } from "bun:test";
-import { chiefDock } from "../workflow-chat/support/chief-dock";
+import { writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { chiefDock, type ChiefDock } from "../workflow-chat/support/chief-dock";
+import { createRunRoot } from "./run-root";
 
 // Approved S3 protocol seam. A new real chief Session reads an immutable report
 // without old delegation context. Controlled HTTP outcomes are not model judgments.
@@ -12,8 +15,13 @@ for (const host of ["omp", "pi"] as const) {
 			calls.push({ method: request.method, path: new URL(request.url).pathname, body: await request.json() });
 			return Response.json({ report, received: true, receipt: { reportId: "original/report-15" }, process: false });
 		} });
-		const dock = await chiefDock(host, peer.url.origin);
+		const root = createRunRoot("chief-unfamiliar-file");
+		const path = join(root.workDir, "artifact.txt");
+		const literal = "The west gate opens at 07:35; the east gate remains closed.";
+		let dock: ChiefDock | undefined;
 		try {
+			writeFileSync(path, literal);
+			dock = await chiefDock(host, peer.url.origin);
 			for (const [result, execution, summary] of [
 				["success", "invoice Bot", "Produced 3 invoices"],
 				["failure", "invoice Bot", "Export failed; one draft exists"],
@@ -22,16 +30,25 @@ for (const host of ["omp", "pi"] as const) {
 			]) {
 				report = { id: "original/report-15", from: "actual-executor", delegationId: "stable-delegation", at: 1700000000000,
 					body: { background: "Invoice capability request", execution, result, summary,
-						deliverables: ["E:/owned/draft.md"], pendingDecisions: ["Review the limitations"] } };
+						deliverables: ["Printed copy issued separately"], pendingDecisions: ["Review the limitations"],
+						...(result === "success" && execution === "invoice Bot" ? { outputs: [{ id: "opaque-7b4e", path }] } : {}) } };
 				expect(await dock.call({ id: "original/report-15" }, "chief_read_report")).toMatchObject({ isError: false, details: { body: { report, received: true, process: false } } });
+				if (result === "success" && execution === "invoice Bot") {
+					const read = await dock.call({ path }, "read");
+					expect(read.isError).toBe(false);
+					expect(read.content).toEqual(expect.arrayContaining([expect.objectContaining({ text: expect.stringContaining(literal) })]));
+					const captures = dock.capture.requests();
+					expect(JSON.stringify(captures[captures.length - 1]?.json)).toContain(literal);
+					expect(calls).toHaveLength(1); // No autonomous view, receive, resend or delegation.
+				}
 			}
 			expect(calls).toEqual(Array.from({ length: 4 }, () => ({ method: "POST", path: "/api/chief/reports/original%2Freport-15/view", body: { sessionId: expect.any(String) } })));
 			const history = await dock.history();
 			expect(history).toContain("chief-chat:tools");
-			expect(history).toContain("询问是否满足要求");
+			expect(history).toContain("按 outputs 中的实际地址读取文件，不根据 ID 猜测内容");
 			const before = calls.length;
 			expect(await dock.call({ id: "original/report-15", sessionId: "forged" }, "chief_read_report")).toMatchObject({ isError: true });
 			expect(calls).toHaveLength(before);
-		} finally { try { await dock.close(); } finally { peer.stop(true); } }
+		} finally { try { await dock?.close(); } finally { peer.stop(true); root.dispose(); } }
 	}, 180_000);
 }

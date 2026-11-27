@@ -167,16 +167,25 @@ for (const host of ["omp", "pi"] as const) {
 
 	test(`${host} chief report sends full approved content from executor and direct manager`, async () => {
 		const sent: { path: string; body: unknown }[] = [];
-		const receipt = { saved: true, report: { id: "report-owned-15", body }, notification: { status: "submitted" } };
+		const reports = [
+			{ ...body, execution: "Independent Task", result: "success", outputs: [{ id: "work-product", path: "E:/owned/report.md" }] },
+			{ ...body, execution: "Direct Map manager", result: "success" },
+			{ ...body, execution: "Direct Map manager", result: "blocked" },
+		];
+		const receipts = reports.map((submitted, index) => ({ saved: true, report: { id: `report-owned-${index}`, body: index === 1
+			? { ...submitted, outputs: [{ id: "public-result", path: "E:/isolated/run/out.md" }] } : submitted }, notification: { status: "submitted" } }));
 		const peer = Bun.serve({ hostname: "127.0.0.1", port: 0, async fetch(request) {
 			if (request.method !== "POST" || new URL(request.url).pathname !== "/api/chief/reports") return new Response(null, { status: 404 });
+			const receipt = receipts[sent.length];
 			sent.push({ path: new URL(request.url).pathname, body: await request.json() });
 			return Response.json(receipt);
 		} });
 		let dock: RoleContractDock | undefined;
 		let pending: Promise<void> | undefined;
 		try {
-			for (const role of ["chief-report", "manager", "dual"] as const) {
+			for (const [index, role] of (["chief-report", "manager", "dual"] as const).entries()) {
+				const body = reports[index]!;
+				const receipt = receipts[index]!;
 				dock = await roleContractDock(host, peer.url.origin, 2000, role, 30000, "chief_report");
 				const state = await dock.state();
 				const data = state.data;
@@ -201,7 +210,12 @@ for (const host of ["omp", "pi"] as const) {
 				});
 				expect(names.filter(name => name === "chief_report")).toHaveLength(1);
 				// Native tools alone do not prove first-run role guidance was active.
-				if (role === "chief-report") expect(JSON.stringify(request)).toContain("你是 chief 实际委派的独立执行者");
+				if (role === "chief-report") {
+					const guide = JSON.stringify(request);
+					expect(guide).toContain("需要交接结果或报告失败、受阻情况时");
+					expect(guide).toContain("Map 文件地址由系统从已完成 Run 的公开成果取得");
+					expect(guide).toContain("通知失败不意味着需要重做业务或重复提交");
+				}
 				if (role === "chief-report") for (const forbidden of ["report", "run", "collect"]) expect(names).not.toContain(forbidden);
 				if (role === "dual") for (const required of ["report", "run", "collect"]) expect(names).toContain(required);
 				await dock.close(); dock = undefined;
